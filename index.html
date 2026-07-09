@@ -37,12 +37,45 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 .pdf-report{position:fixed;left:-9999px;top:0;width:1600px;padding:48px 56px;background:linear-gradient(135deg,#050816,#071126 55%,#080516);color:white;font-family:Inter,system-ui,sans-serif}.pdf-report h1{font-size:34px;letter-spacing:-.05em}.pdf-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.pdf-card{border:1px solid rgba(255,255,255,.12);background:rgba(15,23,42,.72);border-radius:16px;padding:16px;margin-top:12px}.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pdf-donut{width:210px;height:210px;border-radius:50%;background:conic-gradient(#4ade80 0 82%,#fbbf24 82% 93%,#fb3b5b 93% 100%);position:relative;margin:20px auto}.pdf-donut:after{content:"82%";position:absolute;inset:48px;background:#081126;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:28px}.pdf-bars{display:flex;gap:12px;align-items:end;height:230px}.pdf-bars i{flex:1;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#20e7ff,#8b5cf6)}.pdf-table{width:100%;border-collapse:collapse}.pdf-table td,.pdf-table th{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left}
 @media(max-width:1180px){.login-shell{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr 1fr}}
 </style>
+
+<style id="sidebar-footer-position-fix">
+.sidebar{
+  display:flex;
+  flex-direction:column;
+}
+.sidebar .nav{
+  flex:1;
+}
+.sidebar-footer{
+  margin-top:auto;
+  padding:16px 10px 4px;
+  border-top:1px solid rgba(255,255,255,.08);
+  color:#7f8aa3;
+  font-size:11px;
+  line-height:1.55;
+  text-align:left;
+}
+.sidebar-footer strong{
+  display:block;
+  color:#dbeafe;
+  font-size:12px;
+  margin-bottom:3px;
+  font-weight:800;
+}
+.sidebar-footer b{
+  color:#cbd5e1;
+}
+.sidebar.closed .sidebar-footer{
+  display:none;
+}
+</style>
+
 </head>
 <body>
 <section id="login" class="login">
   <div class="login-shell">
     <div class="auth">
-      <img src="assets/vinix7-logo.png" class="logo" alt="Vinix7 Logo" class="logo" alt="Vinix7">
+      <img src="assets/vinix7-logo.png" class="logo" alt="Vinix7 Logo">
       <h1>Selamat Datang 👋</h1>
       <p>Dashboard AI untuk analisis sentimen, engagement, konten, dampak, dan rekomendasi strategi media sosial.</p>
       <form id="loginForm">
@@ -60,7 +93,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 
 <section id="app" class="app">
   <aside id="side" class="sidebar">
-    <div class="side-head"><img src="assets/vinix7-logo.png" class="logo" alt="Vinix7 Logo" class="side-logo"><button id="toggle" class="toggle">⋯</button></div>
+    <div class="side-head"><img src="assets/vinix7-logo.png" class="side-logo" alt="Vinix7 Logo"><button id="toggle" class="toggle">⋯</button></div>
     <nav id="nav" class="nav">
       <button class="active" data-page="dashboard"><b class="ico">🏠</b><span class="label">Dashboard</span></button>
       <button data-page="meta"><b class="ico">📡</b><span class="label">Meta API</span></button>
@@ -71,6 +104,13 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <button data-page="rekomendasi"><b class="ico">✨</b><span class="label">Rekomendasi</span></button>
       <button data-page="laporan"><b class="ico">📄</b><span class="label">Laporan</span></button>
     </nav>
+
+    <div class="sidebar-footer">
+      <strong>© 2026 Vinix7 Insight AI</strong>
+      Developed by <b>Tarmuji</b><br>
+      Version 1.0.0
+    </div>
+
   </aside>
   <main class="main">
     <div class="topbar"><div class="avatar">👤</div></div>
@@ -237,8 +277,4 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
 </script>
 
 </body>
-<<<<<<< HEAD
 </html>
-=======
-</html>
->>>>>>> 1fb5430105d95ad7d35e7292ed98e14ee752f70e
