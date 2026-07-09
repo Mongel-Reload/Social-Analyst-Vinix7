@@ -1,0 +1,16 @@
+{
+  "name": "vinix7-social-intelligence",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vinix7 Social Intelligence dashboard with Netlify Functions for Meta Graph API",
+  "scripts": {
+    "dev": "netlify dev",
+    "start": "netlify dev"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.38.1"
+  }
+}
