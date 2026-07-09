@@ -108,7 +108,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 </section>
 
 <script>
-const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const $=s=>document.querySelector(s), $$=s=>{const els=document.querySelectorAll(s); return els?Array.from(els):[]};
 const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 let charts={}, rows=[{Periode:'Des 2024',Followers:2752,Likes:23,Shares:1,Comments:1,Saves:7,Views:8878,'Profile Visit':840,Reach:7200},{Periode:'Jan 2025',Followers:2901,Likes:180,Shares:32,Comments:1,Saves:37,Views:81718,'Profile Visit':2308,Reach:62000},{Periode:'Feb 2025',Followers:3259,Likes:229,Shares:6,Comments:13,Saves:17,Views:115199,'Profile Visit':4010,Reach:79000}];
 
