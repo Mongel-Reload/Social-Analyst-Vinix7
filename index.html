@@ -142,7 +142,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 
     <section id="input" class="page"><div class="head"><div><h1>Input Data</h1><p>Input konten manual tetap ada, dataset engagement ditambahkan di bawahnya.</p></div><button class="btn primary" id="downloadTemplate">Download Template CSV</button></div><div class="card"><h3>Input Konten Manual</h3><div class="formgrid"><div class="field"><label>Upload Foto/Video</label><input type="file"></div><div class="field"><label>Jenis Konten</label><select><option>Reels</option><option>Carousel</option></select></div><div class="field"><label>Judul</label><input value="Konten Edukasi"></div><div class="field"><label>Tanggal Upload</label><input type="date"></div><div class="field"><label>Waktu Upload</label><input type="time"></div><div class="field"><label>Likes</label><input value="4200"></div><div class="field"><label>Komentar</label><input value="180"></div><div class="field"><label>Share</label><input value="320"></div><div class="field"><label>Views</label><input value="88000"></div><div class="field"><label>Reach</label><input value="62000"></div><div class="field"><label>Saves</label><input value="560"></div></div><button class="btn primary" id="analyzeManual">Analisa Konten</button><p id="manualResult" style="color:#a5f3fc;font-weight:900"></p></div><div class="card" style="margin-top:15px"><h3>Analisis Dataset Engagement CSV/Excel</h3><div class="upload"><div><b>Upload .csv / .xlsx</b><p style="color:var(--muted)">Periode, Followers, Likes, Shares, Comments, Saves, Views, Profile Visit, Reach</p><input id="fileInput" type="file" accept=".csv,.xlsx,.xls"></div></div><div class="toolbar" style="margin-top:14px"><button class="btn primary" id="analyzeDataset">Analisa Dataset</button></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Dataset Trend</h3><canvas id="datasetChart"></canvas></div><div class="card"><h3>Insight Dataset</h3><div id="datasetInsight" style="line-height:1.8;color:#d1d5db">Upload atau gunakan data demo untuk melihat insight otomatis.</div></div></div><div class="table" style="margin-top:15px"><table><thead id="dsHead"></thead><tbody id="dsBody"></tbody></table></div></div></section>
 
-    <section id="sentimen" class="page"><div class="head"><div><h1>Sentimen</h1><p>Klasifikasi TF-IDF + Naive Bayes. Bisa analisa teks manual, link postingan bebas, atau komentar dari Meta API jika sudah terhubung.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Analisa Sentimen</h3><div id="sentimentStep1"><div class="field"><label>Pilih Input</label><select id="sentimentInputType"><option value="text">Input Teks Manual</option><option value="link">Input Link Postingan</option></select></div><div class="field" id="sentimentTextField"><label>Teks Komentar</label><textarea id="sentimentText" rows="4" style="width:100%;height:100px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:14px;outline:none;resize:none"></textarea></div><div class="field hidden" id="sentimentLinkField"><label>Link Postingan / URL Konten</label><input id="sentimentLink" type="url" placeholder="Tempel link Instagram, Facebook, TikTok, YouTube, atau artikel..." style="width:100%;height:50px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:0 14px;outline:none"><small id="sentimentLinkHelper" style="display:block;color:#9aa4b2;margin-top:8px;line-height:1.5">Mode prototype: link apa pun bisa dianalisa dengan simulasi komentar. Jika Meta API sudah aktif, link Instagram/Facebook dapat diarahkan ke data komentar asli.</small></div><button class="btn primary" id="sentimentPreviewBtn">Lanjut ke Preview</button></div><div id="sentimentStep2" class="hidden"><h4>Preview Input</h4><div id="sentimentPreview" style="background:rgba(255,255,255,.06);border-radius:16px;padding:16px;margin:12px 0;min-height:80px"></div><button class="btn" id="sentimentBackBtn">Kembali</button><button class="btn primary" id="sentimentAnalyzeBtn">Mulai Analisa</button></div><div id="sentimentStep3" class="hidden" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">🔄</div><p style="color:var(--muted)">Sedang menganalisa sentimen...</p><p id="sentimentLoadingText" style="color:var(--muted);font-size:12px;margin-top:8px"></p></div><div id="sentimentStep4" class="hidden"><h4>Hasil Analisa</h4><div class="grid3" style="margin-top:12px"><div class="card kpi"><small>Sentimen</small><strong id="sentimentResultLabel">Positif</strong></div><div class="card kpi"><small>Skor Kepercayaan</small><strong id="sentimentResultScore">0.91</strong></div><div class="card kpi"><small>Total Komentar</small><strong id="sentimentResultCount">0</strong></div></div><div class="card" style="margin-top:15px"><h3>Detail Komentar</h3><div id="sentimentCommentsTable" style="max-height:400px;overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Username</th><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Komentar</th><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Sentimen</th><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Skor</th></tr></thead><tbody id="sentimentCommentsBody"></tbody></table></div></div><button class="btn" style="margin-top:15px" id="sentimentResetBtn">Analisa Ulang</button></div><div class="card kpi"><small>Skor Kepercayaan</small><strong id="sentimentResultScore">0.91</strong></div><div class="card kpi"><small>Kata Kunci</small><strong id="sentimentResultKeywords">informatif, bermanfaat</strong></div></div><div style="margin-top:12px;background:rgba(255,255,255,.06);border-radius:16px;padding:16px"><h5>Detail Analisa</h5><p id="sentimentResultDetail" style="color:#d1d5db;line-height:1.6">Teks mengandung kata-kata positif yang menunjukkan apresiasi terhadap konten.</p></div><button class="btn primary" id="sentimentResetBtn" style="margin-top:12px">Analisa Lagi</button></div></div><div class="grid2"><div class="card"><h3>Sentiment Analytics</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Classification Sample</h3><div class="table"><table><thead><tr><th>Komentar</th><th>Label</th><th>Skor</th></tr></thead><tbody><tr><td>Kontennya informatif</td><td><span class="badge pos">Positif</span></td><td>0.91</td></tr><tr><td>Desain biasa saja</td><td><span class="badge neu">Netral</span></td><td>0.63</td></tr><tr><td>Informasi kurang jelas</td><td><span class="badge neg">Negatif</span></td><td>0.72</td></tr></tbody></table></div></div></div></section>
+    <section id="sentimen" class="page"><div class="head"><div><h1>Sentimen</h1><p>Klasifikasi berbasis kata kunci. Bisa analisa teks manual, link postingan (simulasi), atau tarik komentar asli langsung dari Meta Graph API.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Analisa Sentimen</h3><div id="sentimentStep1"><div class="field"><label>Pilih Input</label><select id="sentimentInputType"><option value="text">Input Teks Manual</option><option value="link">Input Link Postingan (Simulasi)</option><option value="media">Komentar Asli dari Meta API</option></select></div><div class="field" id="sentimentTextField"><label>Teks Komentar</label><textarea id="sentimentText" rows="4" style="width:100%;height:100px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:14px;outline:none;resize:none"></textarea></div><div class="field hidden" id="sentimentLinkField"><label>Link Postingan / URL Konten</label><input id="sentimentLink" type="url" placeholder="Tempel link Instagram, Facebook, TikTok, YouTube, atau artikel..." style="width:100%;height:50px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:0 14px;outline:none"><small id="sentimentLinkHelper" style="display:block;color:#9aa4b2;margin-top:8px;line-height:1.5">Mode simulasi: link apa pun akan dianalisa dengan contoh komentar buatan (bukan data asli). Untuk data asli, pilih "Komentar Asli dari Meta API".</small></div><div class="field hidden" id="sentimentMediaField"><label>Media ID Instagram/Facebook</label><input id="sentimentMediaId" type="text" placeholder="Contoh: 17895695668004550" style="width:100%;height:50px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:0 14px;outline:none"><small style="display:block;color:#9aa4b2;margin-top:8px;line-height:1.5">Media ID diambil dari kolom "id" pada tabel Konten setelah Sync Data di halaman Meta API, atau dari Graph API Explorer. Butuh META_ACCESS_TOKEN aktif di Netlify.</small></div><button class="btn primary" id="sentimentPreviewBtn">Lanjut ke Preview</button></div><div id="sentimentStep2" class="hidden"><h4>Preview Input</h4><div id="sentimentPreview" style="background:rgba(255,255,255,.06);border-radius:16px;padding:16px;margin:12px 0;min-height:80px"></div><button class="btn" id="sentimentBackBtn">Kembali</button><button class="btn primary" id="sentimentAnalyzeBtn">Mulai Analisa</button></div><div id="sentimentStep3" class="hidden" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">🔄</div><p style="color:var(--muted)">Sedang menganalisa sentimen...</p><p id="sentimentLoadingText" style="color:var(--muted);font-size:12px;margin-top:8px"></p></div><div id="sentimentStep4" class="hidden"><h4>Hasil Analisa</h4><div class="grid3" style="margin-top:12px"><div class="card kpi"><small>Sentimen</small><strong id="sentimentResultLabel">Positif</strong></div><div class="card kpi"><small>Skor Kepercayaan</small><strong id="sentimentResultScore">0.91</strong></div><div class="card kpi"><small>Total Komentar</small><strong id="sentimentResultCount">0</strong></div></div><div class="card" style="margin-top:15px"><h3>Detail Komentar</h3><div id="sentimentCommentsTable" style="max-height:400px;overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Username</th><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Komentar</th><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Sentimen</th><th style="padding:12px;text-align:left;color:#9aa4b2;font-size:11px;text-transform:uppercase">Skor</th></tr></thead><tbody id="sentimentCommentsBody"></tbody></table></div></div><button class="btn" style="margin-top:15px" id="sentimentResetBtn">Analisa Ulang</button></div><div class="card kpi"><small>Skor Kepercayaan</small><strong id="sentimentResultScore">0.91</strong></div><div class="card kpi"><small>Kata Kunci</small><strong id="sentimentResultKeywords">informatif, bermanfaat</strong></div></div><div style="margin-top:12px;background:rgba(255,255,255,.06);border-radius:16px;padding:16px"><h5>Detail Analisa</h5><p id="sentimentResultDetail" style="color:#d1d5db;line-height:1.6">Teks mengandung kata-kata positif yang menunjukkan apresiasi terhadap konten.</p></div><button class="btn primary" id="sentimentResetBtn" style="margin-top:12px">Analisa Lagi</button></div></div><div class="grid2"><div class="card"><h3>Sentiment Analytics</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Classification Sample</h3><div class="table"><table><thead><tr><th>Komentar</th><th>Label</th><th>Skor</th></tr></thead><tbody><tr><td>Kontennya informatif</td><td><span class="badge pos">Positif</span></td><td>0.91</td></tr><tr><td>Desain biasa saja</td><td><span class="badge neu">Netral</span></td><td>0.63</td></tr><tr><td>Informasi kurang jelas</td><td><span class="badge neg">Negatif</span></td><td>0.72</td></tr></tbody></table></div></div></div></section>
 
     <section id="rekomendasi" class="page"><div class="head"><div><h1>Rekomendasi</h1><p>Action plan terstruktur untuk langkah selanjutnya.</p></div></div><div class="report"><b>Executive Summary</b><br>Konten edukatif menghasilkan performa 43% lebih tinggi dibanding promosi langsung. Strategi berikutnya perlu fokus pada evergreen content, CTA, dan optimasi jam posting.</div><div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Prediksi ER</small><strong>6.7% → 7.9%</strong><span>Jika dijalankan</span></div><div class="card kpi"><small>Prediksi Sentimen</small><strong>82% → 87%</strong><span>Naik</span></div><div class="card kpi"><small>Target Reach</small><strong>141K</strong><span>+13.7%</span></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Priority Action Plan</h3><div class="action high"><b>HIGH — Perbanyak konten edukatif</b><p>Target +15% ER · PIC Content Team · Deadline 30 Juli 2026</p></div><div class="action med"><b>MEDIUM — Optimasi Caption & CTA</b><p>Target +15% Share · PIC Copywriter · Deadline 15 Juli 2026</p></div><div class="action low"><b>LOW — Eksperimen Hashtag Niche</b><p>Target +8% Reach · PIC Digital Marketing</p></div></div><div class="card"><h3>Roadmap 30 Hari</h3><div class="table"><table><thead><tr><th>Minggu</th><th>Aktivitas</th><th>Output</th></tr></thead><tbody><tr><td>1</td><td>Audit konten</td><td>Daftar isu</td></tr><tr><td>2</td><td>Produksi edukasi</td><td>6 reels</td></tr><tr><td>3</td><td>Optimasi caption</td><td>Template baru</td></tr><tr><td>4</td><td>Evaluasi KPI</td><td>Laporan kinerja</td></tr></tbody></table></div></div></div></section>
 
@@ -186,7 +186,12 @@ function initDashboard(){
   if($('#yearCustomKonten'))setupCustomSelect('yearCustomKonten',['2024','2025','2026'],'2026',updateKontenPeriod);
   if($('#monthCustomDampak'))setupCustomSelect('monthCustomDampak',months,'Januari',updateDampakPeriod);
   if($('#yearCustomDampak'))setupCustomSelect('yearCustomDampak',['2024','2025','2026'],'2026',updateDampakPeriod);
-  if($('#sentimentInputType'))$('#sentimentInputType').addEventListener('change',e=>{ if(e.target.value==='text'){$('#sentimentTextField').classList.remove('hidden');$('#sentimentLinkField').classList.add('hidden');}else{$('#sentimentTextField').classList.add('hidden');$('#sentimentLinkField').classList.remove('hidden');}});
+  if($('#sentimentInputType'))$('#sentimentInputType').addEventListener('change',e=>{
+    const v = e.target.value;
+    $('#sentimentTextField').classList.toggle('hidden', v!=='text');
+    $('#sentimentLinkField').classList.toggle('hidden', v!=='link');
+    $('#sentimentMediaField').classList.toggle('hidden', v!=='media');
+  });
   if($('#sentimentPreviewBtn'))$('#sentimentPreviewBtn').addEventListener('click',analyzeSentiment);
   if($('#sentimentBackBtn'))$('#sentimentBackBtn').addEventListener('click',()=>sentimentFlowStep(1));
   if($('#sentimentAnalyzeBtn'))$('#sentimentAnalyzeBtn').addEventListener('click',processSentiment);
@@ -205,22 +210,54 @@ function updatePeriod(){ const m=$('#monthCustom .custom-trigger').textContent.r
 function updateKontenPeriod(){ const m=$('#monthCustomKonten .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; }
 function updateDampakPeriod(){ const m=$('#monthCustomDampak .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; }
 function sentimentFlowStep(step){ $$('#sentimentStep1,#sentimentStep2,#sentimentStep3,#sentimentStep4').forEach(el=>el.classList.add('hidden')); $('#sentimentStep'+step).classList.remove('hidden'); }
-function analyzeSentiment(){ try{ const inputType=$('#sentimentInputType').value; const text=$('#sentimentText').value; const link=$('#sentimentLink').value; if(inputType==='text'&&!text.trim()){alert('Mohon isi teks komentar.');return;} if(inputType==='link'&&!link.trim()){alert('Mohon isi link postingan.');return;} sentimentFlowStep(2); $('#sentimentPreview').textContent=inputType==='text'?text:link; }catch(e){ alert('Terjadi kesalahan: '+e.message); } }
+function analyzeSentiment(){
+  try{
+    const inputType=$('#sentimentInputType').value;
+    const text=$('#sentimentText').value;
+    const link=$('#sentimentLink').value;
+    const mediaId=($('#sentimentMediaId')?.value || '').trim();
+    if(inputType==='text'&&!text.trim()){alert('Mohon isi teks komentar.');return;}
+    if(inputType==='link'&&!link.trim()){alert('Mohon isi link postingan.');return;}
+    if(inputType==='media'&&!mediaId){alert('Mohon isi Media ID.');return;}
+    sentimentFlowStep(2);
+    $('#sentimentPreview').textContent = inputType==='text' ? text : inputType==='link' ? link : 'Media ID: '+mediaId+' (komentar akan diambil langsung dari Meta Graph API)';
+  }catch(e){ alert('Terjadi kesalahan: '+e.message); }
+}
 async function processSentiment(){
  const inputType = $('#sentimentInputType').value;
  const text = ($('#sentimentText')?.value || '').trim();
  const link = ($('#sentimentLink')?.value || '').trim();
+ const mediaId = ($('#sentimentMediaId')?.value || '').trim();
 
  sentimentFlowStep(3);
 
  try{
-  $('#sentimentLoadingText').textContent = inputType === 'link'
-   ? 'Menganalisa link postingan dengan mode simulasi komentar. Meta API akan digunakan jika sudah tersedia.'
-   : 'Menganalisa teks manual dengan preprocessing, TF-IDF, dan Naive Bayes...';
-
-  await new Promise(r=>setTimeout(r,900));
+  $('#sentimentLoadingText').textContent = inputType === 'media'
+   ? 'Mengambil komentar asli dari Meta Graph API...'
+   : inputType === 'link'
+   ? 'Menganalisa link postingan dengan mode simulasi komentar.'
+   : 'Menganalisa teks manual dengan pencocokan kata kunci...';
 
   let comments = [];
+
+  if(inputType === 'media'){
+   const res = await fetch('/.netlify/functions/meta-comments?media_id=' + encodeURIComponent(mediaId));
+   const data = await res.json().catch(()=>({}));
+   if(!res.ok || data.ok === false) throw new Error(data.error || 'Gagal mengambil komentar dari Meta API. Pastikan Media ID benar dan META_ACCESS_TOKEN aktif.');
+
+   comments = (data.comments || []).map(c => ({
+     username: c.username || 'Pengguna Meta',
+     text: c.text || '(tanpa teks)',
+     sentiment: c.sentiment || 'Netral',
+     score: c.sentiment === 'Positif' ? 0.85 : c.sentiment === 'Negatif' ? 0.75 : 0.60
+   }));
+
+   if(!comments.length){
+     comments = [{username:'-', text:'Belum ada komentar pada media ini.', sentiment:'Netral', score:0.50}];
+   }
+  } else {
+   await new Promise(r=>setTimeout(r,900));
+  }
 
   if(inputType === 'link'){
    const source = link.includes('instagram') ? 'Instagram' :
@@ -234,7 +271,7 @@ async function processSentiment(){
     {username:'sim_user_03', text:'Informasinya masih kurang lengkap dan agak membingungkan', sentiment:'Negatif', score:0.72},
     {username:'sim_user_04', text:'Konten seperti ini membantu memahami produk dengan lebih cepat', sentiment:'Positif', score:0.88}
    ];
-  }else{
+  }else if(inputType === 'text'){
    const lower = text.toLowerCase();
    let label = 'Netral';
    let score = 0.63;
@@ -250,6 +287,7 @@ async function processSentiment(){
 
    comments = [{username:'Manual Input', text, sentiment:label, score}];
   }
+  // inputType === 'media' sudah diisi lebih awal dari hasil Meta Graph API asli
 
   const total = comments.length || 1;
   const pos = comments.filter(c=>c.sentiment==='Positif').length;
