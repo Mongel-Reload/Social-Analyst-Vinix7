@@ -1,61 +1,136 @@
-const GRAPH_BASE = "https://graph.facebook.com";
+const { getEnv, json } = require("./_meta");
 
-function getEnv() {
-  const token = process.env.META_ACCESS_TOKEN;
-  const pageId = process.env.META_PAGE_ID;
-  const igId = process.env.META_IG_ID;
-  const version = process.env.META_API_VERSION || "v21.0";
+exports.handler = async function(event) {
+  if (event.httpMethod === "OPTIONS") return json(200, { ok: true });
 
-  if (!token) throw new Error("META_ACCESS_TOKEN belum diisi di Environment Variables.");
-  return { token, pageId, igId, version };
+  try {
+    const { comments } = JSON.parse(event.body);
+    
+    if (!comments || !Array.isArray(comments)) {
+      throw new Error("Invalid comments data");
+    }
+
+    const provider = process.env.AI_PROVIDER || "anthropic";
+    let apiKey;
+    let model;
+    let apiUrl;
+    let headers;
+    let body;
+
+    if (provider === "anthropic") {
+      apiKey = process.env.ANTHROPIC_API_KEY;
+      model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+      apiUrl = "https://api.anthropic.com/v1/messages";
+      headers = {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      };
+      body = {
+        model: model,
+        max_tokens: 1024,
+        messages: [{
+          role: "user",
+          content: `Analisis sentimen dari komentar-komentar berikut. Berikan output dalam format JSON dengan struktur:
+{
+  "summary": {
+    "total": number,
+    "positive": number,
+    "negative": number,
+    "neutral": number
+  },
+  "comments": [
+    {
+      "username": string,
+      "text": string,
+      "sentiment": "Positif"|"Negatif"|"Netral",
+      "score": number,
+      "theme": string
+    }
+  ],
+  "recommendations": string[]
 }
 
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS"
-    },
-    body: JSON.stringify(body)
-  };
+Komentar:
+${comments.map(c => `- ${c.username}: ${c.text}`).join('\n')}`
+        }]
+      };
+    } else if (provider === "openai") {
+      apiKey = process.env.OPENAI_API_KEY;
+      model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+      apiUrl = "https://api.openai.com/v1/chat/completions";
+      headers = {
+        "Authorization": `Bearer ${apiKey}`,
+        "content-type": "application/json"
+      };
+      body = {
+        model: model,
+        messages: [{
+          role: "user",
+          content: `Analisis sentimen dari komentar-komentar berikut. Berikan output dalam format JSON dengan struktur:
+{
+  "summary": {
+    "total": number,
+    "positive": number,
+    "negative": number,
+    "neutral": number
+  },
+  "comments": [
+    {
+      "username": string,
+      "text": string,
+      "sentiment": "Positif"|"Negatif"|"Netral",
+      "score": number,
+      "theme": string
+    }
+  ],
+  "recommendations": string[]
 }
 
-async function graph(path, params = {}) {
-  const { token, version } = getEnv();
-  const url = new URL(`${GRAPH_BASE}/${version}/${path.replace(/^\//, "")}`);
+Komentar:
+${comments.map(c => `- ${c.username}: ${c.text}`).join('\n')}`
+        }]
+      };
+    } else {
+      throw new Error("AI_PROVIDER tidak valid. Gunakan 'anthropic' atau 'openai'");
+    }
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value);
-  });
+    if (!apiKey) {
+      throw new Error(`${provider.toUpperCase()}_API_KEY belum diisi di Environment Variables.`);
+    }
 
-  url.searchParams.set("access_token", token);
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(body)
+    });
 
-  const res = await fetch(url);
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok || data.error) {
-    const message = data?.error?.message || `Graph API error ${res.status}`;
-    throw new Error(message);
+    if (!res.ok) {
+      throw new Error(data.error?.message || `AI API error ${res.status}`);
+    }
+
+    let aiResponse;
+    if (provider === "anthropic") {
+      aiResponse = data.content[0].text;
+    } else {
+      aiResponse = data.choices[0].message.content;
+    }
+
+    // Extract JSON from response
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("AI response tidak mengandung JSON yang valid");
+    }
+
+    const result = JSON.parse(jsonMatch[0]);
+
+    return json(200, {
+      ok: true,
+      ...result
+    });
+  } catch (error) {
+    return json(500, { ok: false, error: error.message });
   }
-
-  return data;
-}
-
-function calculateEngagement(item) {
-  const likes = Number(item.like_count || 0);
-  const comments = Number(item.comments_count || 0);
-  const shares = Number(item.share_count || 0);
-  const reach = Number(item.reach || item.views || item.video_views || 0);
-  if (!reach) return "0%";
-  return (((likes + comments + shares) / reach) * 100).toFixed(2) + "%";
-}
-
-module.exports = {
-  getEnv,
-  json,
-  graph,
-  calculateEngagement
 };
