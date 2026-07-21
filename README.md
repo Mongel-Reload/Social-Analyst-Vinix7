@@ -1,2 +1,2 @@
-# Social-Analyst-Vinix7
+# Social-Analyst-KokoroLens
 Tugas Akhir Klasifikasi Sentimen

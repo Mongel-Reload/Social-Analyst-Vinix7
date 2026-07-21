@@ -1,11 +1,11 @@
-# Vinix7 Social Intelligence — Netlify Ready
+# KokoroLens Social Intelligence — Netlify Ready
 
 Project ini sudah disiapkan agar bisa di-upload ke GitHub lalu di-deploy ke Netlify.
 
 ## Isi Folder
 
-- `index.html` — frontend dashboard Vinix7
-- `assets/vinix7-logo.png` — logo
+- `index.html` — frontend dashboard KokoroLens
+- `assets/kokorolens-logo.png` — logo
 - `netlify.toml` — konfigurasi Netlify
 - `package.json` — dependency untuk Netlify Functions
 - `netlify/functions/` — backend serverless untuk Meta Graph API

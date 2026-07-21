@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="description" content="Dashboard analisis sentimen, engagement, konten, dan rekomendasi strategi media sosial berbasis Meta Graph API.">
-<title>Vinix7 Social Intelligence - Meta Analytics Dashboard</title>
+<title>KokoroLens Social Intelligence - Meta Analytics Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -80,17 +80,17 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 <section id="login" class="login">
   <div class="login-shell">
     <div class="auth">
-      <img src="assets/vinix7-logo.png" class="logo" alt="Vinix7 Logo">
+      <img src="assets/kokorolens-logo.png" class="logo" alt="KokoroLens Logo">
       <h1>Selamat Datang 👋</h1>
       <form id="loginForm">
-        <div class="field"><label>Email</label><input value="admin@vinix7.id"></div>
+        <div class="field"><label>Email</label><input value="admin@kokorolens.id"></div>
         <div class="field"><label>Password</label><input type="password" value="password"></div>
         <div class="login-actions"><button class="btn-main" type="submit">Masuk</button><button class="btn-soft" type="button" onclick="alert('Fitur daftar aktif pada prototype.')">Daftar</button></div>
       </form>
     </div>
     <div class="hero">
       <h2>Next-gen Social Intelligence for 2026</h2>
-      <div class="device"><b>Vinix7 Command Center</b><div class="mini-kpi"><div><small>Sentimen</small><strong>82%</strong></div><div><small>ER</small><strong>6.7%</strong></div><div><small>Reach</small><strong>124K</strong></div><div><small>Growth</small><strong>+14%</strong></div></div><div class="device-grid"><div class="mini-card"><b>Engagement Pulse</b><div class="bars"><span style="height:42%"></span><span style="height:54%"></span><span style="height:47%"></span><span style="height:74%"></span><span style="height:88%"></span></div></div><div class="mini-card"><b>Sentiment Map</b><div class="donut"></div></div></div></div>
+      <div class="device"><b>KokoroLens Command Center</b><div class="mini-kpi"><div><small>Sentimen</small><strong>82%</strong></div><div><small>ER</small><strong>6.7%</strong></div><div><small>Reach</small><strong>124K</strong></div><div><small>Growth</small><strong>+14%</strong></div></div><div class="device-grid"><div class="mini-card"><b>Engagement Pulse</b><div class="bars"><span style="height:42%"></span><span style="height:54%"></span><span style="height:47%"></span><span style="height:74%"></span><span style="height:88%"></span></div></div><div class="mini-card"><b>Sentiment Map</b><div class="donut"></div></div></div></div>
     </div>
   </div>
 </section>
@@ -98,7 +98,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 <section id="app" class="app">
   <aside id="side" class="sidebar">
     <div class="side-head">
-      <img src="assets/vinix7-logo.png" class="side-logo" alt="Vinix7 Logo">
+      <img src="assets/kokorolens-logo.png" class="side-logo" alt="KokoroLens Logo">
       <button id="toggle" class="toggle" type="button" aria-label="Buka atau tutup menu" title="Buka/Tutup Menu" aria-expanded="true">
         <span class="toggle-ico">⋯</span>
       </button>
@@ -115,7 +115,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
     </nav>
 
     <div class="sidebar-footer">
-      <strong>© 2026 Vinix7 Insight AI</strong>
+      <strong>© 2026 KokoroLens Insight AI</strong>
       Developed by <b>Tarmuji</b><br>
       Version 1.0.0
     </div>
@@ -125,7 +125,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
     <div class="topbar"><div class="avatar">👤</div></div>
 
     <section id="dashboard" class="page active">
-      <div class="head"><div><h1>Dashboard</h1><p>Command center performa media sosial Vinix7.</p></div><div class="toolbar"><div class="custom-select" id="monthCustom"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustom"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div>
+      <div class="head"><div><h1>Dashboard</h1><p>Command center performa media sosial KokoroLens.</p></div><div class="toolbar"><div class="custom-select" id="monthCustom"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustom"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div>
       <div class="grid4"><div class="card kpi"><small>Total Konten</small><strong id="kpiKonten">128</strong><span>+12 konten</span></div><div class="card kpi"><small>Engagement Rate</small><strong id="kpiER">6.7%</strong><span>+14%</span></div><div class="card kpi"><small>Reach</small><strong id="kpiReach">124K</strong><span>+10.8%</span></div><div class="card kpi"><small>Sentimen Positif</small><strong id="kpiSent">82%</strong><span>Dominan</span></div></div>
       <div class="grid2" style="margin-top:15px"><div class="card"><h3>Engagement Trend</h3><canvas id="eng"></canvas></div><div class="card"><h3>Sentiment Distribution</h3><canvas id="sent"></canvas></div></div>
       <div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Best Posting Time</small><strong>19.00–21.00</strong><span>Rabu & Jumat</span></div><div class="card kpi"><small>Best Format</small><strong>Reels</strong><span>Reach terbaik</span></div><div class="card kpi"><small>Health Score</small><strong>86/100</strong><span>Excellent</span></div></div>
@@ -204,7 +204,7 @@ function renderCharts(){ makeChart('eng','line',['Jan','Feb','Mar','Apr','Mei','
 function fillContent(){ const data=[['Reels Edukasi','Reels','4.200','180','320','88K','62K','8.9%','Terbaik'],['BTS Campaign','Video','3.100','121','240','71K','54K','7.8%','Interaksi tinggi'],['Testimoni','Carousel','2.600','94','180','52K','41K','7.1%','Positif'],['Promo Batch','Poster','900','31','44','28K','21K','3.2%','CTA lemah']]; $('#contentRows').innerHTML=data.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join(''); }
 function renderDataset(){ if(!$('#dsHead')||!rows.length)return; const keys=Object.keys(rows[0]); $('#dsHead').innerHTML='<tr>'+keys.map(k=>`<th>${k}</th>`).join('')+'</tr>'; $('#dsBody').innerHTML=rows.map(r=>'<tr>'+keys.map(k=>`<td>${r[k]??''}</td>`).join('')+'</tr>').join(''); const el=$('#datasetChart'); if(el&&window.Chart){ if(charts.datasetChart)charts.datasetChart.destroy(); charts.datasetChart=new Chart(el,{type:'line',data:{labels:rows.map(r=>r.Periode),datasets:[{label:'Views',data:rows.map(r=>Number(r.Views||0)),borderColor:'rgba(34,211,238,.9)',backgroundColor:'rgba(34,211,238,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{labels:{color:'#cbd5e1'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'}}}}}); } }
 function analyzeDataset(){ renderDataset(); $('#datasetInsight').innerHTML='<b>Insight Otomatis</b><br>Views meningkat signifikan. Share turun sehingga CTA perlu diperkuat. Konten dengan save tinggi perlu dijadikan format evergreen.'; }
-function downloadTemplate(){ const csv='Periode,Followers,Likes,Shares,Comments,Saves,Views,Profile Visit,Reach\nJanuari 2026,3000,250,20,15,40,90000,2500,70000'; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='template_vinix7.csv'; a.click(); }
+function downloadTemplate(){ const csv='Periode,Followers,Likes,Shares,Comments,Saves,Views,Profile Visit,Reach\nJanuari 2026,3000,250,20,15,40,90000,2500,70000'; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='template_kokorolens.csv'; a.click(); }
 function setupCustomSelect(id,values,def,onChange){ const box=$('#'+id), trig=box.querySelector('.custom-trigger'), opts=box.querySelector('.custom-options'); let value=def; function render(){ trig.innerHTML=value+' <span>⌄</span>'; opts.innerHTML=values.map(v=>`<div class="custom-option ${v===value?'active':''}" data-value="${v}">${v}</div>`).join(''); const options=opts.querySelectorAll('.custom-option'); if(options)options.forEach(o=>o.onclick=e=>{e.stopPropagation(); value=o.dataset.value; render(); box.classList.remove('open'); onChange&&onChange(value);}); } trig.onclick=e=>{e.stopPropagation(); const opens=$$('.custom-select.open'); if(opens)opens.forEach(x=>{if(x!==box)x.classList.remove('open')}); box.classList.toggle('open');}; render(); }
 function updatePeriod(){ const m=$('#monthCustom .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; $('#kpiKonten').textContent=80+idx*8; $('#kpiER').textContent=(4.5+idx*.28).toFixed(1)+'%'; $('#kpiReach').textContent=(90+idx*6)+'K'; $('#kpiSent').textContent=Math.min(88,76+idx)+'%'; }
 function updateKontenPeriod(){ const m=$('#monthCustomKonten .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; }
@@ -401,7 +401,7 @@ async function processSentiment(){
 }
 
 function buildPDFReport(){ return `<div class="pdf-report" id="pdfNode"><h1>LAPORAN HASIL EVALUASI KINERJA MEDIA SOSIAL</h1><p>Ringkasan hasil analisis untuk atasan. Periode: 1 - 30 Juni 2026</p><div class="pdf-kpis"><div class="pdf-card"><small>Total Konten</small><h2>128</h2></div><div class="pdf-card"><small>Engagement Rate</small><h2>6.7%</h2></div><div class="pdf-card"><small>Reach</small><h2>124K</h2></div><div class="pdf-card"><small>Sentimen Positif</small><h2>82%</h2></div><div class="pdf-card"><small>Action Plan</small><h2>7</h2></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Distribusi Sentimen</h3><div class="pdf-donut"></div></div><div class="pdf-card"><h3>Tren Engagement</h3><div class="pdf-bars"><i style="height:42%"></i><i style="height:48%"></i><i style="height:52%"></i><i style="height:58%"></i><i style="height:61%"></i><i style="height:67%"></i></div></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Top Content</h3><table class="pdf-table"><tr><th>Konten</th><th>ER</th><th>Insight</th></tr><tr><td>Reels Edukasi</td><td>8.9%</td><td>Performa terbaik</td></tr><tr><td>BTS Campaign</td><td>7.8%</td><td>Interaksi tinggi</td></tr><tr><td>Promo Batch</td><td>3.2%</td><td>CTA lemah</td></tr></table></div><div class="pdf-card"><h3>Rekomendasi</h3><p>Perbanyak konten edukatif, optimasi CTA, audit komentar negatif, dan evaluasi mingguan selama 30 hari.</p></div></div></div>`; }
-async function exportExecutive(){ const holder=document.createElement('div'); holder.innerHTML=buildPDFReport(); const node=holder.firstElementChild; document.body.appendChild(node); try{ if(!window.html2canvas||!window.jspdf){window.print();return;} const canvas=await html2canvas(node,{scale:2,backgroundColor:'#050816'}); const {jsPDF}=window.jspdf; const pdf=new jsPDF('l','mm','a4'); pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,297,210); pdf.save('Vinix7_Laporan_Hasil_Evaluasi_2026.pdf'); }catch(e){alert('Export PDF gagal. Pastikan koneksi internet aktif.');}finally{node.remove();} }
+async function exportExecutive(){ const holder=document.createElement('div'); holder.innerHTML=buildPDFReport(); const node=holder.firstElementChild; document.body.appendChild(node); try{ if(!window.html2canvas||!window.jspdf){window.print();return;} const canvas=await html2canvas(node,{scale:2,backgroundColor:'#050816'}); const {jsPDF}=window.jspdf; const pdf=new jsPDF('l','mm','a4'); pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,297,210); pdf.save('KokoroLens_Laporan_Hasil_Evaluasi_2026.pdf'); }catch(e){alert('Export PDF gagal. Pastikan koneksi internet aktif.');}finally{node.remove();} }
 document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('#loginForm').addEventListener('submit',e=>{e.preventDefault();enterApp();}); } initDashboard(); }catch(e){alert('Error loading page: '+e.message);} });
 </script>
 
