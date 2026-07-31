@@ -143,9 +143,17 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 
     <section id="dashboard" class="page active">
       <div class="head"><div><h1>Dashboard</h1><p>Command center performa media sosial KokoroLens.</p></div><div class="toolbar"><div class="custom-select" id="monthCustom"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustom"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div>
-      <div class="grid4"><div class="card kpi"><small>Total Konten</small><strong id="kpiKonten">128</strong><span>+12 konten</span></div><div class="card kpi"><small>Engagement Rate</small><strong id="kpiER">6.7%</strong><span>+14%</span></div><div class="card kpi"><small>Reach</small><strong id="kpiReach">124K</strong><span>+10.8%</span></div><div class="card kpi"><small>Sentimen Positif</small><strong id="kpiSent">82%</strong><span>Dominan</span></div></div>
-      <div class="grid2" style="margin-top:15px"><div class="card"><h3>Engagement Trend</h3><canvas id="eng"></canvas></div><div class="card"><h3>Sentiment Distribution</h3><canvas id="sent"></canvas></div></div>
-      <div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Best Posting Time</small><strong>19.00–21.00</strong><span>Rabu & Jumat</span></div><div class="card kpi"><small>Best Format</small><strong>Reels</strong><span>Reach terbaik</span></div><div class="card kpi"><small>Health Score</small><strong>86/100</strong><span>Excellent</span></div></div>
+      <div id="dashboardEmpty" class="card" style="text-align:center;padding:60px 20px">
+        <div style="font-size:64px;margin-bottom:20px">📊</div>
+        <h3 style="margin-bottom:12px">Belum Ada Data</h3>
+        <p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data performa media sosial Anda.</p>
+        <button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button>
+      </div>
+      <div id="dashboardContent" style="display:none">
+        <div class="grid4"><div class="card kpi"><small>Total Konten</small><strong id="kpiKonten">-</strong><span>-</span></div><div class="card kpi"><small>Engagement Rate</small><strong id="kpiER">-</strong><span>-</span></div><div class="card kpi"><small>Reach</small><strong id="kpiReach">-</strong><span>-</span></div><div class="card kpi"><small>Sentimen Positif</small><strong id="kpiSent">-</strong><span>-</span></div></div>
+        <div class="grid2" style="margin-top:15px"><div class="card"><h3>Engagement Trend</h3><canvas id="eng"></canvas></div><div class="card"><h3>Sentiment Distribution</h3><canvas id="sent"></canvas></div></div>
+        <div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Best Posting Time</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Best Format</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Health Score</small><strong>-</strong><span>-</span></div></div>
+      </div>
     </section>
 
     <section id="meta" class="page">
@@ -550,6 +558,13 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
         updateText('kpiReach', formatCompact(data.summary.reach));
         updateText('kpiER', (data.summary.engagement_rate ?? 0) + '%');
         updateText('kpiSent', (data.summary.positive_sentiment ?? 82) + '%');
+      }
+
+      const dashboardEmpty = document.getElementById('dashboardEmpty');
+      const dashboardContent = document.getElementById('dashboardContent');
+      if(dashboardEmpty && dashboardContent){
+        dashboardEmpty.style.display = 'none';
+        dashboardContent.style.display = 'block';
       }
 
       const rows = document.getElementById('contentRows');
