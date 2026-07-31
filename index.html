@@ -312,7 +312,7 @@ function analyzeSentiment(){
   try{
     const inputType=$('#sentimentInputType').value;
     const text=$('#sentimentText').value;
-    const link=$('#sentimentLink').value;
+    const link=($('#sentimentLink')?.value || '').trim();
     const mediaId=($('#sentimentMediaId')?.value || '').trim();
     if(inputType==='text'&&!text.trim()){alert('Mohon isi teks komentar.');return;}
     if(inputType==='link'&&!link.trim()){alert('Mohon isi link postingan.');return;}
