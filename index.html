@@ -337,6 +337,7 @@ async function processSentiment(){
  const text = ($('#sentimentText')?.value || '').trim();
  const link = ($('#sentimentLink')?.value || '').trim();
  const mediaId = ($('#sentimentMediaId')?.value || '').trim();
+ const useAI = false; // Set to false for manual keyword-based analysis
 
  sentimentFlowStep(3);
 
