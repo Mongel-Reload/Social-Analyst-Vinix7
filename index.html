@@ -139,7 +139,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 
   </aside>
   <main class="main">
-    <div class="topbar"><div class="avatar">👤</div></div>
+    <div class="topbar"><div class="avatar" id="userAvatar" onclick="toggleUserMenu()" style="cursor:pointer">👤</div><div id="userMenu" style="display:none;position:absolute;top:60px;right:28px;background:#0f172a;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;min-width:200px;z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,.4)"><div style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:8px"><div id="userEmail" style="font-weight:700;color:#f8fafc;font-size:13px"></div><div style="font-size:11px;color:#9aa4b2;margin-top:4px">Signed in with Firebase</div></div><button onclick="handleLogout()" style="width:100%;height:38px;border:0;border-radius:12px;background:rgba(239,68,68,.15);color:#fca5a5;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px"><span>🚪</span> Logout</button></div></div>
 
     <section id="dashboard" class="page active">
       <div class="head"><div><h1>Dashboard</h1><p>Command center performa media sosial KokoroLens.</p></div><div class="toolbar"><div class="custom-select" id="monthCustom"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustom"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div>
@@ -265,7 +265,30 @@ function showLoginForm(){
   $('#authTitle').textContent='Selamat Datang 👋';
 }
 
-function enterApp(){ $('#login').style.display='none'; $('#app').style.display='block'; initDashboard(); showPage('dashboard'); fillContent(); updatePeriod(); renderCharts(); }
+function enterApp(){ $('#login').style.display='none'; $('#app').style.display='block'; initDashboard(); showPage('dashboard'); fillContent(); updatePeriod(); renderCharts(); const user = auth.currentUser; if(user && $('#userEmail')){ $('#userEmail').textContent = user.email; } }
+
+function toggleUserMenu(){
+  const menu = $('#userMenu');
+  if(menu){
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function handleLogout(){
+  auth.signOut()
+    .then(() => {
+      console.log('Logout success');
+      $('#app').style.display='none';
+      $('#login').style.display='block';
+      $('#userMenu').style.display='none';
+      $('#loginEmail').value = '';
+      $('#loginPassword').value = '';
+    })
+    .catch((error) => {
+      console.error('Logout error:', error);
+      alert('Logout gagal: ' + error.message);
+    });
+}
 function makeChart(id,type,labels,data){ const el=$('#'+id); if(!el||!window.Chart)return; if(charts[id])return; charts[id]=new Chart(el,{type,data:{labels,datasets:[{label:'Data',data,borderWidth:2,tension:.35,fill:type==='line',backgroundColor:['rgba(34,197,94,.75)','rgba(245,158,11,.75)','rgba(239,68,68,.75)','rgba(59,130,246,.75)','rgba(139,92,246,.75)'],borderColor:'rgba(34,211,238,.9)'}]},options:{plugins:{legend:{labels:{color:'#cbd5e1'}}},scales:type==='doughnut'?{}:{x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.06)'}}}}}); }
 function renderCharts(){ makeChart('eng','line',['Jan','Feb','Mar','Apr','Mei','Jun'],[4.2,4.7,5.2,5.8,6.1,6.7]); makeChart('sent','doughnut',['Positif','Netral','Negatif'],[82,11,7]); makeChart('metaChart','bar',['Reach','Impression','Views','Profile'],[124,190,215,14]); makeChart('impact','bar',['Reach','Views','Likes','Share','Saves'],[10.8,18.4,12.3,-8.1,21.2]); makeChart('sent2','doughnut',['Positif','Netral','Negatif'],[82,11,7]); makeChart('reportChart','bar',['Konten','ER','Reach','Growth','Sentimen'],[128,6.7,124,14,82]); renderDataset(); }
 function fillContent(){ const data=[['Reels Edukasi','Reels','4.200','180','320','88K','62K','8.9%','Terbaik'],['BTS Campaign','Video','3.100','121','240','71K','54K','7.8%','Interaksi tinggi'],['Testimoni','Carousel','2.600','94','180','52K','41K','7.1%','Positif'],['Promo Batch','Poster','900','31','44','28K','21K','3.2%','CTA lemah']]; $('#contentRows').innerHTML=data.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join(''); }
@@ -468,7 +491,7 @@ async function processSentiment(){
 
 function buildPDFReport(){ return `<div class="pdf-report" id="pdfNode"><h1>LAPORAN HASIL EVALUASI KINERJA MEDIA SOSIAL</h1><p>Ringkasan hasil analisis untuk atasan. Periode: 1 - 30 Juni 2026</p><div class="pdf-kpis"><div class="pdf-card"><small>Total Konten</small><h2>128</h2></div><div class="pdf-card"><small>Engagement Rate</small><h2>6.7%</h2></div><div class="pdf-card"><small>Reach</small><h2>124K</h2></div><div class="pdf-card"><small>Sentimen Positif</small><h2>82%</h2></div><div class="pdf-card"><small>Action Plan</small><h2>7</h2></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Distribusi Sentimen</h3><div class="pdf-donut"></div></div><div class="pdf-card"><h3>Tren Engagement</h3><div class="pdf-bars"><i style="height:42%"></i><i style="height:48%"></i><i style="height:52%"></i><i style="height:58%"></i><i style="height:61%"></i><i style="height:67%"></i></div></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Top Content</h3><table class="pdf-table"><tr><th>Konten</th><th>ER</th><th>Insight</th></tr><tr><td>Reels Edukasi</td><td>8.9%</td><td>Performa terbaik</td></tr><tr><td>BTS Campaign</td><td>7.8%</td><td>Interaksi tinggi</td></tr><tr><td>Promo Batch</td><td>3.2%</td><td>CTA lemah</td></tr></table></div><div class="pdf-card"><h3>Rekomendasi</h3><p>Perbanyak konten edukatif, optimasi CTA, audit komentar negatif, dan evaluasi mingguan selama 30 hari.</p></div></div></div>`; }
 async function exportExecutive(){ const holder=document.createElement('div'); holder.innerHTML=buildPDFReport(); const node=holder.firstElementChild; document.body.appendChild(node); try{ if(!window.html2canvas||!window.jspdf){window.print();return;} const canvas=await html2canvas(node,{scale:2,backgroundColor:'#050816'}); const {jsPDF}=window.jspdf; const pdf=new jsPDF('l','mm','a4'); pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,297,210); pdf.save('KokoroLens_Laporan_Hasil_Evaluasi_2026.pdf'); }catch(e){alert('Export PDF gagal. Pastikan koneksi internet aktif.');}finally{node.remove();} }
-document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('#loginForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#loginEmail').value; const password=$('#loginPassword').value; if(!email||!password){alert('Mohon isi email dan password.');return;} loginWithEmailPassword(email,password); }); } if($('#registerForm')){ $('#registerForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#registerEmail').value; const password=$('#registerPassword').value; const confirmPassword=$('#registerConfirmPassword').value; if(!email||!password||!confirmPassword){alert('Mohon isi semua field.');return;} if(password.length<6){alert('Password minimal 6 karakter.');return;} if(password!==confirmPassword){alert('Password tidak cocok.');return;} registerWithEmailPassword(email,password); }); } initDashboard(); }catch(e){alert('Error loading page: '+e.message);} });
+document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('#loginForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#loginEmail').value; const password=$('#loginPassword').value; if(!email||!password){alert('Mohon isi email dan password.');return;} loginWithEmailPassword(email,password); }); } if($('#registerForm')){ $('#registerForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#registerEmail').value; const password=$('#registerPassword').value; const confirmPassword=$('#registerConfirmPassword').value; if(!email||!password||!confirmPassword){alert('Mohon isi semua field.');return;} if(password.length<6){alert('Password minimal 6 karakter.');return;} if(password!==confirmPassword){alert('Password tidak cocok.');return;} registerWithEmailPassword(email,password); }); } document.addEventListener('click',e=>{ const menu=$('#userMenu'); const avatar=$('#userAvatar'); if(menu && avatar && !menu.contains(e.target) && !avatar.contains(e.target)){ menu.style.display='none'; } }); initDashboard(); }catch(e){alert('Error loading page: '+e.message);} });
 </script>
 
 <script id="netlify-meta-client">
