@@ -2,12 +2,13 @@
 // Ganti dengan konfigurasi Firebase project Anda
 // Dapatkan dari Firebase Console → Project Settings → General → Your apps
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBLAwEwt1LWDRt1MP15xlDdv0IuW-T0O-c",
+  authDomain: "kokorolens-c5c38.firebaseapp.com",
+  projectId: "kokorolens-c5c38",
+  storageBucket: "kokorolens-c5c38.firebasestorage.app",
+  messagingSenderId: "88410362460",
+  appId: "1:88410362460:web:8cee43cc1a27e8cf384c99",
+  measurementId: "G-YTFW04TB7X"
 };
 
 // Initialize Firebase

@@ -85,11 +85,17 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
   <div class="login-shell">
     <div class="auth">
       <img src="assets/kokorolens-logo.png" class="logo" alt="KokoroLens Logo">
-      <h1>Selamat Datang 👋</h1>
+      <h1 id="authTitle">Selamat Datang 👋</h1>
       <form id="loginForm">
         <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="email@contoh.com"></div>
         <div class="field"><label>Password</label><input id="loginPassword" type="password" placeholder="••••••••"></div>
-        <div class="login-actions"><button class="btn-main" type="submit">Masuk</button><button class="btn-soft" type="button" onclick="alert('Fitur daftar aktif pada prototype.')">Daftar</button></div>
+        <div class="login-actions"><button class="btn-main" type="submit">Masuk</button><button class="btn-soft" type="button" onclick="showRegisterForm()">Daftar</button></div>
+      </form>
+      <form id="registerForm" style="display:none">
+        <div class="field"><label>Email</label><input id="registerEmail" type="email" placeholder="email@contoh.com"></div>
+        <div class="field"><label>Password</label><input id="registerPassword" type="password" placeholder="••••••••" minlength="6"></div>
+        <div class="field"><label>Konfirmasi Password</label><input id="registerConfirmPassword" type="password" placeholder="••••••••" minlength="6"></div>
+        <div class="login-actions"><button class="btn-main" type="submit">Daftar</button><button class="btn-soft" type="button" onclick="showLoginForm()">Kembali ke Login</button></div>
       </form>
       <div style="margin-top:20px;text-align:center;position:relative;z-index:1">
         <div style="color:var(--muted);font-size:12px;margin-bottom:12px">atau masuk dengan</div>
@@ -232,6 +238,31 @@ function loginWithEmailPassword(email, password){
       console.error('Email login error:', error);
       alert('Login gagal: ' + error.message);
     });
+}
+
+function registerWithEmailPassword(email, password){
+  auth.createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      console.log('Registration success:', userCredential.user);
+      alert('Registrasi berhasil! Silakan login dengan email dan password Anda.');
+      showLoginForm();
+    })
+    .catch((error) => {
+      console.error('Registration error:', error);
+      alert('Registrasi gagal: ' + error.message);
+    });
+}
+
+function showRegisterForm(){
+  $('#loginForm').style.display='none';
+  $('#registerForm').style.display='block';
+  $('#authTitle').textContent='Buat Akun Baru';
+}
+
+function showLoginForm(){
+  $('#registerForm').style.display='none';
+  $('#loginForm').style.display='block';
+  $('#authTitle').textContent='Selamat Datang 👋';
 }
 
 function enterApp(){ $('#login').style.display='none'; $('#app').style.display='block'; initDashboard(); showPage('dashboard'); fillContent(); updatePeriod(); renderCharts(); }
@@ -437,7 +468,7 @@ async function processSentiment(){
 
 function buildPDFReport(){ return `<div class="pdf-report" id="pdfNode"><h1>LAPORAN HASIL EVALUASI KINERJA MEDIA SOSIAL</h1><p>Ringkasan hasil analisis untuk atasan. Periode: 1 - 30 Juni 2026</p><div class="pdf-kpis"><div class="pdf-card"><small>Total Konten</small><h2>128</h2></div><div class="pdf-card"><small>Engagement Rate</small><h2>6.7%</h2></div><div class="pdf-card"><small>Reach</small><h2>124K</h2></div><div class="pdf-card"><small>Sentimen Positif</small><h2>82%</h2></div><div class="pdf-card"><small>Action Plan</small><h2>7</h2></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Distribusi Sentimen</h3><div class="pdf-donut"></div></div><div class="pdf-card"><h3>Tren Engagement</h3><div class="pdf-bars"><i style="height:42%"></i><i style="height:48%"></i><i style="height:52%"></i><i style="height:58%"></i><i style="height:61%"></i><i style="height:67%"></i></div></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Top Content</h3><table class="pdf-table"><tr><th>Konten</th><th>ER</th><th>Insight</th></tr><tr><td>Reels Edukasi</td><td>8.9%</td><td>Performa terbaik</td></tr><tr><td>BTS Campaign</td><td>7.8%</td><td>Interaksi tinggi</td></tr><tr><td>Promo Batch</td><td>3.2%</td><td>CTA lemah</td></tr></table></div><div class="pdf-card"><h3>Rekomendasi</h3><p>Perbanyak konten edukatif, optimasi CTA, audit komentar negatif, dan evaluasi mingguan selama 30 hari.</p></div></div></div>`; }
 async function exportExecutive(){ const holder=document.createElement('div'); holder.innerHTML=buildPDFReport(); const node=holder.firstElementChild; document.body.appendChild(node); try{ if(!window.html2canvas||!window.jspdf){window.print();return;} const canvas=await html2canvas(node,{scale:2,backgroundColor:'#050816'}); const {jsPDF}=window.jspdf; const pdf=new jsPDF('l','mm','a4'); pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,297,210); pdf.save('KokoroLens_Laporan_Hasil_Evaluasi_2026.pdf'); }catch(e){alert('Export PDF gagal. Pastikan koneksi internet aktif.');}finally{node.remove();} }
-document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('#loginForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#loginEmail').value; const password=$('#loginPassword').value; if(!email||!password){alert('Mohon isi email dan password.');return;} loginWithEmailPassword(email,password); }); } initDashboard(); }catch(e){alert('Error loading page: '+e.message);} });
+document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('#loginForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#loginEmail').value; const password=$('#loginPassword').value; if(!email||!password){alert('Mohon isi email dan password.');return;} loginWithEmailPassword(email,password); }); } if($('#registerForm')){ $('#registerForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#registerEmail').value; const password=$('#registerPassword').value; const confirmPassword=$('#registerConfirmPassword').value; if(!email||!password||!confirmPassword){alert('Mohon isi semua field.');return;} if(password.length<6){alert('Password minimal 6 karakter.');return;} if(password!==confirmPassword){alert('Password tidak cocok.');return;} registerWithEmailPassword(email,password); }); } initDashboard(); }catch(e){alert('Error loading page: '+e.message);} });
 </script>
 
 <script id="netlify-meta-client">
