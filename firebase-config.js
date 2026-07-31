@@ -1,6 +1,4 @@
-// Firebase Configuration
-// Ganti dengan konfigurasi Firebase project Anda
-// Dapatkan dari Firebase Console → Project Settings → General → Your apps
+
 const firebaseConfig = {
   apiKey: "AIzaSyBLAwEwt1LWDRt1MP15xlDdv0IuW-T0O-c",
   authDomain: "kokorolens-c5c38.firebaseapp.com",
@@ -12,7 +10,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Export auth instance
 const auth = firebase.auth();
