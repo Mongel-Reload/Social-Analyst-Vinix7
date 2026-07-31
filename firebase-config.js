@@ -1,4 +1,4 @@
-
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBLAwEwt1LWDRt1MP15xlDdv0IuW-T0O-c",
   authDomain: "kokorolens-c5c38.firebaseapp.com",
@@ -9,9 +9,8 @@ const firebaseConfig = {
   measurementId: "G-YTFW04TB7X"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// Initialize Firebase (using compat version)
+firebase.initializeApp(firebaseConfig);
 
 // Export auth instance
 const auth = firebase.auth();
