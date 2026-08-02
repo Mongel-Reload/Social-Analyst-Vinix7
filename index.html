@@ -158,7 +158,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 
     <section id="meta" class="page">
       <div class="head"><div><h1>Meta API</h1><p>Koneksi dan sinkronisasi data dari Meta Graph API.</p></div><div class="toolbar"><button class="btn green" id="testMeta">Test Connection</button><button class="btn primary" id="syncMeta">Sync Data</button></div></div>
-      <div class="grid2"><div class="card"><h3>API Credentials</h3><div class="formgrid" style="grid-template-columns:1fr 1fr"><div class="field"><label>App ID</label><input value="123456789"></div><div class="field"><label>Page ID</label><input value="987654321"></div><div class="field"><label>Instagram Business ID</label><input value="178414000"></div><div class="field"><label>Access Token</label><input value="EAAB********"></div></div><p id="statusMeta" style="color:#a5f3fc;font-weight:900">Status: demo siap.</p></div><div class="card"><h3>Meta Performance</h3><canvas id="metaChart"></canvas></div></div>
+      <div class="grid2"><div class="card"><h3>API Credentials</h3><div class="formgrid" style="grid-template-columns:1fr 1fr"><div class="field"><label>App ID</label><input id="metaAppId" value="123456789"></div><div class="field"><label>Page ID</label><input id="metaPageId" value="987654321"></div><div class="field"><label>Instagram Business ID</label><input id="metaIgId" value="178414000"></div><div class="field"><label>Access Token</label><input id="metaAccessToken" value="EAAB********"></div></div><p id="statusMeta" style="color:#a5f3fc;font-weight:900">Status: demo siap.</p></div><div class="card"><h3>Meta Performance</h3><canvas id="metaChart"></canvas></div></div>
     </section>
 
     <section id="sentimen" class="page"><div class="head"><div><h1>Sentimen</h1><p>Klasifikasi berbasis kata kunci dan Machine Learning. Bisa analisa teks manual atau tarik komentar asli langsung dari Meta Graph API.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Proses Analisis Sentimen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px"><div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#22d3ee">🔤 Manual (Keyword-Based)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Cleaning:</b> Hapus URL dan karakter khusus</li><li><b>Case Folding:</b> Konversi ke lowercase</li><li><b>Tokenizing:</b> Pecah teks menjadi kata-kata</li><li><b>Stopword Removal:</b> Hapus kata umum (dan, yang, dll)</li><li><b>Keyword Matching:</b> Cek kata positif/negatif</li><li><b>Scoring:</b> Beri skor berdasarkan kecocokan</li><li><b>Classification:</b> Tentukan label sentimen</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(34,211,238,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#22d3ee">70-75%</div></div></div><div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#8b5cf6">🤖 AI (Machine Learning)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Preprocessing:</b> Cleaning dan normalization</li><li><b>Tokenization:</b> Pecah teks menjadi tokens</li><li><b>Embedding:</b> Konversi ke vector representations</li><li><b>Context Analysis:</b> Analisis makna dan konteks</li><li><b>Sentiment Classification:</b> Model AI (Claude/OpenAI)</li><li><b>Confidence Scoring:</b> Skor kepercayaan hasil</li><li><b>Reasoning:</b> Penjelasan alasan klasifikasi</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(139,92,246,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#8b5cf6">85-95%</div></div></div></div></div><div class="card" style="margin-bottom:15px"><h3>Analisa Sentimen</h3><div id="sentimentStep1"><div class="field"><label>Pilih Input</label><select id="sentimentInputType"><option value="text">Input Teks Manual</option><option value="media">Meta API</option></select></div><div class="field" id="sentimentTextField"><label>Teks Komentar</label><textarea id="sentimentText" rows="4" style="width:100%;height:100px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:14px;outline:none;resize:none"></textarea></div><div class="field hidden" id="sentimentMediaField"><label>Media ID Instagram/Facebook</label><input id="sentimentMediaId" type="text" placeholder="Contoh: 17895695668004550" style="width:100%;height:50px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:0 14px;outline:none"><small style="display:block;color:#9aa4b2;margin-top:8px;line-height:1.5">Media ID diambil dari kolom "id" pada tabel Konten setelah Sync Data di halaman Meta API, atau dari Graph API Explorer. Butuh META_ACCESS_TOKEN aktif di Netlify.</small></div><button class="btn primary" id="sentimentPreviewBtn">Lanjut ke Preview</button></div><div id="sentimentStep2" class="hidden"><h4>Preview Input</h4><div id="sentimentPreview" style="background:rgba(255,255,255,.06);border-radius:16px;padding:16px;margin:12px 0;min-height:80px"></div><button class="btn" id="sentimentBackBtn">Kembali</button><button class="btn primary" id="sentimentAnalyzeBtn">Mulai Analisa</button></div><div id="sentimentStep3" class="hidden" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">🔄</div><p style="color:var(--muted)">Sedang menganalisa sentimen...</p><p id="sentimentLoadingText" style="color:#9aa4b2;font-size:13px"></p></div><div id="sentimentStep4" class="hidden"><div class="grid3" style="margin-bottom:15px"><div class="card kpi"><small>Total Komentar</small><strong id="sentimentResultCount">-</strong></div><div class="card kpi"><small>Sentimen</small><strong id="sentimentResultLabel">-</strong></div><div class="card kpi"><small>Skor</small><strong id="sentimentResultScore">-</strong></div></div><div class="card" style="margin-bottom:15px"><h3>Hasil Analisis</h3><table style="width:100%"><thead><tr><th>Username</th><th>Komentar</th><th>Sentimen</th><th>Skor</th></tr></thead><tbody id="sentimentCommentsBody"></tbody></table></div><div class="card" style="margin-bottom:15px"><h3>Detail Proses</h3><div id="sentimentResultDetail" style="line-height:1.8;color:#d1d5db;font-size:13px"></div></div><div class="card" style="margin-bottom:15px"><h3>Keywords Utama</h3><div id="sentimentResultKeywords" style="color:#22d3ee;font-weight:900"></div></div><div id="sentimentRecommendation" class="card" style="margin-bottom:15px;display:none"><h3>✨ Rekomendasi Berdasarkan Analisis Sentimen</h3><div class="report"><b>Executive Summary</b><br>Berdasarkan hasil analisis sentimen, berikut adalah rekomendasi strategis untuk meningkatkan performa konten Anda.</div><div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Prediksi ER</small><strong>6.7% → 7.9%</strong><span>Jika dijalankan</span></div><div class="card kpi"><small>Prediksi Sentimen</small><strong>82% → 87%</strong><span>Naik</span></div><div class="card kpi"><small>Target Reach</small><strong>141K</strong><span>+13.7%</span></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Priority Action Plan</h3><div class="action high"><b>HIGH — Perbanyak konten edukatif</b><p>Target +15% ER · PIC Content Team · Deadline 30 Juli 2026</p></div><div class="action med"><b>MEDIUM — Optimasi Caption & CTA</b><p>Target +15% Share · PIC Copywriter · Deadline 15 Juli 2026</p></div><div class="action low"><b>LOW — Eksperimen Hashtag Niche</b><p>Target +8% Reach · PIC Digital Marketing</p></div></div><div class="card"><h3>Roadmap 30 Hari</h3><div class="table"><table><thead><tr><th>Minggu</th><th>Aktivitas</th><th>Output</th></tr></thead><tbody><tr><td>1</td><td>Audit konten</td><td>Daftar isu</td></tr><tr><td>2</td><td>Produksi edukasi</td><td>6 reels</td></tr><tr><td>3</td><td>Optimasi caption</td><td>Template baru</td></tr><tr><td>4</td><td>Evaluasi KPI</td><td>Laporan kinerja</td></tr></tbody></table></div></div></div><button class="btn" id="sentimentResetBtn">Analisa Ulang</button></div></div></section>
@@ -196,19 +196,8 @@ function toggleSidebar(){
 function initDashboard(){
   if($$('#nav button'))$$('#nav button').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
   if($('#toggle'))$('#toggle').addEventListener('click',toggleSidebar);
-  if($('#testMeta'))$('#testMeta').addEventListener('click',()=>$('#statusMeta').textContent='Status: koneksi berhasil diuji.');
-  if($('#syncMeta'))$('#syncMeta').addEventListener('click',()=>{
-    alert('Sinkronisasi data berhasil pada mode demo.');
-    $('#dashboardEmpty').style.display='none';
-    $('#dashboardContent').style.display='block';
-    $('#dashboardRecommendation').style.display='block';
-    $('#kontenEmpty').style.display='none';
-    $('#kontenContent').style.display='block';
-    $('#dampakEmpty').style.display='none';
-    $('#dampakContent').style.display='block';
-    $('#laporanEmpty').style.display='none';
-    $('#laporanContent').style.display='block';
-  });
+  if($('#testMeta'))$('#testMeta').addEventListener('click',testMetaConnection);
+  if($('#syncMeta'))$('#syncMeta').addEventListener('click',syncMetaData);
   if($('#downloadTemplate'))$('#downloadTemplate').addEventListener('click',downloadTemplate);
   if($('#analyzeManual'))$('#analyzeManual').addEventListener('click',analyzeManualContent);
   if($('#analyzeDataset'))$('#analyzeDataset').addEventListener('click',analyzeDataset);
@@ -779,9 +768,25 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
   }
 
   async function testMetaConnection(){
+    const appId = document.getElementById('metaAppId')?.value || '';
+    const pageId = document.getElementById('metaPageId')?.value || '';
+    const igId = document.getElementById('metaIgId')?.value || '';
+    const accessToken = document.getElementById('metaAccessToken')?.value || '';
+
+    if(!appId || !pageId || !igId || !accessToken){
+      setMetaStatus('Status: mohon isi semua credentials Meta API', false);
+      alert('Mohon isi App ID, Page ID, Instagram Business ID, dan Access Token.');
+      return;
+    }
+
     setMetaStatus('Status: sedang menguji koneksi Meta...');
     try{
-      const data = await fetchMeta('meta-test');
+      const data = await fetchMeta('meta-test', {
+        app_id: appId,
+        page_id: pageId,
+        ig_id: igId,
+        access_token: accessToken
+      });
       setMetaStatus('Status: koneksi berhasil — ' + (data.name || 'Meta API aktif'));
       alert('Koneksi Meta berhasil.');
     }catch(err){
@@ -792,9 +797,25 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
   }
 
   async function syncMetaData(){
+    const appId = document.getElementById('metaAppId')?.value || '';
+    const pageId = document.getElementById('metaPageId')?.value || '';
+    const igId = document.getElementById('metaIgId')?.value || '';
+    const accessToken = document.getElementById('metaAccessToken')?.value || '';
+
+    if(!appId || !pageId || !igId || !accessToken){
+      setMetaStatus('Status: mohon isi semua credentials Meta API', false);
+      alert('Mohon isi App ID, Page ID, Instagram Business ID, dan Access Token.');
+      return;
+    }
+
     setMetaStatus('Status: mengambil data dari Meta Graph API...');
     try{
-      const data = await fetchMeta('meta-dashboard');
+      const data = await fetchMeta('meta-dashboard', {
+        app_id: appId,
+        page_id: pageId,
+        ig_id: igId,
+        access_token: accessToken
+      });
 
       if(data.summary){
         updateText('kpiKonten', data.summary.total_posts ?? '0');
@@ -805,9 +826,13 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
 
       const dashboardEmpty = document.getElementById('dashboardEmpty');
       const dashboardContent = document.getElementById('dashboardContent');
+      const dashboardRecommendation = document.getElementById('dashboardRecommendation');
       if(dashboardEmpty && dashboardContent){
         dashboardEmpty.style.display = 'none';
         dashboardContent.style.display = 'block';
+      }
+      if(dashboardRecommendation){
+        dashboardRecommendation.style.display = 'block';
       }
 
       const kontenEmpty = document.getElementById('kontenEmpty');
@@ -822,6 +847,13 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       if(dampakEmpty && dampakContent){
         dampakEmpty.style.display = 'none';
         dampakContent.style.display = 'block';
+      }
+
+      const laporanEmpty = document.getElementById('laporanEmpty');
+      const laporanContent = document.getElementById('laporanContent');
+      if(laporanEmpty && laporanContent){
+        laporanEmpty.style.display = 'none';
+        laporanContent.style.display = 'block';
       }
 
       const rows = document.getElementById('contentRows');
