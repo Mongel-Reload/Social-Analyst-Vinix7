@@ -169,7 +169,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
 
     <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul style="line-height:1.9;color:#d1d5db"><li>Reach meningkat signifikan.</li><li>Engagement rate stabil.</li><li>Sentimen positif mendominasi.</li></ul></div></div></div></section>
 
-    <section id="laporan" class="page"><div class="head"><div><h1>Laporan</h1><p>Ringkasan eksekutif untuk atasan.</p></div><button class="btn primary" id="exportExecutive">Export Laporan Hasil PDF</button></div><div class="report"><b>Ringkasan Eksekutif — Juni 2026</b><br>Performa media sosial meningkat. Sentimen positif 82%, engagement 6.7%, dan growth 14%. Konten edukasi menjadi format terbaik.</div><div class="grid4" style="margin-top:15px"><div class="card kpi"><small>Total Konten</small><strong>128</strong></div><div class="card kpi"><small>ER</small><strong>6.7%</strong></div><div class="card kpi"><small>Reach</small><strong>124K</strong></div><div class="card kpi"><small>Sentimen</small><strong>82%</strong></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Report Summary</h3><canvas id="reportChart"></canvas></div><div class="card"><h3>Kesimpulan</h3><ul style="line-height:1.9;color:#d1d5db"><li>Konten edukatif menjadi format terbaik.</li><li>Jam terbaik posting 19.00–21.00 WIB.</li><li>Share turun, CTA perlu diperkuat.</li></ul></div></div></section>
+    <section id="laporan" class="page"><div class="head"><div><h1>Laporan</h1><p>Ringkasan eksekutif untuk atasan.</p></div></div><div id="laporanEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📄</div><h3 style="margin-bottom:12px">Belum Ada Data Laporan</h3><p style="color:var(--muted);margin-bottom:24px">Silakan lakukan analisis pada halaman Dashboard, Sentimen, atau Input Data untuk menghasilkan laporan.</p><button class="btn primary" onclick="showPage('dashboard')">Buka Halaman Dashboard</button></div><div id="laporanContent" style="display:none"><div class="head" style="margin-bottom:18px"><button class="btn primary" id="exportExecutive">Export Laporan Hasil PDF</button></div><div class="report"><b>Ringkasan Eksekutif — Juni 2026</b><br>Performa media sosial meningkat. Sentimen positif 82%, engagement 6.7%, dan growth 14%. Konten edukasi menjadi format terbaik.</div><div class="grid4" style="margin-top:15px"><div class="card kpi"><small>Total Konten</small><strong id="reportTotalKonten">128</strong></div><div class="card kpi"><small>ER</small><strong id="reportER">6.7%</strong></div><div class="card kpi"><small>Reach</small><strong id="reportReach">124K</strong></div><div class="card kpi"><small>Sentimen</small><strong id="reportSentimen">82%</strong></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Report Summary</h3><canvas id="reportChart"></canvas></div><div class="card"><h3>Kesimpulan</h3><ul style="line-height:1.9;color:#d1d5db"><li>Konten edukatif menjadi format terbaik.</li><li>Jam terbaik posting 19.00–21.00 WIB.</li><li>Share turun, CTA perlu diperkuat.</li></ul></div></div></div></section>
   </main>
 </section>
 
@@ -206,6 +206,8 @@ function initDashboard(){
     $('#kontenContent').style.display='block';
     $('#dampakEmpty').style.display='none';
     $('#dampakContent').style.display='block';
+    $('#laporanEmpty').style.display='none';
+    $('#laporanContent').style.display='block';
   });
   if($('#downloadTemplate'))$('#downloadTemplate').addEventListener('click',downloadTemplate);
   if($('#analyzeManual'))$('#analyzeManual').addEventListener('click',analyzeManualContent);
@@ -380,6 +382,10 @@ function analyzeManualContent(){
 
   const resultText = `Hasil: Content Score ${contentScore.toFixed(0)}/100 (${status}), ER: ${engagementRate}%, Engagement: ${engagement.toLocaleString()}, Format: ${contentType}. ${recommendations.join('. ')}.`;
   $('#manualResult').textContent = resultText;
+
+  // Show laporan content after analysis
+  $('#laporanEmpty').style.display='none';
+  $('#laporanContent').style.display='block';
 }
 function renderDataset(){ if(!$('#dsHead')||!rows.length)return; const keys=Object.keys(rows[0]); $('#dsHead').innerHTML='<tr>'+keys.map(k=>`<th>${k}</th>`).join('')+'</tr>'; $('#dsBody').innerHTML=rows.map(r=>'<tr>'+keys.map(k=>`<td>${r[k]??''}</td>`).join('')+'</tr>').join(''); const el=$('#datasetChart'); if(el&&window.Chart){ if(charts.datasetChart)charts.datasetChart.destroy(); charts.datasetChart=new Chart(el,{type:'line',data:{labels:rows.map(r=>r.Periode),datasets:[{label:'Views',data:rows.map(r=>Number(r.Views||0)),borderColor:'rgba(34,211,238,.9)',backgroundColor:'rgba(34,211,238,.12)',fill:true,tension:.35}]},options:{plugins:{legend:{labels:{color:'#cbd5e1'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'}}}}}); } }
 function analyzeDataset(){ renderDataset(); $('#datasetInsight').innerHTML='<b>Insight Otomatis</b><br>Views meningkat signifikan. Share turun sehingga CTA perlu diperkuat. Konten dengan save tinggi perlu dijadikan format evergreen.'; }
@@ -590,7 +596,151 @@ async function processSentiment(){
  }
 }
 
-function buildPDFReport(){ return `<div class="pdf-report" id="pdfNode"><h1>LAPORAN HASIL EVALUASI KINERJA MEDIA SOSIAL</h1><p>Ringkasan hasil analisis untuk atasan. Periode: 1 - 30 Juni 2026</p><div class="pdf-kpis"><div class="pdf-card"><small>Total Konten</small><h2>128</h2></div><div class="pdf-card"><small>Engagement Rate</small><h2>6.7%</h2></div><div class="pdf-card"><small>Reach</small><h2>124K</h2></div><div class="pdf-card"><small>Sentimen Positif</small><h2>82%</h2></div><div class="pdf-card"><small>Action Plan</small><h2>7</h2></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Distribusi Sentimen</h3><div class="pdf-donut"></div></div><div class="pdf-card"><h3>Tren Engagement</h3><div class="pdf-bars"><i style="height:42%"></i><i style="height:48%"></i><i style="height:52%"></i><i style="height:58%"></i><i style="height:61%"></i><i style="height:67%"></i></div></div></div><div class="pdf-grid"><div class="pdf-card"><h3>Top Content</h3><table class="pdf-table"><tr><th>Konten</th><th>ER</th><th>Insight</th></tr><tr><td>Reels Edukasi</td><td>8.9%</td><td>Performa terbaik</td></tr><tr><td>BTS Campaign</td><td>7.8%</td><td>Interaksi tinggi</td></tr><tr><td>Promo Batch</td><td>3.2%</td><td>CTA lemah</td></tr></table></div><div class="pdf-card"><h3>Rekomendasi</h3><p>Perbanyak konten edukatif, optimasi CTA, audit komentar negatif, dan evaluasi mingguan selama 30 hari.</p></div></div></div>`; }
+function buildPDFReport(){ 
+  const totalKonten = $('#reportTotalKonten')?.textContent || '128';
+  const er = $('#reportER')?.textContent || '6.7%';
+  const reach = $('#reportReach')?.textContent || '124K';
+  const sentimen = $('#reportSentimen')?.textContent || '82%';
+  
+  return `
+<div class="pdf-report" id="pdfNode" style="position:fixed;left:-9999px;top:0;width:1600px;padding:56px;background:linear-gradient(135deg,#0a0f1e 0%,#1a1f3a 50%,#0f1428 100%);color:white;font-family:Inter,system-ui,sans-serif">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;padding-bottom:30px;border-bottom:2px solid rgba(34,211,238,0.3)">
+    <div>
+      <h1 style="font-size:48px;font-weight:900;letter-spacing:-0.04em;margin:0;background:linear-gradient(135deg,#22d3ee,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">LAPORAN KINERJA</h1>
+      <p style="font-size:18px;color:#9aa4b2;margin:8px 0 0;letter-spacing:0.02em">KokoroLens Social Intelligence • Executive Report</p>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:14px;color:#64748b;font-weight:600">PERIODE LAPORAN</div>
+      <div style="font-size:24px;font-weight:800;color:#22d3ee">Juni 2026</div>
+    </div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,rgba(34,211,238,0.1),rgba(139,92,246,0.1));border:1px solid rgba(34,211,238,0.2);border-radius:24px;padding:32px;margin-bottom:32px">
+    <h2 style="font-size:20px;font-weight:800;margin:0 0 16px;color:#22d3ee">📊 Executive Summary</h2>
+    <p style="font-size:16px;line-height:1.8;color:#d1d5db;margin:0">Performa media sosial menunjukkan tren positif dengan pertumbuhan engagement yang signifikan. Sentimen audiens mendominasi kategori positif (82%), menunjukkan kualitas konten yang baik. Rekomendasi strategis: fokus pada konten edukatif, optimasi CTA, dan perbaikan timing posting.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px">
+    <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
+      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">TOTAL KONTEN</div>
+      <div style="font-size:36px;font-weight:900;color:#22d3ee">${totalKonten}</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+14% vs bulan lalu</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
+      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">ENGAGEMENT RATE</div>
+      <div style="font-size:36px;font-weight:900;color:#8b5cf6">${er}</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+0.6% vs bulan lalu</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
+      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">REACH</div>
+      <div style="font-size:36px;font-weight:900;color:#ec4899">${reach}</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+18% vs bulan lalu</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
+      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">SENTIMEN POSITIF</div>
+      <div style="font-size:36px;font-weight:900;color:#22c55e">${sentimen}</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+5% vs bulan lalu</div>
+    </div>
+    <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
+      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">ACTION PLAN</div>
+      <div style="font-size:36px;font-weight:900;color:#f59e0b">7</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Prioritas tinggi</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px">
+    <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#22d3ee">🎯 Distribusi Sentimen</h3>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div style="width:180px;height:180px;border-radius:50%;background:conic-gradient(#22c55e 0% 82%,#f59e0b 82% 93%,#ef4444 93% 100%);position:relative">
+          <div style="position:absolute;inset:40px;background:#0f1428;border-radius:50%;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:32px;font-weight:900;color:#22c55e">82%</span>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <div style="width:16px;height:16px;background:#22c55e;border-radius:4px"></div>
+            <span style="font-size:14px;color:#d1d5db">Positif: 82%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <div style="width:16px;height:16px;background:#f59e0b;border-radius:4px"></div>
+            <span style="font-size:14px;color:#d1d5db">Netral: 11%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:16px;height:16px;background:#ef4444;border-radius:4px"></div>
+            <span style="font-size:14px;color:#d1d5db">Negatif: 7%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#8b5cf6">📈 Tren Engagement</h3>
+      <div style="display:flex;gap:12px;align-items:end;height:180px;padding:20px 0">
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:42%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:48%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:52%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:58%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:61%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:67%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;color:#64748b">
+        <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mei</span><span>Jun</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#ec4899">🏆 Top Performing Content</h3>
+      <table style="width:100%;border-collapse:collapse">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.1)">
+          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">Konten</th>
+          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">ER</th>
+          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">Insight</th>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Reels Edukasi</td>
+          <td style="padding:12px 8px;font-size:14px;color:#22c55e;font-weight:700">8.9%</td>
+          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">Performa terbaik</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">BTS Campaign</td>
+          <td style="padding:12px 8px;font-size:14px;color:#22c55e;font-weight:700">7.8%</td>
+          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">Interaksi tinggi</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Promo Batch</td>
+          <td style="padding:12px 8px;font-size:14px;color:#f59e0b;font-weight:700">3.2%</td>
+          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">CTA lemah</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#f59e0b">💡 Rekomendasi Strategis</h3>
+      <ul style="margin:0;padding-left:20px;line-height:2;color:#d1d5db;font-size:14px">
+        <li><b style="color:#22d3ee">HIGH:</b> Perbanyak konten edukatif (+15% ER target)</li>
+        <li><b style="color:#f59e0b">MEDIUM:</b> Optimasi CTA dan caption untuk meningkatkan share</li>
+        <li><b style="color:#22c55e">LOW:</b> Eksperimen hashtag niche untuk reach</li>
+        <li><b style="color:#ec4899">URGENT:</b> Audit komentar negatif dan respons cepat</li>
+        <li><b style="color:#8b5cf6">ONGOING:</b> Evaluasi mingguan selama 30 hari</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:12px;color:#64748b">
+      <div style="font-weight:700;color:#9aa4b2">KokoroLens Social Intelligence</div>
+      <div>Generated on ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</div>
+    </div>
+    <div style="font-size:12px;color:#64748b;text-align:right">
+      <div style="font-weight:700;color:#9aa4b2">Confidential Report</div>
+      <div>For Executive Review Only</div>
+    </div>
+  </div>
+</div>`; 
+}
 async function exportExecutive(){ const holder=document.createElement('div'); holder.innerHTML=buildPDFReport(); const node=holder.firstElementChild; document.body.appendChild(node); try{ if(!window.html2canvas||!window.jspdf){window.print();return;} const canvas=await html2canvas(node,{scale:2,backgroundColor:'#050816'}); const {jsPDF}=window.jspdf; const pdf=new jsPDF('l','mm','a4'); pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,297,210); pdf.save('KokoroLens_Laporan_Hasil_Evaluasi_2026.pdf'); }catch(e){alert('Export PDF gagal. Pastikan koneksi internet aktif.');}finally{node.remove();} }
 document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('#loginForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#loginEmail').value; const password=$('#loginPassword').value; if(!email||!password){alert('Mohon isi email dan password.');return;} loginWithEmailPassword(email,password); }); } if($('#registerForm')){ $('#registerForm').addEventListener('submit',e=>{e.preventDefault(); const email=$('#registerEmail').value; const password=$('#registerPassword').value; const confirmPassword=$('#registerConfirmPassword').value; if(!email||!password||!confirmPassword){alert('Mohon isi semua field.');return;} if(password.length<6){alert('Password minimal 6 karakter.');return;} if(password!==confirmPassword){alert('Password tidak cocok.');return;} registerWithEmailPassword(email,password); }); } document.addEventListener('click',e=>{ const menu=$('#userMenu'); const avatar=$('#userAvatar'); if(menu && avatar && !menu.contains(e.target) && !avatar.contains(e.target)){ menu.style.display='none'; } }); initDashboard(); }catch(e){alert('Error loading page: '+e.message);} });
 </script>
