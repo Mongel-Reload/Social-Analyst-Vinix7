@@ -37,7 +37,20 @@ async function graph(path, params = {}) {
   const data = await res.json();
 
   if (!res.ok || data.error) {
-    const message = data?.error?.message || `Graph API error ${res.status}`;
+    const error = data?.error;
+    let message = `Graph API error ${res.status}`;
+    
+    if (error) {
+      if (error.type === 'OAuthException') {
+        message = `Meta API Authentication Error: ${error.message}. Pastikan META_ACCESS_TOKEN valid dan belum expired.`;
+      } else if (error.code === 190) {
+        message = `Meta API Token Expired: ${error.message}. Silakan generate ulang access token.`;
+      } else if (error.code === 100) {
+        message = `Meta API Invalid Parameter: ${error.message}. Periksa ID yang diminta.`;
+      } else {
+        message = `Meta API Error (${error.code || 'Unknown'}): ${error.message}`;
+      }
+    }
     throw new Error(message);
   }
 
