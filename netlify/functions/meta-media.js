@@ -23,8 +23,9 @@ exports.handler = async function(event) {
     const until = params.until || null;
 
     // Build graph API parameters
+    // Note: Some fields require additional permissions (instagram_basic, instagram_manage_insights)
     const graphParams = {
-      fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count",
+      fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,insights{metric_name,values}",
       limit: Math.min(limit, 100) // Max 100 per request
     };
 
@@ -50,6 +51,16 @@ exports.handler = async function(event) {
         thumbnail_url = item.media_url;
       }
 
+      // Extract insights data if available
+      let insights = {};
+      if (item.insights && item.insights.data) {
+        item.insights.data.forEach(insight => {
+          if (insight.name && insight.values && insight.values[0]) {
+            insights[insight.name] = insight.values[0];
+          }
+        });
+      }
+
       return {
         id: item.id,
         caption: item.caption || null,
@@ -59,7 +70,13 @@ exports.handler = async function(event) {
         permalink: item.permalink,
         timestamp: item.timestamp,
         like_count: item.like_count || 0,
-        comments_count: item.comments_count || 0
+        comments_count: item.comments_count || 0,
+        // Additional fields from insights (may not be available without proper permissions)
+        shares_count: insights.shares_count || 0,
+        reach: insights.reach || 0,
+        impressions: insights.impressions || 0,
+        saves: insights.saves || 0,
+        video_views: insights.video_views || 0
       };
     });
 
