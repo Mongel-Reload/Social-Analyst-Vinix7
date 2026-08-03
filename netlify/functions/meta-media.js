@@ -1,65 +1,93 @@
-const { getEnv, json, graph, calculateEngagement } = require("./_meta");
+const { getEnv, json, graph } = require("./_meta");
 
 exports.handler = async function(event) {
   if (event.httpMethod === "OPTIONS") return json(200, { ok: true });
 
   try {
     const { igId } = getEnv();
-    if (!igId) throw new Error("META_IG_ID belum diisi.");
+    if (!igId) {
+      return json(200, {
+        success: false,
+        error: {
+          type: "META_CREDENTIAL_ERROR",
+          message: "META_IG_ID belum diisi di Environment Variables."
+        }
+      });
+    }
 
-    const mediaRes = await graph(`/${igId}/media`, {
-      fields: "id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count,insights{metric_name,value}",
-      limit: 25
-    });
+    // Parse query parameters
+    const params = event.queryStringParameters || {};
+    const limit = parseInt(params.limit) || 25;
+    const after = params.after || null;
+    const since = params.since || null;
+    const until = params.until || null;
+
+    // Build graph API parameters
+    const graphParams = {
+      fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count",
+      limit: Math.min(limit, 100) // Max 100 per request
+    };
+
+    if (after) graphParams.after = after;
+    if (since) graphParams.since = since;
+    if (until) graphParams.until = until;
+
+    const mediaRes = await graph(`/${igId}/media`, graphParams);
 
     const media = (mediaRes.data || []).map((item) => {
-      const insights = item.insights?.data || [];
-      const reachData = insights.find(i => i.metric_name === 'reach');
-      const impressionsData = insights.find(i => i.metric_name === 'impressions');
-      const engagementData = insights.find(i => i.metric_name === 'engagement');
-      
+      // Handle different media types
+      let media_url = item.media_url;
+      let thumbnail_url = item.thumbnail_url;
+
+      // For CAROUSEL, media_url might not be available
+      if (item.media_type === 'CAROUSEL_ALBUM') {
+        media_url = null;
+        thumbnail_url = null;
+      }
+
+      // For VIDEO, use thumbnail_url if available
+      if (item.media_type === 'VIDEO' && !thumbnail_url) {
+        thumbnail_url = item.media_url;
+      }
+
       return {
         id: item.id,
-        caption: item.caption ? item.caption.slice(0, 70) + (item.caption.length > 70 ? "..." : "") : item.id,
+        caption: item.caption || null,
         media_type: item.media_type,
-        media_url: item.media_url,
+        media_url: media_url,
+        thumbnail_url: thumbnail_url,
         permalink: item.permalink,
         timestamp: item.timestamp,
         like_count: item.like_count || 0,
-        comments_count: item.comments_count || 0,
-        share_count: 0,
-        views: item.media_type === 'VIDEO' ? (impressionsData?.value || 0) : 0,
-        reach: reachData?.value || 0,
-        engagement_rate: calculateEngagement({
-          like_count: item.like_count,
-          comments_count: item.comments_count,
-          share_count: 0,
-          reach: reachData?.value || 0,
-          views: item.media_type === 'VIDEO' ? (impressionsData?.value || 0) : 0
-        }),
-        insight: "Media diambil dari Meta Graph API (Data Aktual)"
+        comments_count: item.comments_count || 0
       };
     });
 
-    const totalLikes = media.reduce((sum, item) => sum + Number(item.like_count || 0), 0);
-    const totalComments = media.reduce((sum, item) => sum + Number(item.comments_count || 0), 0);
-    const totalPosts = media.length;
-    const totalReach = media.reduce((sum, item) => sum + Number(item.reach || 0), 0);
-    const engagementRate = totalReach > 0 ? (((totalLikes + totalComments) / totalReach) * 100).toFixed(2) : "0";
+    // Handle pagination
+    const paging = {
+      has_next: !!(mediaRes.paging && mediaRes.paging.next),
+      after: mediaRes.paging?.cursors?.after || null
+    };
 
     return json(200, {
-      ok: true,
-      summary: {
-        total_posts: totalPosts,
-        likes: totalLikes,
-        comments: totalComments,
-        reach: totalReach,
-        engagement_rate: engagementRate,
-        positive_sentiment: null
-      },
-      media
+      success: true,
+      media,
+      paging,
+      total: media.length
     });
   } catch (error) {
-    return json(500, { ok: false, error: error.message });
+    return json(200, {
+      success: false,
+      error: {
+        type: "META_MEDIA_ERROR",
+        message: error.message.includes("Permission")
+          ? "Izin media tidak tersedia. Pastikan token memiliki permission instagram_basic."
+          : error.message.includes("190")
+          ? "Token Meta sudah kedaluwarsa. Silakan generate ulang access token."
+          : error.message.includes("100")
+          ? "Instagram Business Account ID tidak valid."
+          : `Gagal mengambil media: ${error.message}`
+      }
+    });
   }
 };
