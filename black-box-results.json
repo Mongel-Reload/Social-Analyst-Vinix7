@@ -1,0 +1,447 @@
+{
+  "test_info": {
+    "test_date": null,
+    "tester": null,
+    "environment": "Development",
+    "app_version": "v1.0",
+    "browser": null
+  },
+  "summary": {
+    "total_scenarios": 32,
+    "passed": 0,
+    "failed": 0,
+    "not_tested": 32
+  },
+  "results": [
+    {
+      "id": 1,
+      "feature": "Login dengan data benar",
+      "scenario": "Email dan password valid",
+      "input": {
+        "email": "user@example.com",
+        "password": "validpassword"
+      },
+      "expected": "Login berhasil, redirect ke dashboard",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "feature": "Login dengan data salah",
+      "scenario": "Email tidak terdaftar",
+      "input": {
+        "email": "wrong@example.com",
+        "password": "anypassword"
+      },
+      "expected": "Pesan error 'Email tidak ditemukan'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "feature": "Login dengan password salah",
+      "scenario": "Email valid, password salah",
+      "input": {
+        "email": "user@example.com",
+        "password": "wrongpassword"
+      },
+      "expected": "Pesan error 'Password salah'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "feature": "Logout",
+      "scenario": "Klik tombol logout",
+      "input": {
+        "action": "click_logout_button"
+      },
+      "expected": "Logout berhasil, redirect ke halaman login",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "feature": "Pemulihan sesi login",
+      "scenario": "Refresh halaman setelah login",
+      "input": {
+        "action": "refresh_browser"
+      },
+      "expected": "Sesi tetap login, tetap di dashboard",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "feature": "Input komentar manual",
+      "scenario": "Teks komentar valid",
+      "input": {
+        "input_type": "Teks Manual",
+        "text": "Produk ini sangat bagus"
+      },
+      "expected": "Teks diproses, hasil sentimen ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "feature": "Input komentar kosong",
+      "scenario": "Teks kosong",
+      "input": {
+        "input_type": "Teks Manual",
+        "text": ""
+      },
+      "expected": "Pesan error 'Teks tidak boleh kosong'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "feature": "Upload file CSV",
+      "scenario": "File CSV valid dengan kolom text dan sentiment",
+      "input": {
+        "file": "dataset.csv",
+        "format": "valid"
+      },
+      "expected": "File diupload, data ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "feature": "Upload file Excel",
+      "scenario": "File Excel valid dengan kolom text dan sentiment",
+      "input": {
+        "file": "dataset.xlsx",
+        "format": "valid"
+      },
+      "expected": "File diupload, data ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 10,
+      "feature": "Validasi file tidak sesuai",
+      "scenario": "File bukan CSV/Excel",
+      "input": {
+        "file": "image.png",
+        "format": "invalid"
+      },
+      "expected": "Pesan error 'Format file tidak didukung'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 11,
+      "feature": "Validasi kolom dataset",
+      "scenario": "CSV tanpa kolom text/sentiment",
+      "input": {
+        "file": "invalid.csv",
+        "columns": "wrong"
+      },
+      "expected": "Pesan error 'Kolom text dan sentiment wajib ada'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 12,
+      "feature": "Training model",
+      "scenario": "Dataset valid",
+      "input": {
+        "action": "click_training_button",
+        "dataset": "valid"
+      },
+      "expected": "Model training selesai, metrics ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 13,
+      "feature": "Prediksi satu komentar",
+      "scenario": "Teks tunggal",
+      "input": {
+        "text": "Saya suka produk ini"
+      },
+      "expected": "Hasil sentimen, confidence, probabilitas ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 14,
+      "feature": "Prediksi banyak komentar",
+      "scenario": "Array teks",
+      "input": {
+        "texts": ["Bagus", "Jelek", "Biasa"]
+      },
+      "expected": "Hasil sentimen untuk semua teks ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 15,
+      "feature": "Menampilkan preprocessing",
+      "scenario": "Teks dengan preprocessing",
+      "input": {
+        "text": "SAYA SUKA PRODUK INI!!!"
+      },
+      "expected": "Teks preprocessing ditampilkan: 'saya suka produk ini'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 16,
+      "feature": "Menampilkan hasil TF-IDF",
+      "scenario": "Teks dengan fitur",
+      "input": {
+        "text": "produk bagus"
+      },
+      "expected": "Nilai TF-IDF ditampilkan jika tersedia",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 17,
+      "feature": "Menampilkan sentimen",
+      "scenario": "Hasil prediksi",
+      "input": {
+        "text": "Produk bagus"
+      },
+      "expected": "Label: 'Positif' ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 18,
+      "feature": "Menampilkan confidence",
+      "scenario": "Hasil prediksi",
+      "input": {
+        "text": "Produk bagus"
+      },
+      "expected": "Confidence: 0.85 ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 19,
+      "feature": "Menampilkan probabilitas kelas",
+      "scenario": "Hasil prediksi",
+      "input": {
+        "text": "Produk bagus"
+      },
+      "expected": "Prob_positif, prob_netral, prob_negatif ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 20,
+      "feature": "Mengambil daftar postingan Meta",
+      "scenario": "Meta API terhubung",
+      "input": {
+        "action": "click_fetch_posts",
+        "meta_status": "connected"
+      },
+      "expected": "Daftar postingan ditampilkan dengan thumbnail",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 21,
+      "feature": "Mengambil komentar Meta",
+      "scenario": "Media ID valid",
+      "input": {
+        "action": "click_analyze_comments",
+        "media_id": "valid_id"
+      },
+      "expected": "Komentar diambil dan ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 22,
+      "feature": "Menangani Meta API gagal",
+      "scenario": "Token tidak valid",
+      "input": {
+        "token_status": "invalid_or_expired"
+      },
+      "expected": "Pesan error jelas ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 23,
+      "feature": "Menampilkan dashboard",
+      "scenario": "Setelah analisis",
+      "input": {
+        "action": "navigate_to_dashboard"
+      },
+      "expected": "Summary cards dan charts ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 24,
+      "feature": "Filter periode",
+      "scenario": "Pilih bulan/tahun",
+      "input": {
+        "month": "Januari",
+        "year": 2024
+      },
+      "expected": "Data dashboard difilter sesuai periode",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 25,
+      "feature": "Filter sentimen",
+      "scenario": "Filter tabel sentimen",
+      "input": {
+        "filter": "Positif"
+      },
+      "expected": "Tabel hanya menampilkan komentar positif",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 26,
+      "feature": "Pencarian komentar",
+      "scenario": "Search di tabel",
+      "input": {
+        "search_term": "bagus"
+      },
+      "expected": "Tabel menampilkan komentar mengandung 'bagus'",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 27,
+      "feature": "Pagination",
+      "scenario": "Tabel dengan banyak data",
+      "input": {
+        "action": "click_page_2"
+      },
+      "expected": "Tabel menampilkan halaman 2",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 28,
+      "feature": "Menyimpan riwayat",
+      "scenario": "Setelah analisis",
+      "input": {
+        "action": "analysis_complete"
+      },
+      "expected": "Analisis tersimpan di riwayat",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 29,
+      "feature": "Membuka riwayat",
+      "scenario": "Klik riwayat",
+      "input": {
+        "action": "click_history_item"
+      },
+      "expected": "Detail analisis ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 30,
+      "feature": "Menghapus riwayat",
+      "scenario": "Klik tombol hapus",
+      "input": {
+        "action": "click_delete_button"
+      },
+      "expected": "Riwayat dihapus dari list",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 31,
+      "feature": "Membandingkan analisis",
+      "scenario": "Dua periode",
+      "input": {
+        "period_1": "Januari 2024",
+        "period_2": "Februari 2024"
+      },
+      "expected": "Perbandingan metrics ditampilkan",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    },
+    {
+      "id": 32,
+      "feature": "Export laporan PDF",
+      "scenario": "Klik tombol export",
+      "input": {
+        "action": "click_export_pdf"
+      },
+      "expected": "File PDF terdownload dengan data aktual",
+      "actual": null,
+      "status": "Belum Diuji",
+      "evidence": null,
+      "notes": null
+    }
+  ]
+}
