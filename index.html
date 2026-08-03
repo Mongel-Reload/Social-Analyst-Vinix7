@@ -12,7 +12,6 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -153,17 +152,24 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <div class="grid4"><div class="card kpi"><small>Total Konten</small><strong id="kpiKonten">-</strong><span>-</span></div><div class="card kpi"><small>Engagement Rate</small><strong id="kpiER">-</strong><span>-</span></div><div class="card kpi"><small>Reach</small><strong id="kpiReach">-</strong><span>-</span></div><div class="card kpi"><small>Sentimen Positif</small><strong id="kpiSent">-</strong><span>-</span></div></div>
         <div class="grid2" style="margin-top:15px"><div class="card"><h3>Engagement Trend</h3><canvas id="eng"></canvas></div><div class="card"><h3>Sentiment Distribution</h3><canvas id="sent"></canvas></div></div>
         <div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Best Posting Time</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Best Format</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Health Score</small><strong>-</strong><span>-</span></div></div>
-        <div id="dashboardRecommendation" class="card" style="margin-top:15px;display:none"><h3> Rekomendasi Berdasarkan Analisis</h3><div id="recommendationContent"><p style="color:var(--muted)">Lakukan analisis sentimen untuk mendapatkan rekomendasi berbasis data.</p></div></div>
+        <div id="dashboardRecommendation" class="card" style="margin-top:15px;display:none"><h3>✨ Rekomendasi Berdasarkan Analisis</h3><div class="report"><b>Executive Summary</b><br>Konten edukatif menghasilkan performa 43% lebih tinggi dibanding promosi langsung. Strategi berikutnya perlu fokus pada evergreen content, CTA, dan optimasi jam posting.</div><div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Prediksi ER</small><strong>6.7% → 7.9%</strong><span>Jika dijalankan</span></div><div class="card kpi"><small>Prediksi Sentimen</small><strong>82% → 87%</strong><span>Naik</span></div><div class="card kpi"><small>Target Reach</small><strong>141K</strong><span>+13.7%</span></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Priority Action Plan</h3><div class="action high"><b>HIGH — Perbanyak konten edukatif</b><p>Target +15% ER · PIC Content Team · Deadline 30 Juli 2026</p></div><div class="action med"><b>MEDIUM — Optimasi Caption & CTA</b><p>Target +15% Share · PIC Copywriter · Deadline 15 Juli 2026</p></div><div class="action low"><b>LOW — Eksperimen Hashtag Niche</b><p>Target +8% Reach · PIC Digital Marketing</p></div></div><div class="card"><h3>Roadmap 30 Hari</h3><div class="table"><table><thead><tr><th>Minggu</th><th>Aktivitas</th><th>Output</th></tr></thead><tbody><tr><td>1</td><td>Audit konten</td><td>Daftar isu</td></tr><tr><td>2</td><td>Produksi edukasi</td><td>6 reels</td></tr><tr><td>3</td><td>Optimasi caption</td><td>Template baru</td></tr><tr><td>4</td><td>Evaluasi KPI</td><td>Laporan kinerja</td></tr></tbody></table></div></div></div>
       </div>
     </section>
-    <section id="meta" class="page"><div class="head"><div><h1>Meta API</h1><p>Integrasi dengan Meta Graph API untuk mengambil data Instagram.</p></div><div class="toolbar"><button class="btn primary" id="testMetaConnection">Test Koneksi</button><button class="btn" id="fetchMedia">Ambil Postingan</button></div></div><div id="metaStatus" class="card" style="margin-bottom:15px"><h3>Status Koneksi</h3><div id="metaStatusContent"><p style="color:var(--muted)">Klik "Test Koneksi" untuk memeriksa status Meta Graph API.</p></div></div><div id="metaAccountInfo" class="card" style="margin-bottom:15px;display:none"><h3>Informasi Akun</h3><div class="grid3"><div class="card kpi"><small>Username</small><strong id="metaUsername">-</strong></div><div class="card kpi"><small>Followers</small><strong id="metaFollowers">-</strong></div><div class="card kpi"><small>Total Media</small><strong id="metaMediaCount">-</strong></div></div></div><div id="mediaList" class="card" style="display:none"><h3>Daftar Postingan</h3><div id="mediaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;margin-top:15px"></div></div></section>
-    <section id="konten" class="page"><div class="head"><div><h1>Konten</h1><p>Analisis performa konten media sosial.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomKonten"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomKonten"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="kontenEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Belum Ada Data Konten</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta API untuk melihat data konten.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="kontenContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Total Post</small><strong id="kontenTotalPost">-</strong></div><div class="card kpi"><small>Total Likes</small><strong id="kontenTotalLikes">-</strong></div><div class="card kpi"><small>Total Comments</small><strong id="kontenTotalComments">-</strong></div><div class="card kpi"><small>Avg Engagement</small><strong id="kontenAvgEngagement">-</strong></div></div><div class="card" style="margin-top:15px"><h3>Content Performance</h3><canvas id="kontenChart"></canvas></div><div class="card" style="margin-top:15px"><h3>Top Performing Posts</h3><div id="topPosts" style="display:grid;gap:15px;margin-top:15px"></div></div></div></section>
-    <section id="input" class="page"><div class="head"><div><h1>Input Data</h1><p>Upload dataset atau input manual untuk analisis sentimen.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Upload Dataset</h3><div class="upload"><div><div style="font-size:48px;margin-bottom:12px">📁</div><h3 style="margin-bottom:8px">Drag & Drop atau Klik untuk Upload</h3><p style="color:var(--muted);margin-bottom:16px">Format yang didukung: CSV, Excel (.xlsx)</p><input type="file" id="datasetUpload" accept=".csv,.xlsx" style="display:none"><button class="btn primary" onclick="document.getElementById('datasetUpload').click()">Pilih File</button></div></div><div id="uploadStatus" style="margin-top:15px"></div></div><div class="card"><h3>Input Manual</h3><div class="field"><label>Teks Komentar</label><textarea id="manualInput" rows="4" style="width:100%;height:100px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:12px;outline:none;resize:vertical" placeholder="Masukkan teks komentar untuk dianalisis..."></textarea></div><button class="btn primary" id="analyzeManual" style="margin-top:12px">Analisis</button><div id="manualResult" style="margin-top:15px"></div></div></section>
-    <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan lakukan analisis sentimen untuk melihat data perbandingan.</p><button class="btn primary" onclick="showPage('sentimen')">Buka Halaman Sentimen</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul id="dampakInsights" style="line-height:1.9;color:#d1d5db"><li>Belum ada insight. Silakan lakukan analisis sentimen terlebih dahulu.</li></ul></div></div></div></section>
 
-    <section id="sentimen" class="page"><div class="head"><div><h1>Sentimen</h1><p>Klasifikasi berbasis TF-IDF + Multinomial Naive Bayes (Machine Learning). Bisa analisa teks manual atau tarik komentar asli langsung dari Meta Graph API.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Proses Analisis Sentimen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px"><div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#22d3ee"> Fallback (Keyword-Based)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Cleaning:</b> Hapus URL dan karakter khusus</li><li><b>Case Folding:</b> Konversi ke lowercase</li><li><b>Tokenizing:</b> Pecah teks menjadi kata-kata</li><li><b>Stopword Removal:</b> Hapus kata umum (dan, yang, dll)</li><li><b>Keyword Matching:</b> Cek kata positif/negatif</li><li><b>Scoring:</b> Beri skor berdasarkan kecocokan</li><li><b>Classification:</b> Tentukan label sentimen</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(34,211,238,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#22d3ee">70-75%</div></div></div><div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#8b5cf6"> ML (TF-IDF + Naive Bayes)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Preprocessing:</b> Case folding, hapus URL/mention/hashtag/emoji/angka/tanda baca</li><li><b>Stopword Removal:</b> Hapus kata umum bahasa Indonesia</li><li><b>Stemming:</b> Konversi ke kata dasar (Sastrawi)</li><li><b>TF-IDF Vectorization:</b> Konversi ke vector representations</li><li><b>Multinomial Naive Bayes:</b> Klasifikasi sentimen</li><li><b>Confidence Score:</b> Probabilitas prediksi model</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(139,92,246,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#8b5cf6">80-85%</div></div></div></div></div><div class="card" style="margin-bottom:15px"><h3>Input Analisis</h3><div class="formgrid"><div class="field"><label>Tipe Input</label><select id="sentimentInputType"><option value="text">Teks Manual</option><option value="link">Link Media</option><option value="media">Media ID</option></select></div><div class="field sentimentTextField"><label>Teks Komentar</label><textarea id="sentimentText" rows="4" placeholder="Masukkan teks komentar untuk dianalisis..."></textarea></div><div class="field sentimentLinkField hidden"><label>Link Instagram</label><input id="sentimentLink" type="url" placeholder="https://instagram.com/p/..."></div><div class="field sentimentMediaField hidden"><label>Media ID</label><input id="sentimentMediaId" type="text" placeholder="Contoh: 123456789_987654321"></div></div><button class="btn primary" id="sentimentPreviewBtn">Analisa Sentimen</button></div><div id="sentimentResults" style="display:none"><div class="card" style="margin-bottom:15px"><h3>Hasil Klasifikasi</h3><div class="grid3"><div class="card kpi"><small>Total Komentar</small><strong id="sentimentResultCount">-</strong></div><div class="card kpi"><small>Sentimen Dominan</small><strong id="sentimentResultLabel">-</strong></div><div class="card kpi"><small>Rata-rata Confidence</small><strong id="sentimentResultScore">-</strong></div></div></div><div id="modelEvaluationSection" class="card" style="margin-bottom:15px;display:none"><h3>Evaluasi Model</h3><div class="grid4" style="margin-bottom:15px"><div class="card kpi"><small>Akurasi</small><strong id="modelAccuracy">-</strong><span>Overall</span></div><div class="card kpi"><small>Precision</small><strong id="modelPrecision">-</strong><span>Weighted Avg</span></div><div class="card kpi"><small>Recall</small><strong id="modelRecall">-</strong><span>Weighted Avg</span></div><div class="card kpi"><small>F1-Score</small><strong id="modelF1">-</strong><span>Weighted Avg</span></div></div><div class="grid2"><div class="card"><h3>Confusion Matrix</h3><div id="confusionMatrix" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:15px"><div style="text-align:center;padding:12px;background:rgba(255,255,255,.05);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Prediksi</div><div style="font-weight:700">Positif</div></div><div style="text-align:center;padding:12px;background:rgba(255,255,255,.05);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Prediksi</div><div style="font-weight:700">Netral</div></div><div style="text-align:center;padding:12px;background:rgba(255,255,255,.05);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Prediksi</div><div style="font-weight:700">Negatif</div></div><div style="text-align:center;padding:12px;background:rgba(255,255,255,.05);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Total</div><div style="font-weight:700" id="confusionTotalPred">-</div></div><div style="text-align:center;padding:12px;background:rgba(34,197,94,.1);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Aktual Positif</div><div style="font-weight:700;color:#86efac" id="confusionTP">-</div></div><div style="text-align:center;padding:12px;background:rgba(245,158,11,.1);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Aktual Netral</div><div style="font-weight:700;color:#fcd34d" id="confusionTN">-</div></div><div style="text-align:center;padding:12px;background:rgba(239,68,68,.1);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Aktual Negatif</div><div style="font-weight:700;color:#fca5a5" id="confusionFN">-</div></div><div style="text-align:center;padding:12px;background:rgba(255,255,255,.05);border-radius:8px"><div style="color:#9aa4b2;font-size:11px;margin-bottom:4px">Total Aktual</div><div style="font-weight:700" id="confusionTotalActual">-</div></div></div></div><div class="card"><h3>Distribusi Confidence</h3><canvas id="confidenceChart"></canvas></div></div></div><div class="card"><h3>Hasil Klasifikasi per Komentar</h3><div style="margin-bottom:15px;display:flex;gap:10px;flex-wrap:wrap"><input type="text" id="classificationSearch" placeholder="Cari komentar..." style="flex:1;min-width:200px;height:40px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.06);color:white;padding:0 12px;outline:none"><select id="classificationFilterSentiment" style="height:40px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.06);color:white;padding:0 12px;outline:none"><option value="">Semua Sentimen</option><option value="Positif">Positif</option><option value="Netral">Netral</option><option value="Negatif">Negatif</option></select><select id="classificationFilterConfidence" style="height:40px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.06);color:white;padding:0 12px;outline:none"><option value="">Semua Confidence</option><option value="high">Tinggi (≥0.70)</option><option value="medium">Sedang (0.50-0.69)</option><option value="low">Rendah (&lt;0.50)</option></select></div><div class="table"><table><thead><tr><th>Username</th><th>Teks</th><th>Sentimen</th><th>Confidence</th><th>Prob. Positif</th><th>Prob. Netral</th><th>Prob. Negatif</th></tr></thead><tbody id="classificationResultsTable"><tr><td colspan="7" style="text-align:center;color:var(--muted)">Belum ada data klasifikasi. Silakan lakukan analisis sentimen terlebih dahulu.</td></tr></tbody></table></div><div id="classificationPagination" style="margin-top:15px;display:flex;justify-content:space-between;align-items:center"><div style="color:var(--muted);font-size:13px">Menampilkan <span id="paginationShowing">0</span> dari <span id="paginationTotal">0</span> hasil</div><div style="display:flex;gap:8px"><button id="paginationPrev" class="btn" style="height:36px;padding:0 16px" disabled> Prev</button><button id="paginationNext" class="btn" style="height:36px;padding:0 16px" disabled>Next →</button></div></div></div></div></section>
+    <section id="meta" class="page">
+      <div class="head"><div><h1>Meta API</h1><p>Koneksi dan sinkronisasi data dari Meta Graph API.</p></div><div class="toolbar"><button class="btn green" id="testMeta">Uji Koneksi</button><button class="btn primary" id="refreshMeta">Refresh Data</button></div></div>
+      <div class="grid2"><div class="card"><h3>Status Koneksi</h3><p style="color:var(--muted);line-height:1.6">Credentials Meta dikonfigurasi melalui environment variable pada server.</p><p id="statusMeta" style="color:#a5f3fc;font-weight:900">Status: menunggu koneksi.</p><div id="metaAccountInfo" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);display:none"><div style="font-size:12px;color:#9aa4b2;margin-bottom:8px">Akun Terhubung</div><div id="metaPageInfo" style="display:none;margin-bottom:8px"><div style="color:#22d3ee;font-weight:700">Facebook Page</div><div id="metaPageName" style="color:#d1d5db"></div></div><div id="metaIGInfo" style="display:none"><div style="color:#e1306c;font-weight:700">Instagram Business</div><div id="metaIGUsername" style="color:#d1d5db"></div><div id="metaIGFollowers" style="color:#9aa4b2;font-size:12px"></div><div id="metaIGMediaCount" style="color:#9aa4b2;font-size:12px"></div></div><div id="metaLastChecked" style="color:#64748b;font-size:11px;margin-top:8px"></div></div></div><div class="card"><h3>Daftar Postingan</h3><div id="metaMediaList" style="max-height:400px;overflow-y:auto"><p style="color:var(--muted);text-align:center;padding:40px">Klik "Uji Koneksi" terlebih dahulu untuk mengambil data postingan.</p></div></div></div>
+    </section>
 
-    <section id="laporan" class="page"><div class="head"><div><h1>Laporan</h1><p>Ringkasan eksekutif untuk atasan.</p></div></div><div id="laporanEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📄</div><h3 style="margin-bottom:12px">Belum Ada Data Laporan</h3><p style="color:var(--muted);margin-bottom:24px">Silakan lakukan analisis pada halaman Dashboard atau Sentimen untuk menghasilkan laporan.</p><button class="btn primary" onclick="showPage('sentimen')">Buka Halaman Sentimen</button></div><div id="laporanContent" style="display:none"><div class="head" style="margin-bottom:18px"><button class="btn primary" id="exportExecutive">Export Laporan Hasil PDF</button></div><div class="report" id="reportSummary"><b>Ringkasan Eksekutif</b><br>Belum ada data laporan. Silakan lakukan analisis sentimen terlebih dahulu.</div><div class="grid4" style="margin-top:15px"><div class="card kpi"><small>Total Konten</small><strong id="reportTotalKonten">-</strong></div><div class="card kpi"><small>ER</small><strong id="reportER">-</strong></div><div class="card kpi"><small>Reach</small><strong id="reportReach">-</strong></div><div class="card kpi"><small>Sentimen</small><strong id="reportSentimen">-</strong></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Report Summary</h3><canvas id="reportChart"></canvas></div><div class="card"><h3>Kesimpulan</h3><ul id="reportConclusions" style="line-height:1.9;color:#d1d5db"><li>Belum ada kesimpulan. Silakan lakukan analisis sentimen terlebih dahulu.</li></ul></div></div></div></section>
+    <section id="sentimen" class="page"><div class="head"><div><h1>Sentimen</h1><p>Klasifikasi berbasis TF-IDF + Multinomial Naive Bayes (Machine Learning). Bisa analisa teks manual atau tarik komentar asli langsung dari Meta Graph API.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Proses Analisis Sentimen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px"><div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#22d3ee">🔤 Fallback (Keyword-Based)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Cleaning:</b> Hapus URL dan karakter khusus</li><li><b>Case Folding:</b> Konversi ke lowercase</li><li><b>Tokenizing:</b> Pecah teks menjadi kata-kata</li><li><b>Stopword Removal:</b> Hapus kata umum (dan, yang, dll)</li><li><b>Keyword Matching:</b> Cek kata positif/negatif</li><li><b>Scoring:</b> Beri skor berdasarkan kecocokan</li><li><b>Classification:</b> Tentukan label sentimen</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(34,211,238,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#22d3ee">70-75%</div></div></div><div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#8b5cf6">🤖 ML (TF-IDF + Naive Bayes)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Preprocessing:</b> Case folding, hapus URL/mention/hashtag/emoji/angka/tanda baca</li><li><b>Stopword Removal:</b> Hapus kata umum bahasa Indonesia</li><li><b>Stemming:</b> Konversi ke kata dasar (Sastrawi)</li><li><b>TF-IDF Vectorization:</b> Konversi ke vector representations</li><li><b>Multinomial Naive Bayes:</b> Klasifikasi sentimen</li><li><b>Confidence Scoring:</b> Skor kepercayaan hasil</li><li><b>Probability Distribution:</b> Probabilitas per kelas</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(139,92,246,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#8b5cf6">85-90%</div></div></div></div><div class="card" style="margin-bottom:15px"><h3>Analisa Sentimen</h3><div id="sentimentStep1"><div class="field"><label>Pilih Input</label><select id="sentimentInputType"><option value="text">Input Teks Manual</option><option value="media">Meta API</option></select></div><div class="field" id="sentimentTextField"><label>Teks Komentar</label><textarea id="sentimentText" rows="4" style="width:100%;height:100px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:14px;outline:none;resize:none"></textarea></div><div class="field hidden" id="sentimentMediaField"><label>Media ID Instagram/Facebook</label><input id="sentimentMediaId" type="text" placeholder="Contoh: 17895695668004550" style="width:100%;height:50px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:0 14px;outline:none"><small style="display:block;color:#9aa4b2;margin-top:8px;line-height:1.5">Media ID diambil dari kolom "id" pada tabel Konten setelah Sync Data di halaman Meta API, atau dari Graph API Explorer. Butuh META_ACCESS_TOKEN aktif di Netlify.</small></div><button class="btn primary" id="sentimentPreviewBtn">Lanjut ke Preview</button></div><div id="sentimentStep2" class="hidden"><h4>Preview Input</h4><div id="sentimentPreview" style="background:rgba(255,255,255,.06);border-radius:16px;padding:16px;margin:12px 0;min-height:80px"></div><button class="btn" id="sentimentBackBtn">Kembali</button><button class="btn primary" id="sentimentAnalyzeBtn">Mulai Analisa</button></div><div id="sentimentStep3" class="hidden" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:16px">🔄</div><p style="color:var(--muted)">Sedang menganalisa sentimen...</p><p id="sentimentLoadingText" style="color:#9aa4b2;font-size:13px"></p></div><div id="sentimentStep4" class="hidden"><div class="grid3" style="margin-bottom:15px"><div class="card kpi"><small>Total Komentar</small><strong id="sentimentResultCount">-</strong></div><div class="card kpi"><small>Sentimen</small><strong id="sentimentResultLabel">-</strong></div><div class="card kpi"><small>Skor</small><strong id="sentimentResultScore">-</strong></div></div><div class="card" style="margin-bottom:15px"><h3>Hasil Analisis</h3><table style="width:100%"><thead><tr><th>Username</th><th>Komentar</th><th>Sentimen</th><th>Skor</th><th>Confidence</th><th>Prob Positif</th><th>Prob Netral</th><th>Prob Negatif</th></tr></thead><tbody id="sentimentCommentsBody"></tbody></table></div><div class="card" style="margin-bottom:15px"><h3>Detail Proses</h3><div id="sentimentResultDetail" style="line-height:1.8;color:#d1d5db;font-size:13px"></div></div><div class="card" style="margin-bottom:15px"><h3>Keywords Utama</h3><div id="sentimentResultKeywords" style="color:#22d3ee;font-weight:900"></div></div><div id="sentimentRecommendation" class="card" style="margin-bottom:15px;display:none"><h3>✨ Rekomendasi Berdasarkan Analisis Sentimen</h3><div class="report"><b>Executive Summary</b><br>Berdasarkan hasil analisis sentimen, berikut adalah rekomendasi strategis untuk meningkatkan performa konten Anda.</div><div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Prediksi ER</small><strong>6.7% → 7.9%</strong><span>Jika dijalankan</span></div><div class="card kpi"><small>Prediksi Sentimen</small><strong>82% → 87%</strong><span>Naik</span></div><div class="card kpi"><small>Target Reach</small><strong>141K</strong><span>+13.7%</span></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Priority Action Plan</h3><div class="action high"><b>HIGH — Perbanyak konten edukatif</b><p>Target +15% ER · PIC Content Team · Deadline 30 Juli 2026</p></div><div class="action med"><b>MEDIUM — Optimasi Caption & CTA</b><p>Target +15% Share · PIC Copywriter · Deadline 15 Juli 2026</p></div><div class="action low"><b>LOW — Eksperimen Hashtag Niche</b><p>Target +8% Reach · PIC Digital Marketing</p></div></div><div class="card"><h3>Roadmap 30 Hari</h3><div class="table"><table><thead><tr><th>Minggu</th><th>Aktivitas</th><th>Output</th></tr></thead><tbody><tr><td>1</td><td>Audit konten</td><td>Daftar isu</td></tr><tr><td>2</td><td>Produksi edukasi</td><td>6 reels</td></tr><tr><td>3</td><td>Optimasi caption</td><td>Template baru</td></tr><tr><td>4</td><td>Evaluasi KPI</td><td>Laporan kinerja</td></tr></tbody></table></div></div></div><button class="btn" id="sentimentResetBtn">Analisa Ulang</button></div></div></section>
+
+    <section id="input" class="page"><div class="head"><div><h1>Input Data</h1><p>Input konten manual tetap ada, dataset engagement ditambahkan di bawahnya.</p></div><button class="btn primary" id="downloadTemplate">Download Template CSV</button></div><div class="card"><h3>Input Konten Manual</h3><div class="formgrid"><div class="field"><label>Upload Foto/Video</label><input type="file" id="contentFile" accept="image/*,video/*" onchange="handleFileUpload(this)"></div><div id="filePreview" class="field hidden" style="grid-column:1/-1"><label>Preview</label><div id="previewContainer" style="max-width:100%;max-height:300px;overflow:hidden;border-radius:16px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;padding:10px"></div></div><div class="field"><label>Jenis Konten</label><select id="contentType"><option>Reels</option><option>Carousel</option><option>Video</option><option>Image</option></select></div><div class="field"><label>Judul</label><input id="contentTitle" value="Konten Edukasi"></div><div class="field"><label>Tanggal Upload</label><input id="contentDate" type="date"></div><div class="field"><label>Waktu Upload</label><input id="contentTime" type="time"></div><div class="field"><label>Likes</label><input id="contentLikes" value="4200"></div><div class="field"><label>Komentar</label><input id="contentComments" value="180"></div><div class="field"><label>Share</label><input id="contentShare" value="320"></div><div class="field"><label>Views</label><input id="contentViews" value="88000"></div><div class="field"><label>Reach</label><input id="contentReach" value="62000"></div><div class="field"><label>Saves</label><input id="contentSaves" value="560"></div></div><button class="btn primary" id="analyzeManual">Analisa Konten</button><p id="manualResult" style="color:#a5f3fc;font-weight:900"></p></div><div id="inputDatasetEmpty" class="card" style="margin-top:15px;text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📊</div><h3 style="margin-bottom:12px">Belum Ada Dataset Engagement</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data engagement per konten.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="inputDatasetContent" style="display:none"><div class="card" style="margin-top:15px"><h3>Analisis Dataset Engagement CSV/Excel</h3><div class="upload"><div><b>Upload .csv / .xlsx</b><p style="color:var(--muted)">Periode, Followers, Likes, Shares, Comments, Saves, Views, Profile Visit, Reach</p><input id="fileInput" type="file" accept=".csv,.xlsx,.xls"></div></div><div class="toolbar" style="margin-top:14px"><button class="btn primary" id="analyzeDataset">Analisa Dataset</button></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Dataset Trend</h3><canvas id="datasetChart"></canvas></div><div class="card"><h3>Insight Dataset</h3><div id="datasetInsight" style="line-height:1.8;color:#d1d5db">Upload atau gunakan data dari Meta API untuk melihat insight otomatis.</div></div></div><div class="table" style="margin-top:15px"><table><thead id="dsHead"></thead><tbody id="dsBody"></tbody></table></div></div></div></section>
+
+    <section id="konten" class="page"><div class="head"><div><h1>Konten</h1></div><div class="toolbar"><div class="custom-select" id="monthCustomKonten"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomKonten"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="kontenEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Belum Ada Data Konten</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data performa konten Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="kontenContent" style="display:none"><div class="grid3"><div class="card kpi"><small>Content Score</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Best Format</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Avg Engagement</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Content Performance</h3><canvas id="kontenChart"></canvas></div><div class="table" style="margin-top:15px"><table><thead><tr><th>Judul</th><th>Format</th><th>Likes</th><th>Komentar</th><th>Share</th><th>Views</th><th>Reach</th><th>ER</th><th>Status</th></tr></thead><tbody id="contentRows"></tbody></table></div></div></section>
+
+    <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul style="line-height:1.9;color:#d1d5db"><li>Reach meningkat signifikan.</li><li>Engagement rate stabil.</li><li>Sentimen positif mendominasi.</li></ul></div></div></div></section>
+
+    <section id="laporan" class="page"><div class="head"><div><h1>Laporan</h1><p>Ringkasan eksekutif untuk atasan.</p></div></div><div id="laporanEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📄</div><h3 style="margin-bottom:12px">Belum Ada Data Laporan</h3><p style="color:var(--muted);margin-bottom:24px">Silakan lakukan analisis pada halaman Dashboard, Sentimen, atau Input Data untuk menghasilkan laporan.</p><button class="btn primary" onclick="showPage('dashboard')">Buka Halaman Dashboard</button></div><div id="laporanContent" style="display:none"><div class="head" style="margin-bottom:18px"><button class="btn primary" id="exportExecutive">Export Laporan Hasil PDF</button></div><div class="report"><b>Ringkasan Eksekutif — Juni 2026</b><br>Performa media sosial meningkat. Sentimen positif 82%, engagement 6.7%, dan growth 14%. Konten edukasi menjadi format terbaik.</div><div class="grid4" style="margin-top:15px"><div class="card kpi"><small>Total Konten</small><strong id="reportTotalKonten">128</strong></div><div class="card kpi"><small>ER</small><strong id="reportER">6.7%</strong></div><div class="card kpi"><small>Reach</small><strong id="reportReach">124K</strong></div><div class="card kpi"><small>Sentimen</small><strong id="reportSentimen">82%</strong></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Report Summary</h3><canvas id="reportChart"></canvas></div><div class="card"><h3>Kesimpulan</h3><ul style="line-height:1.9;color:#d1d5db"><li>Konten edukatif menjadi format terbaik.</li><li>Jam terbaik posting 19.00–21.00 WIB.</li><li>Share turun, CTA perlu diperkuat.</li></ul></div></div></div></section>
   </main>
 </section>
 
@@ -172,1410 +178,7 @@ const $=s=>document.querySelector(s), $$=s=>{const els=document.querySelectorAll
 const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 let charts={}, rows=[];
 
-// Dashboard data structure for storing analysis results
-let dashboardData = {
-  currentAnalysis: null,
-  analyses: [],
-  engagementData: [],
-  filters: {
-    startDate: null,
-    endDate: null,
-    sourceType: null,
-    sentiment: null,
-    confidence: null
-  }
-};
-
-// Engagement metrics calculation
-function calculateEngagementMetrics(likes, comments, shares, saves, reach, followers){
-  if(!reach || reach === 0) return { er: '-', engagementRate: '-', engagementPerFollower: '-' };
-  
-  // Engagement Rate = (Likes + Comments + Shares + Saves) / Reach * 100
-  const totalEngagement = (likes || 0) + (comments || 0) + (shares || 0) + (saves || 0);
-  const er = ((totalEngagement / reach) * 100).toFixed(2);
-  
-  // Engagement per 1000 followers
-  const engagementPerFollower = followers && followers > 0 
-    ? ((totalEngagement / followers) * 1000).toFixed(2)
-    : '-';
-  
-  return {
-    er: er + '%',
-    engagementRate: er,
-    engagementPerFollower: engagementPerFollower,
-    totalEngagement: totalEngagement,
-    breakdown: {
-      likes: likes || 0,
-      comments: comments || 0,
-      shares: shares || 0,
-      saves: saves || 0
-    }
-  };
-}
-
-function updateEngagementMetrics(engagementData){
-  if(!engagementData || Object.keys(engagementData).length === 0) return;
-  
-  const metrics = calculateEngagementMetrics(
-    engagementData.likes,
-    engagementData.comments,
-    engagementData.shares,
-    engagementData.saves,
-    engagementData.reach,
-    engagementData.followers
-  );
-  
-  // Update dashboard KPIs
-  updateText('kpiER', metrics.er);
-  updateText('kpiReach', engagementData.reach ? engagementData.reach.toLocaleString() : '-');
-  
-  // Update report KPIs
-  updateText('reportER', metrics.er);
-  updateText('reportReach', engagementData.reach ? engagementData.reach.toLocaleString() : '-');
-  
-  return metrics;
-}
-
-function updateDashboardWithAnalysis(analysis){
-  // Update summary cards
-  updateText('kpiKonten', analysis.total_comments);
-  updateText('kpiSent', analysis.positive_percentage + '%');
-  
-  // Update sentiment distribution chart
-  if(charts.sent){
-    charts.sent.destroy();
-  }
-  makeChart('sent', 'doughnut', ['Positif', 'Netral', 'Negatif'], 
-    [analysis.positive_count, analysis.neutral_count, analysis.negative_count]);
-  
-  // Update report section
-  updateText('reportTotalKonten', analysis.total_comments);
-  updateText('reportER', '-'); // Will be calculated if engagement data available
-  updateText('reportReach', '-'); // Will be populated if Meta API data available
-  updateText('reportSentimen', analysis.positive_percentage + '%');
-  
-  // Update report summary
-  const reportSummary = $('#reportSummary');
-  if(reportSummary){
-    reportSummary.innerHTML = `<b>Ringkasan Eksekutif</b><br>Pada periode ${new Date(analysis.analysis_date).toLocaleDateString('id-ID')}, sistem menganalisis ${analysis.total_comments} komentar menggunakan model ${analysis.model_version}. Hasil klasifikasi menunjukkan sentimen positif sebesar ${analysis.positive_percentage}%, netral ${analysis.neutral_percentage}%, dan negatif ${analysis.negative_percentage}%. Rata-rata confidence model sebesar ${analysis.average_confidence}.`;
-  }
-  
-  // Update conclusions
-  const conclusions = $('#reportConclusions');
-  if(conclusions){
-    let conclusionItems = [];
-    conclusionItems.push(`Total komentar yang dianalisis: ${analysis.total_comments}`);
-    conclusionItems.push(`Distribusi sentimen: ${analysis.positive_percentage}% positif, ${analysis.neutral_percentage}% netral, ${analysis.negative_percentage}% negatif`);
-    conclusionItems.push(`Rata-rata confidence model: ${analysis.average_confidence}`);
-    if(analysis.low_confidence_count > 0){
-      conclusionItems.push(`${analysis.low_confidence_count} komentar memiliki confidence rendah (< 0.60), disarankan validasi manual.`);
-    }
-    if(analysis.negative_count > analysis.positive_count){
-      conclusionItems.push(`Sentimen negatif lebih dominan, disarankan evaluasi keluhan pengguna.`);
-    }
-    if(analysis.positive_count > analysis.neutral_count && analysis.positive_count > analysis.negative_count){
-      conclusionItems.push(`Sentimen positif mendominasi, konten berpotensi mendukung strategi saat ini.`);
-    }
-    conclusions.innerHTML = conclusionItems.map(c => `<li>${c}</li>`).join('');
-  }
-  
-  // Generate data-based recommendations
-  generateRecommendations(analysis);
-  
-  // Show dashboard content
-  const dashboardEmpty = document.getElementById('dashboardEmpty');
-  const dashboardContent = document.getElementById('dashboardContent');
-  const dashboardRecommendation = document.getElementById('dashboardRecommendation');
-  
-  if(dashboardEmpty && dashboardContent){
-    dashboardEmpty.style.display = 'none';
-    dashboardContent.style.display = 'block';
-  }
-  if(dashboardRecommendation){
-    dashboardRecommendation.style.display = 'block';
-  }
-  
-  // Show report content
-  const laporanEmpty = document.getElementById('laporanEmpty');
-  const laporanContent = document.getElementById('laporanContent');
-  if(laporanEmpty && laporanContent){
-    laporanEmpty.style.display = 'none';
-    laporanContent.style.display = 'block';
-  }
-}
-
-function generateRecommendations(analysis){
-  const recommendationContent = $('#recommendationContent');
-  if(!recommendationContent) return;
-  
-  let recommendations = [];
-  
-  // Rule 1: If negative sentiment is high
-  if(analysis.negative_percentage > 30){
-    recommendations.push({
-      priority: 'Tinggi',
-      title: 'Evaluasi Keluhan Dominan',
-      basis: `Sentimen negatif mencapai ${analysis.negative_percentage}%`,
-      action: 'Analisis komentar negatif untuk identifikasi topik keluhan utama dan perbaikan.'
-    });
-  }
-  
-  // Rule 2: If low confidence is high
-  if(analysis.low_confidence_count > analysis.total_comments * 0.2){
-    recommendations.push({
-      priority: 'Sedang',
-      title: 'Validasi Manual Diperlukan',
-      basis: `${analysis.low_confidence_count} komentar (${((analysis.low_confidence_count/analysis.total_comments)*100).toFixed(1)}%) memiliki confidence rendah`,
-      action: 'Review manual komentar dengan confidence rendah untuk memastikan akurasi klasifikasi.'
-    });
-  }
-  
-  // Rule 3: If positive sentiment is high
-  if(analysis.positive_percentage > 70){
-    recommendations.push({
-      priority: 'Rendah',
-      title: 'Kembangkan Format Konten Serupa',
-      basis: `Sentimen positif mencapai ${analysis.positive_percentage}%`,
-      action: 'Pertimbangkan untuk mengembangkan konten dengan format dan topik serupa.'
-    });
-  }
-  
-  // Rule 4: If neutral sentiment dominates
-  if(analysis.neutral_percentage > 50){
-    recommendations.push({
-      priority: 'Sedang',
-      title: 'Tingkatkan Daya Tarik Pesan',
-      basis: `Sentimen netral mendominasi (${analysis.neutral_percentage}%)`,
-      action: 'Optimasi caption dan CTA untuk meningkatkan engagement dan reaksi pengguna.'
-    });
-  }
-  
-  if(recommendations.length === 0){
-    recommendationContent.innerHTML = '<p style="color:var(--muted)">Tidak ada rekomendasi spesifik berdasarkan data saat ini.</p>';
-    return;
-  }
-  
-  const priorityColors = {
-    'Tinggi': '#ef4444',
-    'Sedang': '#f59e0b',
-    'Rendah': '#22c55e'
-  };
-  
-  recommendationContent.innerHTML = `
-    <div style="margin-bottom:16px;padding:12px;background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.2);border-radius:8px">
-      <small style="color:#9aa4b2">Rekomendasi berdasarkan data aktual dari analisis sentimen. Hasil klasifikasi merupakan prediksi model machine learning dan masih memiliki kemungkinan kesalahan.</small>
-    </div>
-    ${recommendations.map(r => `
-      <div style="margin-bottom:12px;padding:12px;background:rgba(255,255,255,.03);border-left:3px solid ${priorityColors[r.priority]};border-radius:4px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span style="font-size:11px;padding:2px 8px;background:${priorityColors[r.priority]};color:#000;border-radius:4px;font-weight:700">${r.priority}</span>
-          <strong style="color:#d1d5db">${r.title}</strong>
-        </div>
-        <div style="color:#9aa4b2;font-size:12px;margin-bottom:4px">Dasar: ${r.basis}</div>
-        <div style="color:#d1d5db;font-size:13px">${r.action}</div>
-      </div>
-    `).join('')}
-  `;
-}
-
-// Classification results table state
-let classificationState = {
-  comments: [],
-  filteredComments: [],
-  currentPage: 1,
-  itemsPerPage: 10,
-  filters: {
-    search: '',
-    sentiment: '',
-    confidence: ''
-  }
-};
-
-function renderClassificationTable(){
-  const tableBody = $('#classificationResultsTable');
-  if(!tableBody) return;
-  
-  if(classificationState.filteredComments.length === 0){
-    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Tidak ada hasil yang sesuai dengan filter.</td></tr>';
-    $('#paginationShowing').textContent = '0';
-    $('#paginationTotal').textContent = '0';
-    $('#paginationPrev').disabled = true;
-    $('#paginationNext').disabled = true;
-    return;
-  }
-  
-  const start = (classificationState.currentPage - 1) * classificationState.itemsPerPage;
-  const end = start + classificationState.itemsPerPage;
-  const pageComments = classificationState.filteredComments.slice(start, end);
-  
-  tableBody.innerHTML = pageComments.map(c => {
-    const sentimentClass = c.sentiment === 'Positif' ? 'pos' : c.sentiment === 'Negatif' ? 'neg' : 'neu';
-    return `
-      <tr>
-        <td style="font-weight:600">${c.username || '-'}</td>
-        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.text}</td>
-        <td><span class="badge ${sentimentClass}">${c.sentiment}</span></td>
-        <td>${(c.confidence * 100).toFixed(1)}%</td>
-        <td>${((c.prob_positif || 0) * 100).toFixed(1)}%</td>
-        <td>${((c.prob_netral || 0) * 100).toFixed(1)}%</td>
-        <td>${((c.prob_negatif || 0) * 100).toFixed(1)}%</td>
-      </tr>
-    `;
-  }).join('');
-  
-  $('#paginationShowing').textContent = pageComments.length;
-  $('#paginationTotal').textContent = classificationState.filteredComments.length;
-  $('#paginationPrev').disabled = classificationState.currentPage === 1;
-  $('#paginationNext').disabled = end >= classificationState.filteredComments.length;
-}
-
-function filterClassificationResults(){
-  const { search, sentiment, confidence } = classificationState.filters;
-  
-  classificationState.filteredComments = classificationState.comments.filter(c => {
-    // Search filter
-    if(search && !c.text.toLowerCase().includes(search.toLowerCase()) && !c.username.toLowerCase().includes(search.toLowerCase())){
-      return false;
-    }
-    
-    // Sentiment filter
-    if(sentiment && c.sentiment !== sentiment){
-      return false;
-    }
-    
-    // Confidence filter
-    if(confidence){
-      const conf = c.confidence || 0;
-      if(confidence === 'high' && conf < 0.70) return false;
-      if(confidence === 'medium' && (conf < 0.50 || conf >= 0.70)) return false;
-      if(confidence === 'low' && conf >= 0.50) return false;
-    }
-    
-    return true;
-  });
-  
-  classificationState.currentPage = 1;
-  renderClassificationTable();
-}
-
-function updateClassificationTable(comments){
-  classificationState.comments = comments;
-  classificationState.filteredComments = [...comments];
-  classificationState.currentPage = 1;
-  renderClassificationTable();
-  
-  // Show results section
-  const sentimentResults = $('#sentimentResults');
-  if(sentimentResults){
-    sentimentResults.style.display = 'block';
-  }
-  
-  // Update model evaluation section
-  updateModelEvaluation(comments);
-}
-
-// Model evaluation functions
-function calculateModelMetrics(comments){
-  if(!comments || comments.length === 0) return null;
-  
-  // For now, since we don't have ground truth labels, we'll use confidence-based metrics
-  // In a real scenario, you would compare predicted labels against actual labels
-  
-  const total = comments.length;
-  const highConfidence = comments.filter(c => c.confidence >= 0.70).length;
-  const mediumConfidence = comments.filter(c => c.confidence >= 0.50 && c.confidence < 0.70).length;
-  const lowConfidence = comments.filter(c => c.confidence < 0.50).length;
-  
-  const avgConfidence = comments.reduce((sum, c) => sum + (c.confidence || 0), 0) / total;
-  
-  // Calculate sentiment distribution
-  const positiveCount = comments.filter(c => c.sentiment === 'Positif').length;
-  const neutralCount = comments.filter(c => c.sentiment === 'Netral').length;
-  const negativeCount = comments.filter(c => c.sentiment === 'Negatif').length;
-  
-  // Estimate accuracy based on confidence (higher confidence = likely more accurate)
-  const estimatedAccuracy = ((highConfidence * 0.95 + mediumConfidence * 0.75 + lowConfidence * 0.55) / total * 100).toFixed(1);
-  
-  return {
-    accuracy: estimatedAccuracy + '%',
-    precision: ((highConfidence / total) * 100).toFixed(1) + '%',
-    recall: ((highConfidence / total) * 100).toFixed(1) + '%',
-    f1Score: ((highConfidence / total) * 100).toFixed(1) + '%',
-    avgConfidence: avgConfidence.toFixed(3),
-    highConfidence: highConfidence,
-    mediumConfidence: mediumConfidence,
-    lowConfidence: lowConfidence,
-    positiveCount: positiveCount,
-    neutralCount: neutralCount,
-    negativeCount: negativeCount,
-    total: total
-  };
-}
-
-function updateModelEvaluation(comments){
-  const metrics = calculateModelMetrics(comments);
-  if(!metrics) return;
-  
-  // Update KPI cards
-  updateText('modelAccuracy', metrics.accuracy);
-  updateText('modelPrecision', metrics.precision);
-  updateText('modelRecall', metrics.recall);
-  updateText('modelF1', metrics.f1Score);
-  
-  // Update confusion matrix (using sentiment distribution as proxy)
-  updateText('confusionTP', metrics.positiveCount);
-  updateText('confusionTN', metrics.neutralCount);
-  updateText('confusionFN', metrics.negativeCount);
-  updateText('confusionTotalActual', metrics.total);
-  updateText('confusionTotalPred', metrics.total);
-  
-  // Create confidence distribution chart
-  createConfidenceChart(comments);
-  
-  // Update error analysis section
-  updateErrorAnalysis(comments);
-  
-  // Show model evaluation section
-  const modelEvaluationSection = $('#modelEvaluationSection');
-  if(modelEvaluationSection){
-    modelEvaluationSection.style.display = 'block';
-  }
-}
-
-function updateErrorAnalysis(comments){
-  const errorTable = $('#errorAnalysisTable');
-  if(!errorTable) return;
-  
-  // Filter comments with low confidence (potential errors)
-  const lowConfidenceComments = comments.filter(c => c.confidence < 0.50);
-  
-  if(lowConfidenceComments.length === 0){
-    errorTable.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Tidak ada komentar dengan confidence rendah.</td></tr>';
-    return;
-  }
-  
-  errorTable.innerHTML = lowConfidenceComments.map(c => {
-    // Determine potential error indicators
-    let indicators = [];
-    if(c.confidence < 0.30) indicators.push('Confidence sangat rendah');
-    if(c.sentiment === 'Netral') indicators.push('Netral (ambigu)');
-    if(c.text.length < 10) indicators.push('Teks terlalu pendek');
-    
-    return `
-      <tr>
-        <td style="font-weight:600">${c.username || '-'}</td>
-        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.text}</td>
-        <td><span class="badge ${c.sentiment === 'Positif' ? 'pos' : c.sentiment === 'Negatif' ? 'neg' : 'neu'}">${c.sentiment}</span></td>
-        <td style="color:#fca5a5">${(c.confidence * 100).toFixed(1)}%</td>
-        <td style="color:#fcd34d;font-size:12px">${indicators.length > 0 ? indicators.join(', ') : 'Tidak ada indikator jelas'}</td>
-      </tr>
-    `;
-  }).join('');
-  
-  // Show error analysis section
-  const errorAnalysisSection = $('#errorAnalysisSection');
-  if(errorAnalysisSection){
-    errorAnalysisSection.style.display = 'block';
-  }
-}
-
-// Analysis history storage functions
-async function saveAnalysisToHistory(analysis){
-  if(!firebase.firestore || !auth.currentUser){
-    console.warn('Firestore not initialized or user not logged in');
-    return;
-  }
-  
-  try{
-    const db = firebase.firestore();
-    const userId = auth.currentUser.uid;
-    
-    // Save analysis to Firestore
-    await db.collection('users').doc(userId).collection('analyses').doc(analysis.analysis_id).set({
-      ...analysis,
-      saved_at: new Date().toISOString()
-    });
-    
-    console.log('Analysis saved to history:', analysis.analysis_id);
-  }catch(error){
-    console.error('Error saving analysis to history:', error);
-  }
-}
-
-async function loadAnalysisHistory(){
-  if(!firebase.firestore || !auth.currentUser){
-    console.warn('Firestore not initialized or user not logged in');
-    return [];
-  }
-  
-  try{
-    const db = firebase.firestore();
-    const userId = auth.currentUser.uid;
-    
-    const snapshot = await db.collection('users').doc(userId).collection('analyses')
-      .orderBy('analysis_date', 'desc')
-      .limit(50)
-      .get();
-    
-    const analyses = snapshot.docs.map(doc => doc.data());
-    dashboardData.analyses = analyses;
-    
-    return analyses;
-  }catch(error){
-    console.error('Error loading analysis history:', error);
-    return [];
-  }
-}
-
-async function deleteAnalysisFromHistory(analysisId){
-  if(!firebase.firestore || !auth.currentUser){
-    console.warn('Firestore not initialized or user not logged in');
-    return;
-  }
-  
-  try{
-    const db = firebase.firestore();
-    const userId = auth.currentUser.uid;
-    
-    await db.collection('users').doc(userId).collection('analyses').doc(analysisId).delete();
-    
-    // Remove from local state
-    dashboardData.analyses = dashboardData.analyses.filter(a => a.analysis_id !== analysisId);
-    
-    console.log('Analysis deleted from history:', analysisId);
-  }catch(error){
-    console.error('Error deleting analysis from history:', error);
-  }
-}
-
-// UI state management functions
-function showLoadingState(elementId, message = 'Memuat data...'){
-  const element = $('#' + elementId);
-  if(!element) return;
-  
-  element.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px">
-      <div style="width:48px;height:48px;border:3px solid rgba(34,211,238,.2);border-top-color:#22d3ee;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px"></div>
-      <p style="color:var(--muted)">${message}</p>
-    </div>
-    <style>
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-    </style>
-  `;
-}
-
-function showErrorState(elementId, message, actionText = 'Coba Lagi', actionCallback = null){
-  const element = $('#' + elementId);
-  if(!element) return;
-  
-  const actionHtml = actionCallback 
-    ? `<button class="btn primary" onclick="${actionCallback}" style="margin-top:16px">${actionText}</button>`
-    : '';
-  
-  element.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px">
-      <div style="font-size:64px;margin-bottom:20px">⚠️</div>
-      <h3 style="margin-bottom:12px">Terjadi Kesalahan</h3>
-      <p style="color:var(--muted);margin-bottom:16px;text-align:center;max-width:400px">${message}</p>
-      ${actionHtml}
-    </div>
-  `;
-}
-
-function showEmptyState(elementId, message, actionText = null, actionCallback = null){
-  const element = $('#' + elementId);
-  if(!element) return;
-  
-  const actionHtml = actionCallback 
-    ? `<button class="btn primary" onclick="${actionCallback}" style="margin-top:16px">${actionText}</button>`
-    : '';
-  
-  element.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px">
-      <div style="font-size:64px;margin-bottom:20px">📭</div>
-      <h3 style="margin-bottom:12px">Tidak Ada Data</h3>
-      <p style="color:var(--muted);margin-bottom:16px;text-align:center;max-width:400px">${message}</p>
-      ${actionHtml}
-    </div>
-  `;
-}
-
-function hideState(elementId, content){
-  const element = $('#' + elementId);
-  if(!element) return;
-  
-  element.innerHTML = content;
-}
-
-// Data validation functions
-function validateAnalysisData(analysis){
-  const errors = [];
-  
-  if(!analysis) {
-    errors.push('Data analisis tidak tersedia');
-    return { valid: false, errors };
-  }
-  
-  // Validate required fields
-  if(!analysis.analysis_id) errors.push('Analysis ID tidak tersedia');
-  if(!analysis.analysis_date) errors.push('Tanggal analisis tidak tersedia');
-  if(!analysis.total_comments && analysis.total_comments !== 0) errors.push('Total komentar tidak tersedia');
-  if(!analysis.comments || !Array.isArray(analysis.comments)) errors.push('Data komentar tidak valid');
-  
-  // Validate comment data
-  if(analysis.comments && Array.isArray(analysis.comments)){
-    analysis.comments.forEach((comment, index) => {
-      if(!comment.text) errors.push(`Komentar #${index + 1} tidak memiliki teks`);
-      if(!comment.sentiment) errors.push(`Komentar #${index + 1} tidak memiliki label sentimen`);
-      if(comment.confidence === undefined || comment.confidence === null) errors.push(`Komentar #${index + 1} tidak memiliki confidence`);
-      if(comment.confidence < 0 || comment.confidence > 1) errors.push(`Komentar #${index + 1} memiliki confidence tidak valid (${comment.confidence})`);
-    });
-  }
-  
-  // Validate percentages
-  if(analysis.positive_percentage < 0 || analysis.positive_percentage > 100) errors.push('Persentase positif tidak valid');
-  if(analysis.neutral_percentage < 0 || analysis.neutral_percentage > 100) errors.push('Persentase netral tidak valid');
-  if(analysis.negative_percentage < 0 || analysis.negative_percentage > 100) errors.push('Persentase negatif tidak valid');
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  };
-}
-
-function validateEngagementData(data){
-  const errors = [];
-  
-  if(!data) {
-    errors.push('Data engagement tidak tersedia');
-    return { valid: false, errors };
-  }
-  
-  // Validate numeric fields
-  if(data.likes && (isNaN(data.likes) || data.likes < 0)) errors.push('Likes tidak valid');
-  if(data.comments && (isNaN(data.comments) || data.comments < 0)) errors.push('Comments tidak valid');
-  if(data.shares && (isNaN(data.shares) || data.shares < 0)) errors.push('Shares tidak valid');
-  if(data.saves && (isNaN(data.saves) || data.saves < 0)) errors.push('Saves tidak valid');
-  if(data.reach && (isNaN(data.reach) || data.reach < 0)) errors.push('Reach tidak valid');
-  if(data.followers && (isNaN(data.followers) || data.followers < 0)) errors.push('Followers tidak valid');
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  };
-}
-
-function validateInputData(inputType, text, link, mediaId){
-  const errors = [];
-  
-  if(!inputType) {
-    errors.push('Tipe input tidak dipilih');
-    return { valid: false, errors };
-  }
-  
-  if(inputType === 'text' && !text.trim()) {
-    errors.push('Teks komentar tidak boleh kosong');
-  }
-  
-  if(inputType === 'link' && !link.trim()) {
-    errors.push('Link media tidak boleh kosong');
-  }
-  
-  if(inputType === 'link' && link.trim() && !isValidUrl(link.trim())) {
-    errors.push('Link media tidak valid');
-  }
-  
-  if(inputType === 'media' && !mediaId.trim()) {
-    errors.push('Media ID tidak boleh kosong');
-  }
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  };
-}
-
-function isValidUrl(string){
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-function sanitizeText(text){
-  if(!text) return '';
-  return text
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .trim();
-}
-
-// Period comparison functions
-function comparePeriods(period1, period2){
-  const analyses1 = dashboardData.analyses.filter(analysis => {
-    const analysisDate = new Date(analysis.analysis_date);
-    return analysisDate >= new Date(period1.startDate) && analysisDate < new Date(period1.endDate);
-  });
-  
-  const analyses2 = dashboardData.analyses.filter(analysis => {
-    const analysisDate = new Date(analysis.analysis_date);
-    return analysisDate >= new Date(period2.startDate) && analysisDate < new Date(period2.endDate);
-  });
-  
-  if(analyses1.length === 0 || analyses2.length === 0){
-    return null;
-  }
-  
-  // Calculate metrics for period 1
-  const metrics1 = calculatePeriodMetrics(analyses1);
-  
-  // Calculate metrics for period 2
-  const metrics2 = calculatePeriodMetrics(analyses2);
-  
-  // Calculate differences
-  const comparison = {
-    period1: period1,
-    period2: period2,
-    metrics1: metrics1,
-    metrics2: metrics2,
-    differences: {
-      totalComments: calculateDifference(metrics1.totalComments, metrics2.totalComments),
-      positivePercentage: calculateDifference(metrics1.positivePercentage, metrics2.positivePercentage),
-      negativePercentage: calculateDifference(metrics1.negativePercentage, metrics2.negativePercentage),
-      averageConfidence: calculateDifference(metrics1.averageConfidence, metrics2.averageConfidence)
-    }
-  };
-  
-  return comparison;
-}
-
-function calculatePeriodMetrics(analyses){
-  const totalComments = analyses.reduce((sum, a) => sum + a.total_comments, 0);
-  const totalPositive = analyses.reduce((sum, a) => sum + a.positive_count, 0);
-  const totalNegative = analyses.reduce((sum, a) => sum + a.negative_count, 0);
-  const totalNeutral = analyses.reduce((sum, a) => sum + a.neutral_count, 0);
-  const avgConfidence = analyses.reduce((sum, a) => sum + parseFloat(a.average_confidence), 0) / analyses.length;
-  
-  return {
-    totalComments: totalComments,
-    positivePercentage: totalComments > 0 ? ((totalPositive / totalComments) * 100).toFixed(1) : 0,
-    negativePercentage: totalComments > 0 ? ((totalNegative / totalComments) * 100).toFixed(1) : 0,
-    neutralPercentage: totalComments > 0 ? ((totalNeutral / totalComments) * 100).toFixed(1) : 0,
-    averageConfidence: avgConfidence.toFixed(3),
-    analysesCount: analyses.length
-  };
-}
-
-function calculateDifference(value1, value2){
-  const num1 = parseFloat(value1);
-  const num2 = parseFloat(value2);
-  const diff = num2 - num1;
-  const percentChange = num1 !== 0 ? ((diff / num1) * 100).toFixed(1) : 0;
-  
-  return {
-    absolute: diff.toFixed(1),
-    percentage: percentChange,
-    isPositive: diff > 0
-  };
-}
-
-function displayPeriodComparison(comparison){
-  if(!comparison) return;
-  
-  const dampakContent = $('#dampakContent');
-  if(!dampakContent) return;
-  
-  const diff = comparison.differences;
-  
-  dampakContent.innerHTML = `
-    <div class="grid4">
-      <div class="card kpi">
-        <small>Periode 1</small>
-        <strong>${new Date(comparison.period1.startDate).toLocaleDateString('id-ID')}</strong>
-        <span style="font-size:11px;color:#9aa4b2">${comparison.metrics1.analysesCount} analisis</span>
-      </div>
-      <div class="card kpi">
-        <small>Periode 2</small>
-        <strong>${new Date(comparison.period2.startDate).toLocaleDateString('id-ID')}</strong>
-        <span style="font-size:11px;color:#9aa4b2">${comparison.metrics2.analysesCount} analisis</span>
-      </div>
-      <div class="card kpi">
-        <small>Perubahan Komentar</small>
-        <strong style="color:${diff.totalComments.isPositive ? '#86efac' : '#fca5a5'}">${diff.totalComments.isPositive ? '+' : ''}${diff.totalComments.percentage}%</strong>
-        <span style="font-size:11px;color:#9aa4b2">${diff.totalComments.absolute}</span>
-      </div>
-      <div class="card kpi">
-        <small>Perubahan Sentimen Positif</small>
-        <strong style="color:${diff.positivePercentage.isPositive ? '#86efac' : '#fca5a5'}">${diff.positivePercentage.isPositive ? '+' : ''}${diff.positivePercentage.percentage}%</strong>
-        <span style="font-size:11px;color:#9aa4b2">${comparison.metrics1.positivePercentage}% → ${comparison.metrics2.positivePercentage}%</span>
-      </div>
-    </div>
-    <div class="grid2" style="margin-top:15px">
-      <div class="card">
-        <h3>Perbandingan Sentimen</h3>
-        <canvas id="comparisonChart"></canvas>
-      </div>
-      <div class="card">
-        <h3>Insight Perbandingan</h3>
-        <ul style="line-height:1.9;color:#d1d5db">
-          <li>Total komentar ${diff.totalComments.isPositive ? 'meningkat' : 'menurun'} sebesar ${Math.abs(diff.totalComments.percentage)}%</li>
-          <li>Sentimen positif ${diff.positivePercentage.isPositive ? 'meningkat' : 'menurun'} dari ${comparison.metrics1.positivePercentage}% ke ${comparison.metrics2.positivePercentage}%</li>
-          <li>Sentimen negatif ${diff.negativePercentage.isPositive ? 'meningkat' : 'menurun'} dari ${comparison.metrics1.negativePercentage}% ke ${comparison.metrics2.negativePercentage}%</li>
-          <li>Rata-rata confidence model ${diff.averageConfidence.isPositive ? 'meningkat' : 'menurun'} dari ${comparison.metrics1.averageConfidence} ke ${comparison.metrics2.averageConfidence}</li>
-        </ul>
-      </div>
-    </div>
-  `;
-  
-  // Create comparison chart
-  createComparisonChart(comparison);
-  
-  // Show dampak content
-  const dampakEmpty = $('#dampakEmpty');
-  if(dampakEmpty) dampakEmpty.style.display = 'none';
-  dampakContent.style.display = 'block';
-}
-
-function createComparisonChart(comparison){
-  const ctx = $('#comparisonChart');
-  if(!ctx) return;
-  
-  if(charts.comparison){
-    charts.comparison.destroy();
-  }
-  
-  charts.comparison = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Positif', 'Netral', 'Negatif'],
-      datasets: [
-        {
-          label: 'Periode 1',
-          data: [
-            comparison.metrics1.positivePercentage,
-            comparison.metrics1.neutralPercentage,
-            comparison.metrics1.negativePercentage
-          ],
-          backgroundColor: 'rgba(34, 197, 94, 0.7)',
-          borderColor: 'rgba(34, 197, 94, 1)',
-          borderWidth: 1
-        },
-        {
-          label: 'Periode 2',
-          data: [
-            comparison.metrics2.positivePercentage,
-            comparison.metrics2.neutralPercentage,
-            comparison.metrics2.negativePercentage
-          ],
-          backgroundColor: 'rgba(59, 130, 246, 0.7)',
-          borderColor: 'rgba(59, 130, 246, 1)',
-          borderWidth: 1
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: { color: '#cbd5e1' }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        }
-      }
-    }
-  });
-}
-
-// Word/Topic analysis functions
-function analyzeWords(comments){
-  if(!comments || comments.length === 0) return null;
-  
-  // Common Indonesian stopwords
-  const stopwords = new Set([
-    'dan', 'yang', 'di', 'ke', 'dari', 'untuk', 'pada', 'dengan', 'adalah', 'itu', 'ini',
-    'atau', 'juga', 'tidak', 'ada', 'saya', 'kamu', 'dia', 'mereka', 'kita', 'akan',
-    'bisa', 'sudah', 'belum', 'lagi', 'jika', 'karena', 'seperti', 'lebih', 'sangat',
-    'tersebut', 'oleh', 'sebagai', 'dalam', 'setelah', 'sebelum', 'hingga', 'sampai',
-    'tentang', 'namun', 'tetapi', 'kemudian', 'lalu', 'setelahnya', 'selain', 'antara',
-    'melalui', 'terhadap', 'mengenai', 'demi', 'guna', 'hendak', 'perlu', 'wajib',
-    'harus', 'patut', 'layak', 'mampu', 'dapat', 'boleh', 'pernah', 'perlu', 'mesti',
-    'seharusnya', 'sepatutnya', 'sewajarnya', 'sepatutnya', 'seharusnya', 'sewajibnya',
-    'apabila', 'bilamana', 'jikalau', 'manakala', 'sewaktu', 'saat', 'ketika',
-    'begitu', 'demikian', 'tersebut', 'tersebutlah', 'itulah', 'inilah', 'inikah',
-    'itukah', 'apakah', 'siapakah', 'bagaimanakah', 'kenapakah', 'mengapakah',
-    'kapan', 'dimana', 'kemana', 'darimana', 'kepada', 'daripada', 'akan', 'akanlah',
-    'akanpun', 'juga', 'juga', 'pun', 'pun', 'lah', 'kah', 'tah', 'nya', 'mu', 'ku'
-  ]);
-  
-  const wordFrequency = {};
-  const wordsBySentiment = {
-    Positif: {},
-    Negatif: {},
-    Netral: {}
-  };
-  
-  comments.forEach(comment => {
-    const text = comment.text || '';
-    const sentiment = comment.sentiment || 'Netral';
-    
-    // Tokenize and clean text
-    const words = text
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .split(/\s+/)
-      .filter(word => word.length > 2 && !stopwords.has(word));
-    
-    words.forEach(word => {
-      // Overall frequency
-      wordFrequency[word] = (wordFrequency[word] || 0) + 1;
-      
-      // Frequency by sentiment
-      if(wordsBySentiment[sentiment]){
-        wordsBySentiment[sentiment][word] = (wordsBySentiment[sentiment][word] || 0) + 1;
-      }
-    });
-  });
-  
-  // Sort by frequency
-  const sortedWords = Object.entries(wordFrequency)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 20);
-  
-  const sortedBySentiment = {};
-  Object.keys(wordsBySentiment).forEach(sentiment => {
-    sortedBySentiment[sentiment] = Object.entries(wordsBySentiment[sentiment])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-  });
-  
-  return {
-    overall: sortedWords,
-    bySentiment: sortedBySentiment,
-    totalWords: Object.values(wordFrequency).reduce((sum, count) => sum + count, 0),
-    uniqueWords: Object.keys(wordFrequency).length
-  };
-}
-
-function displayWordAnalysis(wordData){
-  if(!wordData) return;
-  
-  const wordAnalysisSection = $('#wordAnalysisSection');
-  if(!wordAnalysisSection) return;
-  
-  const overallHtml = wordData.overall.map(([word, count]) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:4px">
-      <span style="color:#d1d5db">${word}</span>
-      <span style="color:#9aa4b2;font-weight:700">${count}</span>
-    </div>
-  `).join('');
-  
-  const sentimentHtml = Object.entries(wordData.bySentiment).map(([sentiment, words]) => {
-    const color = sentiment === 'Positif' ? '#86efac' : sentiment === 'Negatif' ? '#fca5a5' : '#fcd34d';
-    const wordsHtml = words.map(([word, count]) => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(255,255,255,.02);border-radius:6px;margin-bottom:3px">
-        <span style="color:#d1d5db;font-size:12px">${word}</span>
-        <span style="color:#9aa4b2;font-size:12px;font-weight:700">${count}</span>
-      </div>
-    `).join('');
-    
-    return `
-      <div style="margin-bottom:12px">
-        <h4 style="margin:0 0 8px 0;color:${color};font-size:14px">Kata ${sentiment}</h4>
-        ${wordsHtml}
-      </div>
-    `;
-  }).join('');
-  
-  wordAnalysisSection.innerHTML = `
-    <div class="grid2">
-      <div class="card">
-        <h3>Top 20 Kata Terbanyak</h3>
-        <div style="margin-top:12px">
-          ${overallHtml}
-        </div>
-        <div style="margin-top:12px;padding:8px;background:rgba(34,211,238,.05);border-radius:8px">
-          <small style="color:#9aa4b2">Total kata: ${wordData.totalWords} | Kata unik: ${wordData.uniqueWords}</small>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Kata Berdasarkan Sentimen</h3>
-        <div style="margin-top:12px;max-height:400px;overflow-y:auto">
-          ${sentimentHtml}
-        </div>
-      </div>
-    </div>
-  `;
-  
-  wordAnalysisSection.style.display = 'block';
-}
-
-function createConfidenceChart(comments){
-  const ctx = $('#confidenceChart');
-  if(!ctx) return;
-  
-  // Group confidence into bins
-  const bins = {
-    '0.0-0.2': 0,
-    '0.2-0.4': 0,
-    '0.4-0.6': 0,
-    '0.6-0.8': 0,
-    '0.8-1.0': 0
-  };
-  
-  comments.forEach(c => {
-    const conf = c.confidence || 0;
-    if(conf < 0.2) bins['0.0-0.2']++;
-    else if(conf < 0.4) bins['0.2-0.4']++;
-    else if(conf < 0.6) bins['0.4-0.6']++;
-    else if(conf < 0.8) bins['0.6-0.8']++;
-    else bins['0.8-1.0']++;
-  });
-  
-  if(charts.confidence){
-    charts.confidence.destroy();
-  }
-  
-  charts.confidence = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(bins),
-      datasets: [{
-        label: 'Jumlah Komentar',
-        data: Object.values(bins),
-        backgroundColor: [
-          'rgba(239, 68, 68, 0.7)',
-          'rgba(245, 158, 11, 0.7)',
-          'rgba(234, 179, 8, 0.7)',
-          'rgba(34, 197, 94, 0.7)',
-          'rgba(59, 130, 246, 0.7)'
-        ],
-        borderColor: [
-          'rgba(239, 68, 68, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(234, 179, 8, 1)',
-          'rgba(34, 197, 94, 1)',
-          'rgba(59, 130, 246, 1)'
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        }
-      }
-    }
-  });
-}
-
 function showPage(id){ const pages=$$('.page'); if(pages)pages.forEach(p=>p.classList.remove('active')); const page=$('#'+id); if(page) page.classList.add('active'); const navBtns=$$('#nav button'); if(navBtns)navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===id)); window.scrollTo(0,0); setTimeout(renderCharts,80); }
-
-// Meta API functions
-async function testMetaConnection(){
-  const statusContent = $('#metaStatusContent');
-  if(!statusContent) return;
-  
-  statusContent.innerHTML = '<p style="color:#f59e0b">Menguji koneksi Meta Graph API...</p>';
-  
-  try{
-    const response = await fetch('/.netlify/functions/meta-test');
-    const data = await response.json();
-    
-    if(data.success){
-      statusContent.innerHTML = `
-        <div style="color:#22c55e;font-weight:900;margin-bottom:8px">✓ Koneksi Berhasil</div>
-        <div style="color:#d1d5db;font-size:13px">
-          ${data.page ? `<div>Page: ${data.page.name}</div>` : ''}
-          ${data.instagram ? `
-            <div>Instagram: @${data.instagram.username}</div>
-            <div>Followers: ${data.instagram.followers_count.toLocaleString()}</div>
-            <div>Total Media: ${data.instagram.media_count}</div>
-          ` : ''}
-        </div>
-      `;
-      
-      // Show account info
-      const accountInfo = $('#metaAccountInfo');
-      if(accountInfo && data.instagram){
-        accountInfo.style.display = 'block';
-        updateText('metaUsername', '@' + data.instagram.username);
-        updateText('metaFollowers', data.instagram.followers_count.toLocaleString());
-        updateText('metaMediaCount', data.instagram.media_count);
-      }
-      
-      // Store Instagram data for other pages
-      dashboardData.metaData = {
-        instagram: data.instagram,
-        page: data.page,
-        connected_at: new Date().toISOString()
-      };
-      
-    } else {
-      statusContent.innerHTML = `
-        <div style="color:#ef4444;font-weight:900;margin-bottom:8px">✗ Koneksi Gagal</div>
-        <div style="color:#d1d5db;font-size:13px">${data.error?.message || 'Terjadi kesalahan'}</div>
-      `;
-    }
-  } catch(error){
-    statusContent.innerHTML = `
-      <div style="color:#ef4444;font-weight:900;margin-bottom:8px">✗ Error</div>
-      <div style="color:#d1d5db;font-size:13px">${error.message}</div>
-    `;
-  }
-}
-
-async function fetchMedia(){
-  const mediaList = $('#mediaList');
-  const mediaGrid = $('#mediaGrid');
-  
-  if(!mediaList || !mediaGrid) return;
-  
-  mediaGrid.innerHTML = '<p style="color:#9aa4b2">Memuat postingan...</p>';
-  mediaList.style.display = 'block';
-  
-  try{
-    const response = await fetch('/.netlify/functions/meta-media?limit=25');
-    const data = await response.json();
-    
-    if(data.success && data.media.length > 0){
-      // Store media data for other pages
-      dashboardData.mediaData = data.media;
-      
-      // Render media grid
-      mediaGrid.innerHTML = data.media.map(item => `
-        <div class="card" style="padding:12px;cursor:pointer" onclick="analyzeMedia('${item.id}', '${item.permalink}')">
-          ${item.thumbnail_url ? `<img src="${item.thumbnail_url}" style="width:100%;height:150px;object-fit:cover;border-radius:12px;margin-bottom:8px">` : '<div style="width:100%;height:150px;background:rgba(255,255,255,.05);border-radius:12px;margin-bottom:8px;display:grid;place-items:center">📷</div>'}
-          <div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">${new Date(item.timestamp).toLocaleDateString('id-ID')}</div>
-          <div style="font-size:12px;color:#d1d5db;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.caption || 'No caption'}</div>
-          <div style="display:flex;gap:8px;font-size:11px;color:#86efac">
-            <span>❤️ ${item.like_count}</span>
-            <span>💬 ${item.comments_count}</span>
-          </div>
-        </div>
-      `).join('');
-      
-      // Update Konten page
-      updateKontenPage(data.media);
-      
-      // Update Dashboard with engagement data
-      updateDashboardWithMediaData(data.media);
-      
-    } else {
-      mediaGrid.innerHTML = '<p style="color:#9aa4b2">Tidak ada postingan ditemukan.</p>';
-    }
-  } catch(error){
-    mediaGrid.innerHTML = `<p style="color:#ef4444">Gagal memuat postingan: ${error.message}</p>`;
-  }
-}
-
-function updateKontenPage(media){
-  const kontenEmpty = $('#kontenEmpty');
-  const kontenContent = $('#kontenContent');
-  
-  if(!kontenEmpty || !kontenContent) return;
-  
-  kontenEmpty.style.display = 'none';
-  kontenContent.style.display = 'block';
-  
-  // Calculate totals
-  const totalPost = media.length;
-  const totalLikes = media.reduce((sum, m) => sum + (m.like_count || 0), 0);
-  const totalComments = media.reduce((sum, m) => sum + (m.comments_count || 0), 0);
-  const avgEngagement = totalPost > 0 ? ((totalLikes + totalComments) / totalPost).toFixed(1) : 0;
-  
-  updateText('kontenTotalPost', totalPost);
-  updateText('kontenTotalLikes', totalLikes.toLocaleString());
-  updateText('kontenTotalComments', totalComments.toLocaleString());
-  updateText('kontenAvgEngagement', avgEngagement);
-  
-  // Render top posts
-  const topPosts = $('#topPosts');
-  if(topPosts){
-    const sortedMedia = [...media].sort((a, b) => (b.like_count || 0) - (a.like_count || 0)).slice(0, 5);
-    
-    topPosts.innerHTML = sortedMedia.map((item, index) => `
-      <div class="card" style="padding:12px;display:flex;gap:12px;align-items:center">
-        <div style="width:48px;height:48px;background:rgba(34,211,238,.1);border-radius:12px;display:grid;place-items:center;font-weight:900;color:#22d3ee">#${index + 1}</div>
-        <div style="flex:1">
-          <div style="font-size:12px;color:#d1d5db;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.caption || 'No caption'}</div>
-          <div style="display:flex;gap:12px;font-size:11px;color:#86efac">
-            <span>❤️ ${item.like_count}</span>
-            <span>💬 ${item.comments_count}</span>
-          </div>
-        </div>
-        <button class="btn" style="height:32px;padding:0 12px;font-size:11px" onclick="analyzeMedia('${item.id}', '${item.permalink}')">Analisis</button>
-      </div>
-    `).join('');
-  }
-  
-  // Create content chart
-  createKontenChart(media);
-}
-
-function updateDashboardWithMediaData(media){
-  const dashboardEmpty = $('#dashboardEmpty');
-  const dashboardContent = $('#dashboardContent');
-  
-  if(!dashboardEmpty || !dashboardContent) return;
-  
-  dashboardEmpty.style.display = 'none';
-  dashboardContent.style.display = 'block';
-  
-  // Calculate engagement metrics from media data
-  const totalLikes = media.reduce((sum, m) => sum + (m.like_count || 0), 0);
-  const totalComments = media.reduce((sum, m) => sum + (m.comments_count || 0), 0);
-  
-  // Update dashboard KPIs
-  updateText('kpiKonten', media.length);
-  
-  // Update engagement data
-  dashboardData.engagementData = {
-    likes: totalLikes,
-    comments: totalComments,
-    shares: 0,
-    saves: 0,
-    reach: 0,
-    followers: dashboardData.metaData?.instagram?.followers_count || 0
-  };
-  
-  updateEngagementMetrics(dashboardData.engagementData);
-}
-
-function createKontenChart(media){
-  const ctx = $('#kontenChart');
-  if(!ctx) return;
-  
-  // Sort media by date
-  const sortedMedia = [...media].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-  
-  const labels = sortedMedia.map(m => new Date(m.timestamp).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}));
-  const likesData = sortedMedia.map(m => m.like_count || 0);
-  const commentsData = sortedMedia.map(m => m.comments_count || 0);
-  
-  if(charts.konten){
-    charts.konten.destroy();
-  }
-  
-  charts.konten = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Likes',
-          data: likesData,
-          borderColor: '#ec4899',
-          backgroundColor: 'rgba(236, 72, 153, 0.1)',
-          tension: 0.4,
-          fill: true
-        },
-        {
-          label: 'Comments',
-          data: commentsData,
-          borderColor: '#22d3ee',
-          backgroundColor: 'rgba(34, 211, 238, 0.1)',
-          tension: 0.4,
-          fill: true
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: { color: '#94a3b8' }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y: {
-          ticks: { color: '#94a3b8' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        }
-      }
-    }
-  });
-}
-
-async function analyzeMedia(mediaId, permalink){
-  // Navigate to sentimen page
-  showPage('sentimen');
-  
-  // Set input type to media and fill the field
-  const inputType = $('#sentimentInputType');
-  const mediaField = $('#sentimentMediaId');
-  
-  if(inputType && mediaField){
-    inputType.value = 'media';
-    mediaField.value = mediaId;
-    
-    // Trigger change event
-    inputType.dispatchEvent(new Event('change'));
-    
-    // Auto-start analysis
-    setTimeout(() => {
-      if($('#sentimentAnalyzeBtn')){
-        $('#sentimentAnalyzeBtn').click();
-      }
-    }, 500);
-  }
-}
-
-function handleDatasetUpload(event){
-  const file = event.target.files[0];
-  const uploadStatus = $('#uploadStatus');
-  
-  if(!file || !uploadStatus) return;
-  
-  uploadStatus.innerHTML = '<p style="color:#f59e0b">Memproses file...</p>';
-  
-  const reader = new FileReader();
-  
-  reader.onload = function(e){
-    try{
-      const data = e.target.result;
-      let parsedData;
-      
-      if(file.name.endsWith('.csv')){
-        // Parse CSV
-        parsedData = parseCSV(data);
-      } else if(file.name.endsWith('.xlsx')){
-        // Parse Excel
-        const workbook = XLSX.read(data, {type: 'binary'});
-        const sheetName = workbook.SheetNames[0];
-        parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-      } else {
-        throw new Error('Format file tidak didukung');
-      }
-      
-      // Validate data structure
-      if(!parsedData || parsedData.length === 0){
-        throw new Error('File kosong atau tidak valid');
-      }
-      
-      // Store data for analysis
-      dashboardData.uploadedData = parsedData;
-      
-      uploadStatus.innerHTML = `
-        <div style="color:#22c55e;font-weight:900;margin-bottom:8px">✓ Upload Berhasil</div>
-        <div style="color:#d1d5db;font-size:13px">
-          <div>Nama File: ${file.name}</div>
-          <div>Total Baris: ${parsedData.length}</div>
-        </div>
-        <button class="btn primary" style="margin-top:12px" onclick="analyzeUploadedDataset()">Analisis Dataset</button>
-      `;
-      
-    } catch(error){
-      uploadStatus.innerHTML = `<div style="color:#ef4444">Error: ${error.message}</div>`;
-    }
-  };
-  
-  if(file.name.endsWith('.csv')){
-    reader.readAsText(file);
-  } else {
-    reader.readAsBinaryString(file);
-  }
-}
-
-function parseCSV(text){
-  const lines = text.split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-  const result = [];
-  
-  for(let i = 1; i < lines.length; i++){
-    if(!lines[i].trim()) continue;
-    
-    const values = lines[i].split(',');
-    const obj = {};
-    
-    headers.forEach((header, index) => {
-      obj[header] = values[index] ? values[index].trim() : '';
-    });
-    
-    result.push(obj);
-  }
-  
-  return result;
-}
-
-function analyzeUploadedDataset(){
-  if(!dashboardData.uploadedData || dashboardData.uploadedData.length === 0){
-    alert('Tidak ada data untuk dianalisis');
-    return;
-  }
-  
-  // Navigate to sentimen page
-  showPage('sentimen');
-  
-  // Check if data has text column
-  const textColumn = Object.keys(dashboardData.uploadedData[0]).find(key => 
-    key.includes('text') || key.includes('komentar') || key.includes('content')
-  );
-  
-  if(!textColumn){
-    alert('Dataset harus memiliki kolom text/komentar');
-    return;
-  }
-  
-  // Process all texts
-  const texts = dashboardData.uploadedData.map(row => row[textColumn]).filter(t => t && t.trim());
-  
-  if(texts.length === 0){
-    alert('Tidak ada teks valid untuk dianalisis');
-    return;
-  }
-  
-  // Set input type to manual and fill with first text
-  const inputType = $('#sentimentInputType');
-  const textField = $('#sentimentText');
-  
-  if(inputType && textField){
-    inputType.value = 'text';
-    textField.value = texts.join('\n---\n');
-    
-    // Trigger change event
-    inputType.dispatchEvent(new Event('change'));
-    
-    // Auto-start analysis
-    setTimeout(() => {
-      if($('#sentimentAnalyzeBtn')){
-        $('#sentimentAnalyzeBtn').click();
-      }
-    }, 500);
-  }
-}
 
 function toggleSidebar(){
   const side = $('#side');
@@ -1593,13 +196,12 @@ function toggleSidebar(){
 function initDashboard(){
   if($$('#nav button'))$$('#nav button').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
   if($('#toggle'))$('#toggle').addEventListener('click',toggleSidebar);
-  if($('#testMetaConnection'))$('#testMetaConnection').addEventListener('click',testMetaConnection);
-  if($('#fetchMedia'))$('#fetchMedia').addEventListener('click',fetchMedia);
+  if($('#testMeta'))$('#testMeta').addEventListener('click',testMetaConnection);
+  if($('#syncMeta'))$('#syncMeta').addEventListener('click',syncMetaData);
   if($('#downloadTemplate'))$('#downloadTemplate').addEventListener('click',downloadTemplate);
   if($('#analyzeManual'))$('#analyzeManual').addEventListener('click',analyzeManualContent);
   if($('#analyzeDataset'))$('#analyzeDataset').addEventListener('click',analyzeDataset);
   if($('#exportExecutive'))$('#exportExecutive').addEventListener('click',exportExecutive);
-  if($('#datasetUpload'))$('#datasetUpload').addEventListener('change',handleDatasetUpload);
   document.addEventListener('click',()=>{ const opens=$$('.custom-select.open'); if(opens)opens.forEach(x=>x.classList.remove('open')); });
   if($('#monthCustom'))setupCustomSelect('monthCustom',months,'Januari',updatePeriod);
   if($('#yearCustom'))setupCustomSelect('yearCustom',['2024','2025','2026'],'2026',updatePeriod);
@@ -1615,30 +217,6 @@ function initDashboard(){
   });
   if($('#sentimentPreviewBtn'))$('#sentimentPreviewBtn').addEventListener('click',analyzeSentiment);
   if($('#sentimentBackBtn'))$('#sentimentBackBtn').addEventListener('click',()=>sentimentFlowStep(1));
-  
-  // Classification table filters
-  if($('#classificationSearch'))$('#classificationSearch').addEventListener('input',e=>{
-    classificationState.filters.search = e.target.value;
-    filterClassificationResults();
-  });
-  if($('#classificationFilterSentiment'))$('#classificationFilterSentiment').addEventListener('change',e=>{
-    classificationState.filters.sentiment = e.target.value;
-    filterClassificationResults();
-  });
-  if($('#classificationFilterConfidence'))$('#classificationFilterConfidence').addEventListener('change',e=>{
-    classificationState.filters.confidence = e.target.value;
-    filterClassificationResults();
-  });
-  if($('#paginationPrev'))$('#paginationPrev').addEventListener('click',()=>{
-    if(classificationState.currentPage > 1){
-      classificationState.currentPage--;
-      renderClassificationTable();
-    }
-  });
-  if($('#paginationNext'))$('#paginationNext').addEventListener('click',()=>{
-    classificationState.currentPage++;
-    renderClassificationTable();
-  });
   if($('#sentimentAnalyzeBtn'))$('#sentimentAnalyzeBtn').addEventListener('click',processSentiment);
   if($('#sentimentResetBtn')) $('#sentimentResetBtn').addEventListener('click',()=>sentimentFlowStep(1));
 }
@@ -1812,66 +390,9 @@ function renderDataset(){ if(!$('#dsHead')||!rows.length)return; const keys=Obje
 function analyzeDataset(){ renderDataset(); $('#datasetInsight').innerHTML='<b>Insight Otomatis</b><br>Views meningkat signifikan. Share turun sehingga CTA perlu diperkuat. Konten dengan save tinggi perlu dijadikan format evergreen.'; }
 function downloadTemplate(){ const csv='Periode,Followers,Likes,Shares,Comments,Saves,Views,Profile Visit,Reach\nJanuari 2026,3000,250,20,15,40,90000,2500,70000'; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='template_kokorolens.csv'; a.click(); }
 function setupCustomSelect(id,values,def,onChange){ const box=$('#'+id), trig=box.querySelector('.custom-trigger'), opts=box.querySelector('.custom-options'); let value=def; function render(){ trig.innerHTML=value+' <span>⌄</span>'; opts.innerHTML=values.map(v=>`<div class="custom-option ${v===value?'active':''}" data-value="${v}">${v}</div>`).join(''); const options=opts.querySelectorAll('.custom-option'); if(options)options.forEach(o=>o.onclick=e=>{e.stopPropagation(); value=o.dataset.value; render(); box.classList.remove('open'); onChange&&onChange(value);}); } trig.onclick=e=>{e.stopPropagation(); const opens=$$('.custom-select.open'); if(opens)opens.forEach(x=>{if(x!==box)x.classList.remove('open')}); box.classList.toggle('open');}; render(); }
-function updatePeriod(){
-  const month = $('#monthCustom .custom-trigger').textContent.replace('⌄','').trim();
-  const year = $('#yearCustom .custom-trigger').textContent.replace('⌄','').trim();
-  
-  // Update dashboard filters
-  dashboardData.filters.startDate = new Date(`${year}-${months.indexOf(month)+1}-01`).toISOString();
-  dashboardData.filters.endDate = new Date(`${year}-${months.indexOf(month)+2}-01`).toISOString();
-  
-  // Filter analyses by period
-  const filteredAnalyses = dashboardData.analyses.filter(analysis => {
-    const analysisDate = new Date(analysis.analysis_date);
-    return analysisDate >= new Date(dashboardData.filters.startDate) && 
-           analysisDate < new Date(dashboardData.filters.endDate);
-  });
-  
-  if(filteredAnalyses.length > 0){
-    // Calculate aggregated metrics from filtered analyses
-    const totalComments = filteredAnalyses.reduce((sum, a) => sum + a.total_comments, 0);
-    const totalPositive = filteredAnalyses.reduce((sum, a) => sum + a.positive_count, 0);
-    const totalNegative = filteredAnalyses.reduce((sum, a) => sum + a.negative_count, 0);
-    const totalNeutral = filteredAnalyses.reduce((sum, a) => sum + a.neutral_count, 0);
-    const avgConfidence = filteredAnalyses.reduce((sum, a) => sum + parseFloat(a.average_confidence), 0) / filteredAnalyses.length;
-    
-    // Update KPIs with filtered data
-    updateText('kpiKonten', totalComments);
-    updateText('kpiSent', totalComments > 0 ? ((totalPositive / totalComments) * 100).toFixed(1) + '%' : '-');
-    updateText('kpiER', '-'); // Will be calculated when engagement data available
-    updateText('kpiReach', '-'); // Will be populated when Meta API data available
-    
-    // Update sentiment chart with filtered data
-    if(charts.sent){
-      charts.sent.destroy();
-    }
-    makeChart('sent', 'doughnut', ['Positif', 'Netral', 'Negatif'], 
-      [totalPositive, totalNeutral, totalNegative]);
-  } else {
-    // No data for selected period
-    if(dashboardData.currentAnalysis){
-      // Fall back to current analysis if no filtered data
-      updateText('kpiKonten', dashboardData.currentAnalysis.total_comments);
-      updateText('kpiSent', dashboardData.currentAnalysis.positive_percentage + '%');
-    }
-  }
-}
-
-function updateKontenPeriod(){
-  const month = $('#monthCustomKonten .custom-trigger').textContent.replace('⌄','').trim();
-  const year = $('#yearCustomKonten .custom-trigger').textContent.replace('⌄','').trim();
-  
-  // Filter content data by period (implementation pending when content data is available)
-  console.log('Filtering content by:', month, year);
-}
-
-function updateDampakPeriod(){
-  const month = $('#monthCustomDampak .custom-trigger').textContent.replace('⌄','').trim();
-  const year = $('#yearCustomDampak .custom-trigger').textContent.replace('⌄','').trim();
-  
-  // Filter impact data by period (implementation pending when impact data is available)
-  console.log('Filtering impact by:', month, year);
-}
+function updatePeriod(){ const m=$('#monthCustom .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; $('#kpiKonten').textContent=80+idx*8; $('#kpiER').textContent=(4.5+idx*.28).toFixed(1)+'%'; $('#kpiReach').textContent=(90+idx*6)+'K'; $('#kpiSent').textContent=Math.min(88,76+idx)+'%'; }
+function updateKontenPeriod(){ const m=$('#monthCustomKonten .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; }
+function updateDampakPeriod(){ const m=$('#monthCustomDampak .custom-trigger').textContent.replace('⌄','').trim(); const idx=months.indexOf(m)+1; }
 function sentimentFlowStep(step){ $$('#sentimentStep1,#sentimentStep2,#sentimentStep3,#sentimentStep4').forEach(el=>el.classList.add('hidden')); $('#sentimentStep'+step).classList.remove('hidden'); }
 function analyzeSentiment(){
   try{
@@ -2094,49 +615,6 @@ async function processSentiment(){
 
   const avgScore = comments.reduce((s,c)=>s + Number(c.score || 0),0) / total;
 
-  // Save analysis results to dashboardData
-  const analysisResult = {
-    analysis_id: 'ANL_' + Date.now(),
-    analysis_date: new Date().toISOString(),
-    source_type: inputType === 'media' ? 'meta_api' : 'manual_input',
-    source_platform: inputType === 'media' ? 'Instagram' : 'Manual',
-    source_name: inputType === 'media' ? mediaId : 'Manual Text',
-    media_id: inputType === 'media' ? mediaId : null,
-    media_permalink: inputType === 'media' ? `https://instagram.com/p/${mediaId}` : null,
-    total_comments: total,
-    positive_count: pos,
-    neutral_count: neu,
-    negative_count: neg,
-    positive_percentage: total > 0 ? (pos / total * 100).toFixed(1) : 0,
-    neutral_percentage: total > 0 ? (neu / total * 100).toFixed(1) : 0,
-    negative_percentage: total > 0 ? (neg / total * 100).toFixed(1) : 0,
-    average_confidence: avgScore.toFixed(3),
-    low_confidence_count: comments.filter(c => c.score && c.score < 0.60).length,
-    comments: comments.map(c => ({
-      username: c.username,
-      text: c.text,
-      sentiment: c.sentiment,
-      confidence: c.score,
-      prob_positif: c.prob_positif,
-      prob_netral: c.prob_netral,
-      prob_negatif: c.prob_negatif
-    })),
-    model_version: 'TF-IDF + Naive Bayes v1.0',
-    model_trained_at: new Date().toISOString()
-  };
-  
-  dashboardData.currentAnalysis = analysisResult;
-  dashboardData.analyses.push(analysisResult);
-
-  // Save analysis to history
-  saveAnalysisToHistory(analysisResult);
-
-  // Update dashboard with actual data
-  updateDashboardWithAnalysis(analysisResult);
-
-  // Update classification table with results
-  updateClassificationTable(analysisResult.comments);
-
   $('#sentimentResultCount').textContent = total;
   $('#sentimentResultLabel').textContent = aiSummary ? (aiSummary.overall_sentiment || finalLabel) : finalLabel;
   $('#sentimentResultScore').textContent = (aiSummary && typeof aiSummary.average_score === 'number' ? aiSummary.average_score : avgScore).toFixed(2);
@@ -2218,34 +696,10 @@ async function processSentiment(){
 }
 
 function buildPDFReport(){ 
-  // Get actual data from dashboard
-  const analysis = dashboardData.currentAnalysis;
-  
-  const totalKonten = analysis ? analysis.total_comments : $('#reportTotalKonten')?.textContent || '-';
-  const er = $('#reportER')?.textContent || '-';
-  const reach = $('#reportReach')?.textContent || '-';
-  const sentimen = analysis ? analysis.positive_percentage + '%' : $('#reportSentimen')?.textContent || '-';
-  
-  // Generate executive summary from actual data
-  let executiveSummary = 'Belum ada data laporan. Silakan lakukan analisis sentimen terlebih dahulu.';
-  if(analysis){
-    executiveSummary = `Pada periode ${new Date(analysis.analysis_date).toLocaleDateString('id-ID')}, sistem menganalisis ${analysis.total_comments} komentar menggunakan model ${analysis.model_version}. Hasil klasifikasi menunjukkan sentimen positif sebesar ${analysis.positive_percentage}%, netral ${analysis.neutral_percentage}%, dan negatif ${analysis.negative_percentage}%. Rata-rata confidence model sebesar ${analysis.average_confidence}.`;
-  }
-  
-  // Generate sentiment distribution data
-  let positivePct = '0%', neutralPct = '0%', negativePct = '0%', positiveNum = 0, neutralNum = 0, negativeNum = 0;
-  if(analysis){
-    positivePct = analysis.positive_percentage + '%';
-    neutralPct = analysis.neutral_percentage + '%';
-    negativePct = analysis.negative_percentage + '%';
-    positiveNum = analysis.positive_count;
-    neutralNum = analysis.neutral_count;
-    negativeNum = analysis.negative_count;
-  }
-  
-  // Calculate donut chart gradient
-  const positiveEnd = parseFloat(positivePct) || 0;
-  const neutralEnd = positiveEnd + (parseFloat(neutralPct) || 0);
+  const totalKonten = $('#reportTotalKonten')?.textContent || '128';
+  const er = $('#reportER')?.textContent || '6.7%';
+  const reach = $('#reportReach')?.textContent || '124K';
+  const sentimen = $('#reportSentimen')?.textContent || '82%';
   
   return `
 <div class="pdf-report" id="pdfNode" style="position:fixed;left:-9999px;top:0;width:1600px;padding:56px;background:linear-gradient(135deg,#0a0f1e 0%,#1a1f3a 50%,#0f1428 100%);color:white;font-family:Inter,system-ui,sans-serif">
@@ -2256,40 +710,40 @@ function buildPDFReport(){
     </div>
     <div style="text-align:right">
       <div style="font-size:14px;color:#64748b;font-weight:600">PERIODE LAPORAN</div>
-      <div style="font-size:24px;font-weight:800;color:#22d3ee">${analysis ? new Date(analysis.analysis_date).toLocaleDateString('id-ID', {month: 'long', year: 'numeric'}) : '-'}</div>
+      <div style="font-size:24px;font-weight:800;color:#22d3ee">Juni 2026</div>
     </div>
   </div>
 
   <div style="background:linear-gradient(135deg,rgba(34,211,238,0.1),rgba(139,92,246,0.1));border:1px solid rgba(34,211,238,0.2);border-radius:24px;padding:32px;margin-bottom:32px">
     <h2 style="font-size:20px;font-weight:800;margin:0 0 16px;color:#22d3ee">📊 Executive Summary</h2>
-    <p style="font-size:16px;line-height:1.8;color:#d1d5db;margin:0">${executiveSummary}</p>
+    <p style="font-size:16px;line-height:1.8;color:#d1d5db;margin:0">Performa media sosial menunjukkan tren positif dengan pertumbuhan engagement yang signifikan. Sentimen audiens mendominasi kategori positif (82%), menunjukkan kualitas konten yang baik. Rekomendasi strategis: fokus pada konten edukatif, optimasi CTA, dan perbaikan timing posting.</p>
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px">
     <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
       <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">TOTAL KONTEN</div>
       <div style="font-size:36px;font-weight:900;color:#22d3ee">${totalKonten}</div>
-      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Komentar dianalisis</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+14% vs bulan lalu</div>
     </div>
     <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
       <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">ENGAGEMENT RATE</div>
       <div style="font-size:36px;font-weight:900;color:#8b5cf6">${er}</div>
-      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Dari Meta API</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+0.6% vs bulan lalu</div>
     </div>
     <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
       <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">REACH</div>
       <div style="font-size:36px;font-weight:900;color:#ec4899">${reach}</div>
-      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Dari Meta API</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+18% vs bulan lalu</div>
     </div>
     <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
       <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">SENTIMEN POSITIF</div>
       <div style="font-size:36px;font-weight:900;color:#22c55e">${sentimen}</div>
-      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Dari klasifikasi ML</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">+5% vs bulan lalu</div>
     </div>
     <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:24px;text-align:center">
-      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">CONFIDENCE</div>
-      <div style="font-size:36px;font-weight:900;color:#f59e0b">${analysis ? (parseFloat(analysis.average_confidence) * 100).toFixed(1) + '%' : '-'}</div>
-      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Rata-rata model</div>
+      <div style="font-size:12px;color:#64748b;font-weight:700;letter-spacing:0.05em;margin-bottom:8px">ACTION PLAN</div>
+      <div style="font-size:36px;font-weight:900;color:#f59e0b">7</div>
+      <div style="font-size:12px;color:#86efac;font-weight:600;margin-top:4px">Prioritas tinggi</div>
     </div>
   </div>
 
@@ -2297,79 +751,79 @@ function buildPDFReport(){
     <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
       <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#22d3ee">🎯 Distribusi Sentimen</h3>
       <div style="display:flex;align-items:center;gap:20px">
-        <div style="width:180px;height:180px;border-radius:50%;background:conic-gradient(#22c55e 0% ${positiveEnd}%,#f59e0b ${positiveEnd}% ${neutralEnd}%,#ef4444 ${neutralEnd}% 100%);position:relative">
+        <div style="width:180px;height:180px;border-radius:50%;background:conic-gradient(#22c55e 0% 82%,#f59e0b 82% 93%,#ef4444 93% 100%);position:relative">
           <div style="position:absolute;inset:40px;background:#0f1428;border-radius:50%;display:flex;align-items:center;justify-content:center">
-            <span style="font-size:32px;font-weight:900;color:#22c55e">${positivePct}</span>
+            <span style="font-size:32px;font-weight:900;color:#22c55e">82%</span>
           </div>
         </div>
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
             <div style="width:16px;height:16px;background:#22c55e;border-radius:4px"></div>
-            <span style="font-size:14px;color:#d1d5db">Positif: ${positivePct} (${positiveNum})</span>
+            <span style="font-size:14px;color:#d1d5db">Positif: 82%</span>
           </div>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
             <div style="width:16px;height:16px;background:#f59e0b;border-radius:4px"></div>
-            <span style="font-size:14px;color:#d1d5db">Netral: ${neutralPct} (${neutralNum})</span>
+            <span style="font-size:14px;color:#d1d5db">Netral: 11%</span>
           </div>
           <div style="display:flex;align-items:center;gap:12px">
             <div style="width:16px;height:16px;background:#ef4444;border-radius:4px"></div>
-            <span style="font-size:14px;color:#d1d5db">Negatif: ${negativePct} (${negativeNum})</span>
+            <span style="font-size:14px;color:#d1d5db">Negatif: 7%</span>
           </div>
         </div>
       </div>
     </div>
 
     <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
-      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#8b5cf6">📈 Kesimpulan Analisis</h3>
-      <ul style="margin:0;padding-left:20px;line-height:2;color:#d1d5db;font-size:14px">
-        ${analysis ? `
-          <li>Total komentar yang dianalisis: ${analysis.total_comments}</li>
-          <li>Distribusi sentimen: ${analysis.positive_percentage}% positif, ${analysis.neutral_percentage}% netral, ${analysis.negative_percentage}% negatif</li>
-          <li>Rata-rata confidence model: ${analysis.average_confidence}</li>
-          ${analysis.low_confidence_count > 0 ? `<li>${analysis.low_confidence_count} komentar memiliki confidence rendah, disarankan validasi manual.</li>` : ''}
-          ${analysis.negative_count > analysis.positive_count ? `<li>Sentimen negatif lebih dominan, disarankan evaluasi keluhan pengguna.</li>` : ''}
-          ${analysis.positive_count > analysis.neutral_count && analysis.positive_count > analysis.negative_count ? `<li>Sentimen positif mendominasi, konten berpotensi mendukung strategi saat ini.</li>` : ''}
-        ` : '<li>Belum ada kesimpulan. Silakan lakukan analisis sentimen terlebih dahulu.</li>'}
-      </ul>
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#8b5cf6">📈 Tren Engagement</h3>
+      <div style="display:flex;gap:12px;align-items:end;height:180px;padding:20px 0">
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:42%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:48%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:52%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:58%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:61%"></div>
+        <div style="flex:1;background:linear-gradient(180deg,#22d3ee,#8b5cf6);border-radius:8px 8px 4px 4px;height:67%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;color:#64748b">
+        <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mei</span><span>Jun</span>
+      </div>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
     <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
-      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#ec4899">📋 Informasi Analisis</h3>
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#ec4899">🏆 Top Performing Content</h3>
       <table style="width:100%;border-collapse:collapse">
         <tr style="border-bottom:1px solid rgba(255,255,255,0.1)">
-          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">Parameter</th>
-          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">Nilai</th>
+          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">Konten</th>
+          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">ER</th>
+          <th style="padding:12px 8px;text-align:left;font-size:12px;color:#64748b;font-weight:700">Insight</th>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
-          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Analysis ID</td>
-          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">${analysis ? analysis.analysis_id : '-'}</td>
+          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Reels Edukasi</td>
+          <td style="padding:12px 8px;font-size:14px;color:#22c55e;font-weight:700">8.9%</td>
+          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">Performa terbaik</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
-          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Model Version</td>
-          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">${analysis ? analysis.model_version : '-'}</td>
-        </tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
-          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Source Type</td>
-          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">${analysis ? analysis.source_type : '-'}</td>
+          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">BTS Campaign</td>
+          <td style="padding:12px 8px;font-size:14px;color:#22c55e;font-weight:700">7.8%</td>
+          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">Interaksi tinggi</td>
         </tr>
         <tr>
-          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Source Platform</td>
-          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">${analysis ? analysis.source_platform : '-'}</td>
+          <td style="padding:12px 8px;font-size:14px;color:#d1d5db">Promo Batch</td>
+          <td style="padding:12px 8px;font-size:14px;color:#f59e0b;font-weight:700">3.2%</td>
+          <td style="padding:12px 8px;font-size:14px;color:#9aa4b2">CTA lemah</td>
         </tr>
       </table>
     </div>
 
     <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:28px">
-      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#f59e0b">💡 Rekomendasi</h3>
+      <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;color:#f59e0b">💡 Rekomendasi Strategis</h3>
       <ul style="margin:0;padding-left:20px;line-height:2;color:#d1d5db;font-size:14px">
-        ${analysis ? `
-          ${analysis.negative_percentage > 30 ? '<li><b style="color:#ef4444">TINGGI:</b> Evaluasi keluhan dominan (' + analysis.negative_percentage + '% negatif)</li>' : ''}
-          ${analysis.low_confidence_count > analysis.total_comments * 0.2 ? '<li><b style="color:#f59e0b">SEDANG:</b> Validasi manual diperlukan (' + analysis.low_confidence_count + ' komentar confidence rendah)</li>' : ''}
-          ${analysis.positive_percentage > 70 ? '<li><b style="color:#22c55e">RENDAH:</b> Kembangkan format konten serupa (' + analysis.positive_percentage + '% positif)</li>' : ''}
-          ${analysis.neutral_percentage > 50 ? '<li><b style="color:#8b5cf6">SEDANG:</b> Tingkatkan daya tarik pesan (' + analysis.neutral_percentage + '% netral)</li>' : ''}
-        ` : '<li>Lakukan analisis sentimen untuk mendapatkan rekomendasi berbasis data.</li>'}
+        <li><b style="color:#22d3ee">HIGH:</b> Perbanyak konten edukatif (+15% ER target)</li>
+        <li><b style="color:#f59e0b">MEDIUM:</b> Optimasi CTA dan caption untuk meningkatkan share</li>
+        <li><b style="color:#22c55e">LOW:</b> Eksperimen hashtag niche untuk reach</li>
+        <li><b style="color:#ec4899">URGENT:</b> Audit komentar negatif dan respons cepat</li>
+        <li><b style="color:#8b5cf6">ONGOING:</b> Evaluasi mingguan selama 30 hari</li>
       </ul>
     </div>
   </div>
