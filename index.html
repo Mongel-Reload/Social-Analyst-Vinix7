@@ -152,7 +152,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <div class="grid4"><div class="card kpi"><small>Total Konten</small><strong id="kpiKonten">-</strong><span>-</span></div><div class="card kpi"><small>Engagement Rate</small><strong id="kpiER">-</strong><span>-</span></div><div class="card kpi"><small>Reach</small><strong id="kpiReach">-</strong><span>-</span></div><div class="card kpi"><small>Sentimen Positif</small><strong id="kpiSent">-</strong><span>-</span></div></div>
         <div class="grid2" style="margin-top:15px"><div class="card"><h3>Engagement Trend</h3><canvas id="eng"></canvas></div><div class="card"><h3>Sentiment Distribution</h3><canvas id="sent"></canvas></div></div>
         <div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Best Posting Time</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Best Format</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Health Score</small><strong>-</strong><span>-</span></div></div>
-        <div id="dashboardRecommendation" class="card" style="margin-top:15px;display:none"><h3>✨ Rekomendasi Berdasarkan Analisis</h3><div class="report"><b>Executive Summary</b><br>Konten edukatif menghasilkan performa 43% lebih tinggi dibanding promosi langsung. Strategi berikutnya perlu fokus pada evergreen content, CTA, dan optimasi jam posting.</div><div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Prediksi ER</small><strong>6.7% → 7.9%</strong><span>Jika dijalankan</span></div><div class="card kpi"><small>Prediksi Sentimen</small><strong>82% → 87%</strong><span>Naik</span></div><div class="card kpi"><small>Target Reach</small><strong>141K</strong><span>+13.7%</span></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Priority Action Plan</h3><div class="action high"><b>HIGH — Perbanyak konten edukatif</b><p>Target +15% ER · PIC Content Team · Deadline 30 Juli 2026</p></div><div class="action med"><b>MEDIUM — Optimasi Caption & CTA</b><p>Target +15% Share · PIC Copywriter · Deadline 15 Juli 2026</p></div><div class="action low"><b>LOW — Eksperimen Hashtag Niche</b><p>Target +8% Reach · PIC Digital Marketing</p></div></div><div class="card"><h3>Roadmap 30 Hari</h3><div class="table"><table><thead><tr><th>Minggu</th><th>Aktivitas</th><th>Output</th></tr></thead><tbody><tr><td>1</td><td>Audit konten</td><td>Daftar isu</td></tr><tr><td>2</td><td>Produksi edukasi</td><td>6 reels</td></tr><tr><td>3</td><td>Optimasi caption</td><td>Template baru</td></tr><tr><td>4</td><td>Evaluasi KPI</td><td>Laporan kinerja</td></tr></tbody></table></div></div></div>
+        <div id="dashboardRecommendation" class="card" style="margin-top:15px;display:none"><h3>✨ Rekomendasi Berdasarkan Analisis</h3><div class="report"><b>Executive Summary</b><br>Menunggu hasil analisis sentimen untuk menghasilkan rekomendasi...</div><div class="grid3" style="margin-top:15px"><div class="card kpi"><small>Prediksi ER</small><strong id="recPredER">-</strong><span id="recPredERLabel">-</span></div><div class="card kpi"><small>Prediksi Sentimen</small><strong id="recPredSent">-</strong><span id="recPredSentLabel">-</span></div><div class="card kpi"><small>Target Reach</small><strong id="recTargetReach">-</strong><span id="recTargetReachLabel">-</span></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Priority Action Plan</h3><div class="action high"><b id="recActionHighTitle">HIGH — Menunggu Analisis</b><p id="recActionHighDesc">Silakan lakukan analisis sentimen terlebih dahulu.</p></div><div class="action med"><b id="recActionMedTitle">MEDIUM — Menunggu Analisis</b><p id="recActionMedDesc">Silakan lakukan analisis sentimen terlebih dahulu.</p></div><div class="action low"><b id="recActionLowTitle">LOW — Menunggu Analisis</b><p id="recActionLowDesc">Silakan lakukan analisis sentimen terlebih dahulu.</p></div></div><div class="card"><h3>Roadmap 30 Hari</h3><div class="table"><table><thead><tr><th>Minggu</th><th>Aktivitas</th><th>Output</th></tr></thead><tbody id="recRoadmapBody"><tr><td>1</td><td>Menunggu analisis</td><td>-</td></tr><tr><td>2</td><td>Menunggu analisis</td><td>-</td></tr><tr><td>3</td><td>Menunggu analisis</td><td>-</td></tr><tr><td>4</td><td>Menunggu analisis</td><td>-</td></tr></tbody></table></div></div></div>
       </div>
     </section>
     <section id="meta" class="page"><div class="head"><div><h1>Meta API</h1><p>Integrasi dengan Meta Graph API untuk data Facebook Page dan Instagram Business.</p></div><div class="toolbar"><button class="btn primary" id="testMeta">Uji Koneksi</button><button class="btn" id="syncMeta">Sinkronisasi Data</button></div></div><div class="grid2" style="margin-bottom:15px"><div class="card"><h3>Status Koneksi</h3><p style="color:var(--muted);line-height:1.6">Credentials Meta dikonfigurasi melalui environment variable pada server.</p><p id="statusMeta" style="color:#a5f3fc;font-weight:900">Status: menunggu koneksi.</p><div id="metaAccountInfo" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);display:none"><div style="font-size:12px;color:#9aa4b2;margin-bottom:8px">Akun Terhubung</div><div id="metaPageInfo" style="display:none;margin-bottom:8px"><div style="color:#22d3ee;font-weight:700">Facebook Page</div><div id="metaPageName" style="color:#d1d5db"></div></div><div id="metaIGInfo" style="display:none"><div style="color:#e1306c;font-weight:700">Instagram Business</div><div id="metaIGUsername" style="color:#d1d5db"></div><div id="metaIGFollowers" style="color:#9aa4b2;font-size:12px"></div><div id="metaIGMediaCount" style="color:#9aa4b2;font-size:12px"></div></div><div id="metaLastChecked" style="color:#64748b;font-size:11px;margin-top:8px"></div></div></div><div class="card"><h3>Daftar Postingan</h3><div id="metaMediaList" style="max-height:400px;overflow-y:auto"><p style="color:var(--muted);text-align:center;padding:40px">Klik "Uji Koneksi" terlebih dahulu untuk mengambil data postingan.</p></div></div></div></section>
@@ -643,6 +643,80 @@ function renderDashboard(){
   console.log('Dashboard rendered:', filteredMedia.length, 'items for', selectedMonth, selectedYear);
 }
 
+// Render Dashboard Recommendation with actual data from dashboardData.prediction
+function renderRecommendation(){
+  const dashboardRecommendation = $('#dashboardRecommendation');
+  
+  if(!dashboardRecommendation) return;
+  
+  console.log('Prediction data:', dashboardData.prediction);
+  
+  // Check if prediction data exists
+  if(!dashboardData.prediction){
+    dashboardRecommendation.style.display = 'none';
+    console.log('Recommendation: No prediction data');
+    return;
+  }
+  
+  const prediction = dashboardData.prediction;
+  const currentER = $('#kpiER').textContent.replace('%', '');
+  const currentSentiment = $('#kpiSent').textContent.replace('%', '');
+  const currentReach = $('#kpiReach').textContent;
+  
+  // Calculate predictions (simple logic for demo)
+  const predER = currentER !== '-' ? (parseFloat(currentER) * 1.15).toFixed(1) + '%' : '-';
+  const predSentiment = currentSentiment !== '-' ? Math.min(95, parseFloat(currentSentiment) + 5) + '%' : '-';
+  const predReach = currentReach !== '-' ? Math.round(parseFloat(currentReach) * 1.1) + '%' : '-';
+  
+  // Update prediction KPIs
+  updateText('recPredER', currentER !== '-' ? currentER + ' → ' + predER : '-');
+  updateText('recPredERLabel', currentER !== '-' ? 'Jika dijalankan' : '-');
+  updateText('recPredSent', currentSentiment !== '-' ? currentSentiment + ' → ' + predSentiment : '-');
+  updateText('recPredSentLabel', currentSentiment !== '-' ? 'Naik' : '-');
+  updateText('recTargetReach', predReach);
+  updateText('recTargetReachLabel', currentReach !== '-' ? '+10%' : '-');
+  
+  // Update executive summary
+  const summaryDiv = dashboardRecommendation.querySelector('.report');
+  if(summaryDiv){
+    const positiveCount = prediction.positive_count || 0;
+    const neutralCount = prediction.neutral_count || 0;
+    const negativeCount = prediction.negative_count || 0;
+    const total = positiveCount + neutralCount + negativeCount;
+    const positivePct = total > 0 ? ((positiveCount / total) * 100).toFixed(0) : 0;
+    
+    summaryDiv.innerHTML = `<b>Executive Summary</b><br>Berdasarkan analisis ${total} komentar, sentimen positif ${positivePct}%. Fokus pada konten yang menghasilkan engagement tinggi dan sentimen positif untuk meningkatkan performa.`;
+  }
+  
+  // Update action plan based on sentiment
+  updateText('recActionHighTitle', 'HIGH — Fokus pada konten positif');
+  updateText('recActionHighDesc', `Target +15% ER · PIC Content Team · Berdasarkan ${prediction.positive_count || 0} komentar positif`);
+  updateText('recActionMedTitle', 'MEDIUM — Optimasi Caption & CTA');
+  updateText('recActionMedDesc', 'Target +15% Share · PIC Copywriter · Tingkatkan interaksi');
+  updateText('recActionLowTitle', 'LOW — Eksperimen Hashtag Niche');
+  updateText('recActionLowDesc', 'Target +8% Reach · PIC Digital Marketing · Perluas jangkauan');
+  
+  // Update roadmap
+  const roadmapBody = $('#recRoadmapBody');
+  if(roadmapBody){
+    const today = new Date();
+    const week1 = new Date(today.setDate(today.getDate() + 7)).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+    const week2 = new Date(today.setDate(today.getDate() + 7)).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+    const week3 = new Date(today.setDate(today.getDate() + 7)).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+    const week4 = new Date(today.setDate(today.getDate() + 7)).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'});
+    
+    roadmapBody.innerHTML = `
+      <tr><td>1</td><td>Audit konten & analisis sentimen</td><td>Laporan ${week1}</td></tr>
+      <tr><td>2</td><td>Produksi konten berdasarkan insight</td><td>6 reels ${week2}</td></tr>
+      <tr><td>3</td><td>Optimasi caption & CTA</td><td>Template baru ${week3}</td></tr>
+      <tr><td>4</td><td>Evaluasi KPI & iterasi</td><td>Laporan kinerja ${week4}</td></tr>
+    `;
+  }
+  
+  dashboardRecommendation.style.display = 'block';
+  console.log('Recommendation rendered');
+}
+
 function setupGlobalEventListeners(){
   // Meta connected - update dashboard with account info
   window.addEventListener(APP_EVENTS.META_CONNECTED, (e) => {
@@ -676,6 +750,7 @@ function setupGlobalEventListeners(){
   window.addEventListener(APP_EVENTS.PREDICTION_FINISHED, (e) => {
     console.log('Prediction finished:', e.detail);
     refreshAllPages();
+    renderRecommendation();
   });
 }
 
@@ -785,7 +860,7 @@ function addToHistory(){
 
 function showPage(id){ const pages=$$('.page'); if(pages)pages.forEach(p=>p.classList.remove('active')); const page=$('#'+id); if(page) page.classList.add('active'); const navBtns=$$('#nav button'); if(navBtns)navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===id)); window.scrollTo(0,0); setTimeout(renderCharts,80); 
   // Render page-specific content
-  if(id === 'dashboard') renderDashboard();
+  if(id === 'dashboard') { renderDashboard(); renderRecommendation(); }
   if(id === 'konten') renderKonten();
   if(id === 'dampak') renderDampak();
   if(id === 'laporan') renderLaporan();
