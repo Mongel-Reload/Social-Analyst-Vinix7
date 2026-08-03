@@ -882,8 +882,7 @@ function toggleSidebar(){
 function initDashboard(){
   if($$('#nav button'))$$('#nav button').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
   if($('#toggle'))$('#toggle').addEventListener('click',toggleSidebar);
-  if($('#testMeta'))$('#testMeta').addEventListener('click',testMetaConnection);
-  if($('#syncMeta'))$('#syncMeta').addEventListener('click',syncMetaData);
+  // testMeta and syncMeta event listeners are handled by bindMetaButtons()
   if($('#downloadTemplate'))$('#downloadTemplate').addEventListener('click',downloadTemplate);
   if($('#analyzeManual'))$('#analyzeManual').addEventListener('click',analyzeManualContent);
   if($('#analyzeDataset'))$('#analyzeDataset').addEventListener('click',analyzeDataset);
