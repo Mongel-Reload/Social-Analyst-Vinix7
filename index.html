@@ -1676,14 +1676,14 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       // Dispatch media loaded event - DISABLED TO PREVENT INFINITE LOOP
       // dispatchEvent(APP_EVENTS.MEDIA_LOADED, dashboardData.media);
       
-      // Manually call render functions instead of using events
-      autoSetLatestPeriod();
-      renderDashboard();
-      renderKonten();
-      renderDampak();
-      updateMediaDropdown(dashboardData.media);
-      saveStateToStorage();
-      showContentPages();
+      // Manually call render functions - DISABLED TO TEST INFINITE LOOP
+      // autoSetLatestPeriod();
+      // renderDashboard();
+      // renderKonten();
+      // renderDampak();
+      // updateMediaDropdown(dashboardData.media);
+      // saveStateToStorage();
+      // showContentPages();
       
       hideLoading();
       
