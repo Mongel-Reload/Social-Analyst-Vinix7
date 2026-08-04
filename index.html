@@ -386,6 +386,13 @@ function updateText(id, value){
   if(el) el.textContent = value;
 }
 
+function formatCompact(num){
+  const n = Number(num || 0);
+  if(n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M';
+  if(n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K';
+  return String(n);
+}
+
 // Save state to sessionStorage (no sensitive data)
 function saveStateToStorage(){
   try{
@@ -1077,7 +1084,6 @@ function setupGlobalEventListeners(){
   // Prediction finished - update all pages
   window.addEventListener(APP_EVENTS.PREDICTION_FINISHED, (e) => {
     refreshAllPages();
-    renderRecommendation();
   });
 }
 
@@ -1187,7 +1193,7 @@ function addToHistory(){
 
 function showPage(id){ const pages=$$('.page'); if(pages)pages.forEach(p=>p.classList.remove('active')); const page=$('#'+id); if(page) page.classList.add('active'); const navBtns=$$('#nav button'); if(navBtns)navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===id)); window.scrollTo(0,0); setTimeout(renderCharts,80); 
   // Render page-specific content
-  if(id === 'dashboard') { renderDashboard(); renderRecommendation(); }
+  if(id === 'dashboard') { renderDashboard(); }
   if(id === 'konten') renderKonten();
   if(id === 'dampak') renderDampak();
   if(id === 'laporan') renderLaporan();
@@ -1963,13 +1969,6 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       el.textContent = message;
       el.style.color = ok ? '#a5f3fc' : '#fca5a5';
     }
-  }
-
-  function formatCompact(num){
-    const n = Number(num || 0);
-    if(n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M';
-    if(n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K';
-    return String(n);
   }
 
   async function testMetaConnection(){
