@@ -165,8 +165,13 @@ function validateGeminiResponse(response) {
 
 // Netlify Function handler
 exports.handler = async (event, context) => {
+  console.log('=== Gemini Recommendation Function Started ===');
+  console.log('HTTP Method:', event.httpMethod);
+  console.log('Event body length:', event.body ? event.body.length : 0);
+  
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
+    console.log('ERROR: Method not allowed');
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
@@ -175,7 +180,11 @@ exports.handler = async (event, context) => {
   
   // Check for API Key
   const apiKey = process.env.GEMINI_API_KEY;
+  console.log('API Key present:', !!apiKey);
+  console.log('API Key length:', apiKey ? apiKey.length : 0);
+  
   if (!apiKey) {
+    console.log('ERROR: Gemini API Key not configured');
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Gemini API Key not configured' })
@@ -187,7 +196,10 @@ exports.handler = async (event, context) => {
     let requestData;
     try {
       requestData = JSON.parse(event.body);
+      console.log('Request data parsed successfully');
+      console.log('Total comments:', requestData.total_comments);
     } catch (e) {
+      console.log('ERROR: Invalid JSON in request body', e.message);
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Invalid JSON in request body' })
@@ -197,11 +209,13 @@ exports.handler = async (event, context) => {
     // Validate request
     const validation = validateRequest(requestData);
     if (!validation.valid) {
+      console.log('ERROR: Validation failed', validation.errors);
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Validation failed', details: validation.errors })
       };
     }
+    console.log('Request validation passed');
     
     // Create prompt for Gemini
     const prompt = `Berdasarkan data analisis sentimen berikut, berikan rekomendasi yang spesifik dan actionable:
@@ -278,6 +292,8 @@ Pastikan:
 - Jangan memberikan prediksi persentase tanpa model forecasting
 - Gunakan bahasa Indonesia formal`;
 
+    console.log('Calling Gemini API...');
+    
     // Call Gemini API
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     
@@ -302,8 +318,11 @@ Pastikan:
       }
     });
     
+    console.log('Gemini API response received');
+    
     // Validate and parse response
     const validatedResponse = validateGeminiResponse(geminiResponse);
+    console.log('Response validated successfully');
     
     // Return success response
     return {
@@ -315,7 +334,9 @@ Pastikan:
     };
     
   } catch (error) {
-    console.error('Gemini recommendation error:', error.message);
+    console.error('=== Gemini Recommendation Error ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     
     // Return error response (never expose API key)
     let errorMessage = 'Failed to generate recommendation';
@@ -328,7 +349,11 @@ Pastikan:
       errorMessage = 'Request timeout';
     } else if (error.message.includes('JSON')) {
       errorMessage = 'Invalid response from Gemini';
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      errorMessage = 'Cannot connect to Gemini API';
     }
+    
+    console.log('Returning error to frontend:', errorMessage);
     
     return {
       statusCode: 500,
