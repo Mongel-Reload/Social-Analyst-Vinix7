@@ -1677,16 +1677,18 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       
       // Render media list
       if(mediaList){
-        mediaList.innerHTML = data.media.map(item => `
+        mediaList.innerHTML = data.media.map(item => {
+          const likes = item.like_count >= 1000 ? (item.like_count/1000).toFixed(1).replace('.0','') + 'K' : item.like_count;
+          return `
           <div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid rgba(255,255,255,.08);align-items:center">
             ${item.thumbnail_url ? `<img src="${item.thumbnail_url}" style="width:60px;height:60px;object-fit:cover;border-radius:8px">` : '<div style="width:60px;height:60px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9aa4b2;font-size:12px">No img</div>'}
             <div style="flex:1;min-width:0">
               <div style="color:#d1d5db;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px">${item.caption || '(tanpa caption)'}</div>
-              <div style="color:#9aa4b2;font-size:11px">${new Date(item.timestamp).toLocaleDateString('id-ID')} · ${formatCompact(item.like_count)} likes · ${item.comments_count} komentar</div>
+              <div style="color:#9aa4b2;font-size:11px">${new Date(item.timestamp).toLocaleDateString('id-ID')} · ${likes} likes · ${item.comments_count} komentar</div>
             </div>
             <button class="btn" style="padding:6px 12px;font-size:12px" onclick="analyzeMediaComments('${item.id}', '${item.caption?.replace(/'/g, "\\'") || 'No caption'}')">Analisis Komentar</button>
           </div>
-        `).join('');
+        `}).join('');
       }
       
       // Dispatch media loaded event - DISABLED TO PREVENT INFINITE LOOP
