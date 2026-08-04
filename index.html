@@ -1580,6 +1580,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
   async function testMetaConnection(){
     showLoading('Connecting to Meta Graph API...');
     setMetaStatus('Status: sedang menguji koneksi Meta...');
+    
     try{
       const data = await fetchMeta('meta-test');
       
@@ -1634,6 +1635,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       }
       
       setMetaStatus('Status: koneksi berhasil');
+      hideLoading();
       
       // Dispatch meta connected event - DISABLED TO PREVENT INFINITE LOOP
       // dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
