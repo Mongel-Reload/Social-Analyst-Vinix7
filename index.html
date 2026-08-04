@@ -1677,9 +1677,8 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       
       setMetaStatus('Status: koneksi berhasil');
       
-      // Dispatch meta connected event
-      console.log('[DEBUG] Dispatching META_CONNECTED event');
-      dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
+      // Dispatch meta connected event - DISABLED TO PREVENT INFINITE LOOP
+      // dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
       
       // Auto-load media list after successful connection
       console.log('[DEBUG] Calling loadMetaMedia...');
@@ -1736,8 +1735,18 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
         `).join('');
       }
       
-      // Dispatch media loaded event
-      dispatchEvent(APP_EVENTS.MEDIA_LOADED, dashboardData.media);
+      // Dispatch media loaded event - DISABLED TO PREVENT INFINITE LOOP
+      // dispatchEvent(APP_EVENTS.MEDIA_LOADED, dashboardData.media);
+      
+      // Manually call render functions instead of using events
+      autoSetLatestPeriod();
+      renderDashboard();
+      renderKonten();
+      renderDampak();
+      updateMediaDropdown(dashboardData.media);
+      saveStateToStorage();
+      showContentPages();
+      
       hideLoading();
       
     }catch(err){
