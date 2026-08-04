@@ -1677,9 +1677,9 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       
       setMetaStatus('Status: koneksi berhasil');
       
-      // Dispatch meta connected event - DISABLED TEMPORARILY TO DEBUG
-      // console.log('[DEBUG] Dispatching META_CONNECTED event');
-      // dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
+      // Dispatch meta connected event
+      console.log('[DEBUG] Dispatching META_CONNECTED event');
+      dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
       
       // Auto-load media list after successful connection
       console.log('[DEBUG] Calling loadMetaMedia...');
@@ -1736,13 +1736,44 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
         `).join('');
       }
       
-      // Dispatch media loaded event - DISABLED TEMPORARILY TO DEBUG
-      // dispatchEvent(APP_EVENTS.MEDIA_LOADED, dashboardData.media);
+      // Dispatch media loaded event
+      dispatchEvent(APP_EVENTS.MEDIA_LOADED, dashboardData.media);
       hideLoading();
       
     }catch(err){
       console.error(err);
-      if(mediaList) mediaList.innerHTML = `<p style="color:#fca5a5;text-align:center;padding:20px">Gagal memuat postingan: ${err.message}</p>`;
+      const errorMessage = err.message || '';
+      
+      // Check for permission errors
+      if(errorMessage.includes('#10') || errorMessage.includes('permission') || errorMessage.includes('Authentication Error')){
+        if(mediaList) mediaList.innerHTML = `
+          <div style="padding:30px;text-align:center">
+            <div style="font-size:48px;margin-bottom:16px">🔒</div>
+            <h3 style="margin-bottom:12px;color:#fca5a5">Permission Meta Graph API Kurang</h3>
+            <p style="color:var(--muted);margin-bottom:16px;line-height:1.6">
+              Error: ${errorMessage}<br><br>
+              Aplikasi tidak memiliki permission untuk mengambil daftar postingan Instagram Business.<br>
+              Kemungkinan penyebab:<br>
+              • Access token tidak memiliki permission yang dibutuhkan (pages_read_engagement, instagram_basic)<br>
+              • Token adalah user token, bukan Page Access Token<br>
+              • Aplikasi dalam Development Mode dan user bukan role aplikasi<br>
+              • Instagram Business belum terhubung dengan benar ke Facebook Page
+            </p>
+            <div style="background:rgba(250,165,165,0.1);padding:16px;border-radius:8px;border:1px solid rgba(250,165,165,0.3);margin-bottom:16px">
+              <strong style="color:#fca5a5">Solusi:</strong>
+              <p style="color:var(--muted);margin-top:8px;margin-bottom:0">
+                1. Pastikan aplikasi Meta memiliki permission: <code>pages_read_engagement</code>, <code>instagram_basic</code><br>
+                2. Gunakan Page Access Token bukan User Access Token<br>
+                3. Pastikan Instagram Business terhubung ke Facebook Page di Meta Business Suite<br>
+                4. Jika aplikasi dalam Development Mode, tambahkan user sebagai Tester/Developer
+              </p>
+            </div>
+            <button class="btn" onclick="loadMetaMedia()">Coba Lagi</button>
+          </div>
+        `;
+      } else {
+        if(mediaList) mediaList.innerHTML = `<p style="color:#fca5a5;text-align:center;padding:20px">Gagal memuat postingan: ${err.message}</p>`;
+      }
       hideLoading();
     }
   }
