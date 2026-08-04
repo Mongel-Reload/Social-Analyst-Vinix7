@@ -381,6 +381,11 @@ function calculateEngagement(item){
   return (((likes + comments + shares) / reach) * 100).toFixed(2) + '%';
 }
 
+function updateText(id, value){
+  const el = document.getElementById(id);
+  if(el) el.textContent = value;
+}
+
 // Save state to sessionStorage (no sensitive data)
 function saveStateToStorage(){
   try{
@@ -1917,11 +1922,6 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
     return String(n);
   }
 
-  function updateText(id, value){
-    const el = document.getElementById(id);
-    if(el) el.textContent = value;
-  }
-
   async function testMetaConnection(){
     showLoading('Connecting to Meta Graph API...');
     setMetaStatus('Status: sedang menguji koneksi Meta...');
@@ -2050,7 +2050,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       renderDashboard();
       // renderKonten();
       // renderDampak();
-      // updateMediaDropdown(dashboardData.media);
+      updateMediaDropdown(dashboardData.media);
       saveStateToStorage();
       showContentPages();
       
