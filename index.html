@@ -717,7 +717,13 @@ function renderRecommendation(){
   console.log('Recommendation rendered');
 }
 
+let globalEventListenersSetup = false;
+
 function setupGlobalEventListeners(){
+  // Prevent duplicate event listener registration
+  if(globalEventListenersSetup) return;
+  globalEventListenersSetup = true;
+
   // Meta connected - update dashboard with account info
   window.addEventListener(APP_EVENTS.META_CONNECTED, (e) => {
     console.log('Meta connected:', e.detail);
