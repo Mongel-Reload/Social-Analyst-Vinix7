@@ -518,8 +518,14 @@ function renderKonten(){
   
   if(!kontenEmpty || !kontenContent) return;
   
+  console.log('renderKonten called', {
+    metaConnected: dashboardData.meta.connected,
+    mediaCount: dashboardData.media?.length || 0
+  });
+  
   // Check if Meta is connected
   if(!dashboardData.meta.connected){
+    console.log('Meta not connected, showing empty state');
     kontenEmpty.style.display = 'block';
     kontenEmpty.innerHTML = '<div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Meta Graph API belum terhubung</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data performa konten Anda.</p><button class="btn primary" onclick="showPage(\'meta\')">Buka Halaman Meta API</button>';
     kontenContent.style.display = 'none';
@@ -528,6 +534,7 @@ function renderKonten(){
   
   // Check if media data exists
   if(!dashboardData.media || dashboardData.media.length === 0){
+    console.log('No media data, showing empty state');
     kontenEmpty.style.display = 'block';
     kontenEmpty.innerHTML = '<div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Data konten belum dimuat</h3><p style="color:var(--muted);margin-bottom:24px">Meta sudah terhubung. Silakan muat data konten dari Meta API.</p><button class="btn primary" onclick="loadMetaMedia()">Muat Ulang Konten</button>';
     kontenContent.style.display = 'none';
@@ -539,11 +546,18 @@ function renderKonten(){
   const selectedYear = $('#yearCustomKonten .custom-trigger').textContent.replace('⌄', '').trim();
   const monthIndex = months.indexOf(selectedMonth);
   
+  console.log('Filter period:', { selectedMonth, selectedYear, monthIndex });
+  
   // Filter media by period
   const filteredMedia = dashboardData.media.filter(item => {
     const itemDate = new Date(item.timestamp);
-    return itemDate.getMonth() === monthIndex && itemDate.getFullYear().toString() === selectedYear;
+    const itemMonth = itemDate.getMonth();
+    const itemYear = itemDate.getFullYear().toString();
+    console.log('Item:', item.id, 'Date:', itemDate, 'Month:', itemMonth, 'Year:', itemYear, 'Match:', itemMonth === monthIndex && itemYear === selectedYear);
+    return itemMonth === monthIndex && itemYear === selectedYear;
   });
+  
+  console.log('Filtered media count:', filteredMedia.length);
   
   // Check if filtered data exists
   if(filteredMedia.length === 0){
@@ -2084,7 +2098,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       // Manually call render functions - ENABLE DASHBOARD FOR NEW DESIGN
       autoSetLatestPeriod();
       renderDashboard();
-      // renderKonten();
+      renderKonten();
       // renderDampak();
       updateMediaDropdown(dashboardData.media);
       saveStateToStorage();
