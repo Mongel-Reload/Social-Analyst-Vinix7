@@ -1616,10 +1616,13 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
   }
 
   async function testMetaConnection(){
+    console.log('[DEBUG] testMetaConnection called');
     showLoading('Connecting to Meta Graph API...');
     setMetaStatus('Status: sedang menguji koneksi Meta...');
     try{
+      console.log('[DEBUG] Fetching meta-test...');
       const data = await fetchMeta('meta-test');
+      console.log('[DEBUG] Meta test response:', data);
       
       if(data.success === false){
         throw new Error(data.error?.message || 'Koneksi Meta gagal');
@@ -1632,6 +1635,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
         instagram: data.instagram || null,
         connected_at: new Date().toISOString()
       };
+      console.log('[DEBUG] dashboardData.meta updated');
       
       // Update account info display
       const accountInfo = document.getElementById('metaAccountInfo');
@@ -1674,13 +1678,16 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       setMetaStatus('Status: koneksi berhasil');
       
       // Dispatch meta connected event
+      console.log('[DEBUG] Dispatching META_CONNECTED event');
       dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
       
       // Auto-load media list after successful connection
+      console.log('[DEBUG] Calling loadMetaMedia...');
       await loadMetaMedia();
+      console.log('[DEBUG] loadMetaMedia completed');
       
     }catch(err){
-      console.error(err);
+      console.error('[ERROR] testMetaConnection error:', err);
       setMetaStatus('Status: koneksi gagal — ' + err.message, false);
       hideLoading();
       alert('Koneksi Meta gagal: ' + err.message);
