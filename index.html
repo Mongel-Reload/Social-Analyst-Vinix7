@@ -333,15 +333,11 @@ function renderKonten(){
   
   if(!kontenEmpty || !kontenContent) return;
   
-  console.log('Meta connected:', dashboardData.meta.connected);
-  console.log('Media count:', dashboardData.media.length);
-  
   // Check if Meta is connected
   if(!dashboardData.meta.connected){
     kontenEmpty.style.display = 'block';
     kontenEmpty.innerHTML = '<div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Meta Graph API belum terhubung</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data performa konten Anda.</p><button class="btn primary" onclick="showPage(\'meta\')">Buka Halaman Meta API</button>';
     kontenContent.style.display = 'none';
-    console.log('Konten: Meta not connected');
     return;
   }
   
@@ -350,7 +346,6 @@ function renderKonten(){
     kontenEmpty.style.display = 'block';
     kontenEmpty.innerHTML = '<div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Data konten belum dimuat</h3><p style="color:var(--muted);margin-bottom:24px">Meta sudah terhubung. Silakan muat data konten dari Meta API.</p><button class="btn primary" onclick="loadMetaMedia()">Muat Ulang Konten</button>';
     kontenContent.style.display = 'none';
-    console.log('Konten: Media not loaded');
     return;
   }
   
@@ -359,22 +354,17 @@ function renderKonten(){
   const selectedYear = $('#yearCustomKonten .custom-trigger').textContent.replace('⌄', '').trim();
   const monthIndex = months.indexOf(selectedMonth);
   
-  console.log('Selected period:', selectedMonth, selectedYear);
-  
   // Filter media by period
   const filteredMedia = dashboardData.media.filter(item => {
     const itemDate = new Date(item.timestamp);
     return itemDate.getMonth() === monthIndex && itemDate.getFullYear().toString() === selectedYear;
   });
   
-  console.log('Filtered media count:', filteredMedia.length);
-  
   // Check if filtered data exists
   if(filteredMedia.length === 0){
     kontenEmpty.style.display = 'block';
     kontenEmpty.innerHTML = `<div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Tidak ada konten pada periode ini</h3><p style="color:var(--muted);margin-bottom:24px">Tidak ada data konten untuk periode ${selectedMonth} ${selectedYear}. Coba periode lain atau tampilkan periode terbaru.</p><button class="btn primary" onclick="autoSetLatestPeriod();renderKonten();">Tampilkan Periode Terbaru</button>`;
     kontenContent.style.display = 'none';
-    console.log('Konten: No data for selected period');
     return;
   }
   
@@ -422,8 +412,6 @@ function renderKonten(){
   
   kontenEmpty.style.display = 'none';
   kontenContent.style.display = 'block';
-  
-  console.log('Konten rendered:', filteredMedia.length, 'items for', selectedMonth, selectedYear);
 }
 
 // Render Dampak page with actual data from dashboardData.media
@@ -433,15 +421,11 @@ function renderDampak(){
   
   if(!dampakEmpty || !dampakContent) return;
   
-  console.log('Meta connected:', dashboardData.meta.connected);
-  console.log('Media count:', dashboardData.media.length);
-  
   // Check if Meta is connected
   if(!dashboardData.meta.connected){
     dampakEmpty.style.display = 'block';
     dampakEmpty.innerHTML = '<div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Meta Graph API belum terhubung</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage(\'meta\')">Buka Halaman Meta API</button>';
     dampakContent.style.display = 'none';
-    console.log('Dampak: Meta not connected');
     return;
   }
   
@@ -450,7 +434,6 @@ function renderDampak(){
     dampakEmpty.style.display = 'block';
     dampakEmpty.innerHTML = '<div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Data dampak belum dimuat</h3><p style="color:var(--muted);margin-bottom:24px">Meta sudah terhubung. Silakan muat data konten dari Meta API.</p><button class="btn primary" onclick="loadMetaMedia()">Muat Ulang Konten</button>';
     dampakContent.style.display = 'none';
-    console.log('Dampak: Media not loaded');
     return;
   }
   
@@ -459,22 +442,17 @@ function renderDampak(){
   const selectedYear = $('#yearCustomDampak .custom-trigger').textContent.replace('⌄', '').trim();
   const monthIndex = months.indexOf(selectedMonth);
   
-  console.log('Selected period:', selectedMonth, selectedYear);
-  
   // Filter media by period
   const filteredMedia = dashboardData.media.filter(item => {
     const itemDate = new Date(item.timestamp);
     return itemDate.getMonth() === monthIndex && itemDate.getFullYear().toString() === selectedYear;
   });
   
-  console.log('Filtered media count:', filteredMedia.length);
-  
   // Check if filtered data exists
   if(filteredMedia.length === 0){
     dampakEmpty.style.display = 'block';
     dampakEmpty.innerHTML = `<div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Tidak ada data pada periode ini</h3><p style="color:var(--muted);margin-bottom:24px">Tidak ada data untuk periode ${selectedMonth} ${selectedYear}. Coba periode lain atau tampilkan periode terbaru.</p><button class="btn primary" onclick="autoSetLatestPeriod();renderDampak();">Tampilkan Periode Terbaru</button>`;
     dampakContent.style.display = 'none';
-    console.log('Dampak: No data for selected period');
     return;
   }
   
@@ -503,8 +481,6 @@ function renderDampak(){
   
   dampakEmpty.style.display = 'none';
   dampakContent.style.display = 'block';
-  
-  console.log('Dampak rendered:', filteredMedia.length, 'items for', selectedMonth, selectedYear);
 }
 
 // Render Laporan page with actual data from dashboardData.media and dashboardData.prediction
@@ -514,14 +490,10 @@ function renderLaporan(){
   
   if(!laporanEmpty || !laporanContent) return;
   
-  console.log('Meta connected:', dashboardData.meta.connected);
-  console.log('Media count:', dashboardData.media.length);
-  
   // Check if Meta is connected and has data
   if(!dashboardData.meta.connected || !dashboardData.media || dashboardData.media.length === 0){
     laporanEmpty.style.display = 'block';
     laporanContent.style.display = 'none';
-    console.log('Laporan: No data available');
     return;
   }
   
@@ -552,8 +524,6 @@ function renderLaporan(){
   
   laporanEmpty.style.display = 'none';
   laporanContent.style.display = 'block';
-  
-  console.log('Laporan rendered with', totalPosts, 'posts');
 }
 
 // Refresh all Meta-dependent pages
@@ -564,7 +534,6 @@ function refreshMetaDependentPages(){
   renderDampak();
   updateMediaDropdown(dashboardData.media);
   saveStateToStorage();
-  console.log('All Meta-dependent pages refreshed');
 }
 
 // Render Dashboard page with actual data from dashboardData.media
@@ -575,15 +544,11 @@ function renderDashboard(){
   
   if(!dashboardEmpty || !dashboardContent) return;
   
-  console.log('Meta connected:', dashboardData.meta.connected);
-  console.log('Media count:', dashboardData.media.length);
-  
   // Check if Meta is connected
   if(!dashboardData.meta.connected){
     dashboardEmpty.style.display = 'block';
     dashboardContent.style.display = 'none';
     if(dashboardRecommendation) dashboardRecommendation.style.display = 'none';
-    console.log('Dashboard: Meta not connected');
     return;
   }
   
@@ -592,7 +557,6 @@ function renderDashboard(){
     dashboardEmpty.style.display = 'block';
     dashboardContent.style.display = 'none';
     if(dashboardRecommendation) dashboardRecommendation.style.display = 'none';
-    console.log('Dashboard: Media not loaded');
     return;
   }
   
@@ -601,22 +565,17 @@ function renderDashboard(){
   const selectedYear = $('#yearCustom .custom-trigger').textContent.replace('⌄', '').trim();
   const monthIndex = months.indexOf(selectedMonth);
   
-  console.log('Selected period:', selectedMonth, selectedYear);
-  
   // Filter media by period
   const filteredMedia = dashboardData.media.filter(item => {
     const itemDate = new Date(item.timestamp);
     return itemDate.getMonth() === monthIndex && itemDate.getFullYear().toString() === selectedYear;
   });
   
-  console.log('Filtered media count:', filteredMedia.length);
-  
   // Check if filtered data exists
   if(filteredMedia.length === 0){
     dashboardEmpty.style.display = 'block';
     dashboardContent.style.display = 'none';
     if(dashboardRecommendation) dashboardRecommendation.style.display = 'none';
-    console.log('Dashboard: No data for selected period');
     return;
   }
   
@@ -639,8 +598,6 @@ function renderDashboard(){
   
   // Hide recommendation until sentiment analysis is done
   if(dashboardRecommendation) dashboardRecommendation.style.display = 'none';
-  
-  console.log('Dashboard rendered:', filteredMedia.length, 'items for', selectedMonth, selectedYear);
 }
 
 // Render Dashboard Recommendation with actual data from dashboardData.prediction
@@ -649,12 +606,8 @@ function renderRecommendation(){
   
   if(!dashboardRecommendation) return;
   
-  console.log('Prediction data:', dashboardData.prediction);
-  
-  // Check if prediction data exists
   if(!dashboardData.prediction){
     dashboardRecommendation.style.display = 'none';
-    console.log('Recommendation: No prediction data');
     return;
   }
   
@@ -714,7 +667,6 @@ function renderRecommendation(){
   }
   
   dashboardRecommendation.style.display = 'block';
-  console.log('Recommendation rendered');
 }
 
 let globalEventListenersSetup = false;
@@ -726,7 +678,6 @@ function setupGlobalEventListeners(){
 
   // Meta connected - update dashboard with account info
   window.addEventListener(APP_EVENTS.META_CONNECTED, (e) => {
-    console.log('Meta connected:', e.detail);
     // Update dashboard with meta info
     if(e.detail.instagram){
       updateText('kpiReach', formatCompact(e.detail.instagram.followers_count));
@@ -735,8 +686,6 @@ function setupGlobalEventListeners(){
   
   // Media loaded - update dashboard and content pages
   window.addEventListener(APP_EVENTS.MEDIA_LOADED, (e) => {
-    console.log('Media loaded:', e.detail.length, 'items');
-    
     // Auto-set filter to latest period
     autoSetLatestPeriod();
     
@@ -754,7 +703,6 @@ function setupGlobalEventListeners(){
   
   // Prediction finished - update all pages
   window.addEventListener(APP_EVENTS.PREDICTION_FINISHED, (e) => {
-    console.log('Prediction finished:', e.detail);
     refreshAllPages();
     renderRecommendation();
   });
@@ -1616,13 +1564,10 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
   }
 
   async function testMetaConnection(){
-    console.log('[DEBUG] testMetaConnection called');
     showLoading('Connecting to Meta Graph API...');
     setMetaStatus('Status: sedang menguji koneksi Meta...');
     try{
-      console.log('[DEBUG] Fetching meta-test...');
       const data = await fetchMeta('meta-test');
-      console.log('[DEBUG] Meta test response:', data);
       
       if(data.success === false){
         throw new Error(data.error?.message || 'Koneksi Meta gagal');
@@ -1635,7 +1580,6 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
         instagram: data.instagram || null,
         connected_at: new Date().toISOString()
       };
-      console.log('[DEBUG] dashboardData.meta updated');
       
       // Update account info display
       const accountInfo = document.getElementById('metaAccountInfo');
@@ -1681,12 +1625,10 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       // dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
       
       // Auto-load media list after successful connection
-      console.log('[DEBUG] Calling loadMetaMedia...');
       await loadMetaMedia();
-      console.log('[DEBUG] loadMetaMedia completed');
       
     }catch(err){
-      console.error('[ERROR] testMetaConnection error:', err);
+      console.error(err);
       setMetaStatus('Status: koneksi gagal — ' + err.message, false);
       hideLoading();
       alert('Koneksi Meta gagal: ' + err.message);
@@ -1698,8 +1640,6 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
     const mediaList = document.getElementById('metaMediaList');
     if(mediaList) mediaList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Memuat postingan...</p>';
     
-    console.log('Meta connected:', dashboardData.meta.connected);
-    
     try{
       const data = await fetchMeta('meta-media?limit=25');
       
@@ -1710,13 +1650,11 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       if(!data.media || data.media.length === 0){
         if(mediaList) mediaList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Belum ada postingan pada akun Instagram Business ini.</p>';
         hideLoading();
-        console.log('Media count: 0');
         return;
       }
       
       // Store media in dashboardData
       dashboardData.media = data.media;
-      console.log('Media count:', dashboardData.media.length);
       
       // Update media dropdown for sentiment page
       updateMediaDropdown(data.media);
