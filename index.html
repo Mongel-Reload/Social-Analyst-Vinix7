@@ -428,6 +428,52 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <button class="btn" id="exportSentimentCSV">Export CSV</button>
         </div>
       </div>
+      
+      <!-- 13. AI Insight & Recommendation -->
+      <div id="sentimentAISection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">🤖 AI Insight & Recommendation</h3>
+        
+        <!-- API Key Input -->
+        <div style="margin-bottom:15px">
+          <label style="display:block;margin-bottom:8px;color:#9aa4b2;font-size:13px">Pilih AI Provider</label>
+          <select id="aiProvider" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#d1d5db;padding:10px;border-radius:8px;margin-bottom:10px">
+            <option value="openai">OpenAI (GPT-4/GPT-3.5)</option>
+            <option value="gemini">Google Gemini</option>
+          </select>
+          <label style="display:block;margin-bottom:8px;color:#9aa4b2;font-size:13px">API Key</label>
+          <input type="password" id="aiApiKey" placeholder="Masukkan API Key Anda" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#d1d5db;padding:10px;border-radius:8px;margin-bottom:10px">
+          <small style="color:#9aa4b2;font-size:11px">API Key hanya disimpan di browser Anda dan tidak dikirim ke server kami.</small>
+        </div>
+        
+        <button class="btn primary" id="generateAIInsight" style="width:100%">Generate AI Insight</button>
+        
+        <!-- AI Results -->
+        <div id="aiResults" style="margin-top:20px;display:none">
+          <!-- AI Summary -->
+          <div class="card" style="margin-bottom:15px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3)">
+            <h4 style="margin-bottom:12px;color:#c4b5fd">📋 AI Summary</h4>
+            <div id="aiSummary" style="color:#d1d5db;line-height:1.8"></div>
+          </div>
+          
+          <!-- AI Recommendation -->
+          <div class="card" style="margin-bottom:15px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3)">
+            <h4 style="margin-bottom:12px;color:#67e8f9">💡 AI Recommendation</h4>
+            <div id="aiRecommendation" style="color:#d1d5db;line-height:1.8"></div>
+          </div>
+          
+          <!-- Priority Action -->
+          <div class="card" style="margin-bottom:15px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)">
+            <h4 style="margin-bottom:12px;color:#fca5a5">🎯 Priority Action</h4>
+            <div id="aiPriority" style="color:#d1d5db;line-height:1.8"></div>
+          </div>
+          
+          <!-- Expected Impact -->
+          <div class="card" style="margin-bottom:15px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3)">
+            <h4 style="margin-bottom:12px;color:#86efac">📈 Expected Impact</h4>
+            <div id="aiImpact" style="color:#d1d5db;line-height:1.8"></div>
+          </div>
+        </div>
+      </div>
     </section>
     <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul style="line-height:1.9;color:#d1d5db"><li>Menunggu data untuk analisis dampak...</li></ul></div></div></div></section>
 
@@ -2991,6 +3037,9 @@ function analyzeSentimentDataset() {
     // Show export buttons
     document.getElementById('sentimentExportSection').style.display = 'block';
     
+    // Show AI Insight section
+    document.getElementById('sentimentAISection').style.display = 'block';
+    
     hideLoading();
     
   } catch (error) {
@@ -3424,7 +3473,403 @@ function exportSentimentToPDF() {
 document.addEventListener('DOMContentLoaded', () => {
   setupSentimentUploadHandlers();
   setupExportHandlers();
+  setupAIHandlers();
 });
+
+// ============================================
+// AI INSIGHT & RECOMMENDATION
+// ============================================
+
+function setupAIHandlers() {
+  const generateBtn = document.getElementById('generateAIInsight');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', generateAIInsight);
+  }
+}
+
+// Calculate statistics for AI analysis
+function calculateSentimentStatistics() {
+  if (!sentimentPredictions) {
+    return null;
+  }
+  
+  const total = sentimentPredictions.length;
+  const sentimentCounts = {
+    Positif: 0,
+    Netral: 0,
+    Negatif: 0
+  };
+  
+  sentimentPredictions.forEach(row => {
+    if (sentimentCounts[row.predicted] !== undefined) {
+      sentimentCounts[row.predicted]++;
+    }
+  });
+  
+  const sentimentPercentages = {
+    Positif: ((sentimentCounts.Positif / total) * 100).toFixed(2),
+    Netral: ((sentimentCounts.Netral / total) * 100).toFixed(2),
+    Negatif: ((sentimentCounts.Negatif / total) * 100).toFixed(2)
+  };
+  
+  // Extract all words from preprocessed text
+  const allWords = sentimentPredictions
+    .map(row => row.preprocessed.split(' '))
+    .flat()
+    .filter(word => word.length > 2);
+  
+  // Word frequency
+  const wordFreq = {};
+  allWords.forEach(word => {
+    wordFreq[word] = (wordFreq[word] || 0) + 1;
+  });
+  
+  // Top 10 most frequent words
+  const topWords = Object.entries(wordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([word, count]) => ({ word, count }));
+  
+  // Positive words (from positive comments)
+  const positiveComments = sentimentPredictions.filter(row => row.predicted === 'Positif');
+  const positiveWords = positiveComments
+    .map(row => row.preprocessed.split(' '))
+    .flat()
+    .filter(word => word.length > 2);
+  
+  const positiveWordFreq = {};
+  positiveWords.forEach(word => {
+    positiveWordFreq[word] = (positiveWordFreq[word] || 0) + 1;
+  });
+  
+  const topPositiveWords = Object.entries(positiveWordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([word, count]) => ({ word, count }));
+  
+  // Negative words (from negative comments)
+  const negativeComments = sentimentPredictions.filter(row => row.predicted === 'Negatif');
+  const negativeWords = negativeComments
+    .map(row => row.preprocessed.split(' '))
+    .flat()
+    .filter(word => word.length > 2);
+  
+  const negativeWordFreq = {};
+  negativeWords.forEach(word => {
+    negativeWordFreq[word] = (negativeWordFreq[word] || 0) + 1;
+  });
+  
+  const topNegativeWords = Object.entries(negativeWordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([word, count]) => ({ word, count }));
+  
+  // Top comments by likes (if likes data exists)
+  const commentsWithLikes = sentimentPredictions.filter(row => row.likes && !isNaN(row.likes));
+  const topPositiveByLikes = commentsWithLikes
+    .filter(row => row.predicted === 'Positif')
+    .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+    .slice(0, 5)
+    .map(row => ({ comment: row.komentar.substring(0, 100), likes: row.likes }));
+  
+  const topNegativeByLikes = commentsWithLikes
+    .filter(row => row.predicted === 'Negatif')
+    .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+    .slice(0, 5)
+    .map(row => ({ comment: row.komentar.substring(0, 100), likes: row.likes }));
+  
+  // Topic extraction (simple keyword clustering)
+  const topics = extractTopics(topWords.map(w => w.word));
+  
+  return {
+    total,
+    sentimentCounts,
+    sentimentPercentages,
+    topWords,
+    topPositiveWords,
+    topNegativeWords,
+    topPositiveByLikes,
+    topNegativeByLikes,
+    topics
+  };
+}
+
+// Simple topic extraction based on word clustering
+function extractTopics(words) {
+  const topicKeywords = {
+    'Produk/Kualitas': ['produk', 'kualitas', 'barang', 'item', 'bahan', 'material', 'kualitas', 'bagus', 'jelek'],
+    'Harga': ['harga', 'murah', 'mahal', 'diskon', 'promo', 'sale', 'hemat', 'biaya', 'ongkir'],
+    'Pelayanan': ['pelayanan', 'layanan', 'cs', 'customer service', 'admin', 'respon', 'balas', 'fast', 'lambat'],
+    'Pengiriman': ['kirim', 'pengiriman', 'kurir', 'jne', 'sicepat', 'gojek', 'grab', 'antar', 'sampai'],
+    'Kemasan': ['kemasan', 'packaging', 'bungkus', 'box', 'rapuh', 'aman', 'rapi'],
+    'Promosi': ['promosi', 'iklan', 'ads', 'konten', 'video', 'reels', 'feed', 'story'],
+    'Fitur': ['fitur', 'fungsi', 'aplikasi', 'sistem', 'update', 'versi', 'bug', 'error']
+  };
+  
+  const topicCounts = {};
+  Object.keys(topicKeywords).forEach(topic => {
+    topicCounts[topic] = 0;
+    topicKeywords[topic].forEach(keyword => {
+      words.forEach(word => {
+        if (word.includes(keyword) || keyword.includes(word)) {
+          topicCounts[topic]++;
+        }
+      });
+    });
+  });
+  
+  return Object.entries(topicCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([topic, count]) => ({ topic, count }))
+    .filter(t => t.count > 0);
+}
+
+// Generate AI Insight
+async function generateAIInsight() {
+  const apiKey = document.getElementById('aiApiKey').value;
+  const provider = document.getElementById('aiProvider').value;
+  
+  if (!apiKey) {
+    alert('Silakan masukkan API Key terlebih dahulu!');
+    return;
+  }
+  
+  if (!sentimentPredictions) {
+    alert('Silakan analisis dataset terlebih dahulu!');
+    return;
+  }
+  
+  showLoading('Generating AI Insight...');
+  
+  try {
+    // Calculate statistics
+    const stats = calculateSentimentStatistics();
+    console.log('Statistics for AI:', stats);
+    
+    // Create prompt
+    const prompt = createAIPrompt(stats);
+    console.log('AI Prompt:', prompt);
+    
+    // Call AI API
+    let aiResponse;
+    if (provider === 'openai') {
+      aiResponse = await callOpenAI(apiKey, prompt);
+    } else {
+      aiResponse = await callGemini(apiKey, prompt);
+    }
+    
+    console.log('AI Response:', aiResponse);
+    
+    // Parse and display response
+    displayAIResponse(aiResponse);
+    
+    hideLoading();
+    
+  } catch (error) {
+    hideLoading();
+    alert('Error generating AI Insight: ' + error.message);
+    console.error('AI Error:', error);
+  }
+}
+
+// Create AI prompt
+function createAIPrompt(stats) {
+  return `Sebagai ahli analisis sentimen media sosial, berikan insight dan rekomendasi berdasarkan data berikut:
+
+DATA STATISTIK:
+- Total Komentar: ${stats.total}
+- Sentimen Positif: ${stats.sentimentCounts.Positif} (${stats.sentimentPercentages.Positif}%)
+- Sentimen Netral: ${stats.sentimentCounts.Netral} (${stats.sentimentPercentages.Netral}%)
+- Sentimen Negatif: ${stats.sentimentCounts.Negatif} (${stats.sentimentPercentages.Negatif}%)
+
+TOP 10 KATA PALING SERING MUNCUL:
+${stats.topWords.map(w => `- ${w.word} (${w.count}x)`).join('\n')}
+
+TOP 10 KATA POSITIF:
+${stats.topPositiveWords.map(w => `- ${w.word} (${w.count}x)`).join('\n')}
+
+TOP 10 KATA NEGATIF:
+${stats.topNegativeWords.map(w => `- ${w.word} (${w.count}x)`).join('\n')}
+
+TOPIK YANG PALING SERING DIBAHAS:
+${stats.topics.map(t => `- ${t.topic} (${t.count}x)`).join('\n')}
+
+${stats.topPositiveByLikes.length > 0 ? `
+KOMENTAR POSITIF DENGAN LIKE TERBANYAK:
+${stats.topPositiveByLikes.map(c => `- "${c.comment}" (${c.likes} likes)`).join('\n')}
+` : ''}
+
+${stats.topNegativeByLikes.length > 0 ? `
+KOMENTAR NEGATIF DENGAN LIKE TERBANYAK:
+${stats.topNegativeByLikes.map(c => `- "${c.comment}" (${c.likes} likes)`).join('\n')}
+` : ''}
+
+TUGAS:
+Berdasarkan data di atas, berikan rekomendasi yang spesifik dan actionable dalam format JSON berikut:
+{
+  "summary": "Ringkasan kondisi sentimen akun secara keseluruhan (2-3 kalimat)",
+  "negativeFactors": ["Faktor utama penyebab sentimen negatif (3-5 poin)"],
+  "positiveFactors": ["Faktor utama penyebab sentimen positif (3-5 poin)"],
+  "contentStrategy": ["Rekomendasi strategi konten (3-5 poin spesifik)"],
+  "serviceImprovement": ["Rekomendasi peningkatan pelayanan/admin (3-5 poin spesifik)"],
+  "priorityActions": [
+    {"action": "Tindakan prioritas", "priority": "High/Medium/Low", "reason": "Alasan"}
+  ],
+  "expectedImpact": "Prediksi dampak jika rekomendasi diterapkan (2-3 kalimat)"
+}
+
+Pastikan rekomendasi:
+- Berbasis data yang diberikan
+- Spesifik dan actionable
+- Tidak menggunakan template generik
+- Sesuai dengan konteks komentar Instagram`;
+}
+
+// Call OpenAI API
+async function callOpenAI(apiKey, prompt) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert social media sentiment analyst. Provide specific, data-driven recommendations based on the given statistics. Always respond in valid JSON format.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || 'OpenAI API error');
+  }
+  
+  const data = await response.json();
+  const content = data.choices[0].message.content;
+  
+  // Parse JSON response
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    // If not JSON, try to extract JSON from the response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error('Failed to parse AI response as JSON');
+  }
+}
+
+// Call Gemini API
+async function callGemini(apiKey, prompt) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: `You are an expert social media sentiment analyst. Provide specific, data-driven recommendations based on the given statistics. Always respond in valid JSON format.\n\n${prompt}`
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000
+      }
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || 'Gemini API error');
+  }
+  
+  const data = await response.json();
+  const content = data.candidates[0].content.parts[0].text;
+  
+  // Parse JSON response
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    // If not JSON, try to extract JSON from the response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error('Failed to parse AI response as JSON');
+  }
+}
+
+// Display AI response
+function displayAIResponse(response) {
+  document.getElementById('aiResults').style.display = 'block';
+  
+  // Summary
+  document.getElementById('aiSummary').innerHTML = `
+    <p>${response.summary}</p>
+  `;
+  
+  // Recommendation
+  document.getElementById('aiRecommendation').innerHTML = `
+    <div style="margin-bottom:12px">
+      <strong style="color:#fca5a5">Faktor Negatif:</strong>
+      <ul style="margin-top:8px;margin-left:20px">
+        ${response.negativeFactors.map(f => `<li>${f}</li>`).join('')}
+      </ul>
+    </div>
+    <div style="margin-bottom:12px">
+      <strong style="color:#86efac">Faktor Positif:</strong>
+      <ul style="margin-top:8px;margin-left:20px">
+        ${response.positiveFactors.map(f => `<li>${f}</li>`).join('')}
+      </ul>
+    </div>
+    <div style="margin-bottom:12px">
+      <strong style="color:#67e8f9">Strategi Konten:</strong>
+      <ul style="margin-top:8px;margin-left:20px">
+        ${response.contentStrategy.map(s => `<li>${s}</li>`).join('')}
+      </ul>
+    </div>
+    <div>
+      <strong style="color:#c4b5fd">Peningkatan Pelayanan:</strong>
+      <ul style="margin-top:8px;margin-left:20px">
+        ${response.serviceImprovement.map(s => `<li>${s}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+  
+  // Priority Actions
+  document.getElementById('aiPriority').innerHTML = `
+    ${response.priorityActions.map(action => `
+      <div style="margin-bottom:12px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px;border-left:4px solid ${action.priority === 'High' ? '#ef4444' : action.priority === 'Medium' ? '#f59e0b' : '#22c55e'}">
+        <strong>${action.action}</strong>
+        <div style="margin-top:4px;font-size:13px;color:#9aa4b2">Priority: ${action.priority}</div>
+        <div style="margin-top:4px;font-size:13px;color:#d1d5db">${action.reason}</div>
+      </div>
+    `).join('')}
+  `;
+  
+  // Expected Impact
+  document.getElementById('aiImpact').innerHTML = `
+    <p>${response.expectedImpact}</p>
+  `;
+}
 
 </script>
 
