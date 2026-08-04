@@ -23,9 +23,9 @@ exports.handler = async function(event) {
     const until = params.until || null;
 
     // Build graph API parameters
-    // Note: Some fields require additional permissions (instagram_basic, instagram_manage_insights)
+    // Note: Removed insights to avoid permission errors - basic fields work with instagram_basic
     const graphParams = {
-      fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,insights{metric_name,values}",
+      fields: "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count",
       limit: Math.min(limit, 100) // Max 100 per request
     };
 
@@ -51,16 +51,6 @@ exports.handler = async function(event) {
         thumbnail_url = item.media_url;
       }
 
-      // Extract insights data if available
-      let insights = {};
-      if (item.insights && item.insights.data) {
-        item.insights.data.forEach(insight => {
-          if (insight.name && insight.values && insight.values[0]) {
-            insights[insight.name] = insight.values[0];
-          }
-        });
-      }
-
       return {
         id: item.id,
         caption: item.caption || null,
@@ -71,12 +61,12 @@ exports.handler = async function(event) {
         timestamp: item.timestamp,
         like_count: item.like_count || 0,
         comments_count: item.comments_count || 0,
-        // Additional fields from insights (may not be available without proper permissions)
-        shares_count: insights.shares_count || 0,
-        reach: insights.reach || 0,
-        impressions: insights.impressions || 0,
-        saves: insights.saves || 0,
-        video_views: insights.video_views || 0
+        // Additional fields set to 0 since insights are not requested
+        shares_count: 0,
+        reach: 0,
+        impressions: 0,
+        saves: 0,
+        video_views: 0
       };
     });
 
