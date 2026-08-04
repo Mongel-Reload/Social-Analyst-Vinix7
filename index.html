@@ -882,7 +882,8 @@ function toggleSidebar(){
 function initDashboard(){
   if($$('#nav button'))$$('#nav button').forEach(btn=>btn.addEventListener('click',()=>showPage(btn.dataset.page)));
   if($('#toggle'))$('#toggle').addEventListener('click',toggleSidebar);
-  // testMeta and syncMeta event listeners are handled by bindMetaButtons()
+  // Bind Meta API buttons
+  bindMetaButtons();
   if($('#downloadTemplate'))$('#downloadTemplate').addEventListener('click',downloadTemplate);
   if($('#analyzeManual'))$('#analyzeManual').addEventListener('click',analyzeManualContent);
   if($('#analyzeDataset'))$('#analyzeDataset').addEventListener('click',analyzeDataset);
@@ -1775,29 +1776,30 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
     refreshMetaDependentPages();
   }
 
-  function bindMetaButtons(){
-    const testBtn = document.getElementById('testMeta');
-    const syncBtn = document.getElementById('syncMeta');
-
-    if(testBtn){
-      testBtn.onclick = function(e){
-        e.preventDefault();
-        testMetaConnection();
-      };
-    }
-
-    if(syncBtn){
-      syncBtn.onclick = function(e){
-        e.preventDefault();
-        syncMetaData();
-      };
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', bindMetaButtons);
+  // Expose functions to window for global access
   window.testMetaConnection = testMetaConnection;
   window.syncMetaData = syncMetaData;
 })();
+
+// Bind Meta API buttons - outside IIFE for global access
+function bindMetaButtons(){
+  const testBtn = document.getElementById('testMeta');
+  const syncBtn = document.getElementById('syncMeta');
+
+  if(testBtn){
+    testBtn.onclick = function(e){
+      e.preventDefault();
+      window.testMetaConnection();
+    };
+  }
+
+  if(syncBtn){
+    syncBtn.onclick = function(e){
+      e.preventDefault();
+      window.syncMetaData();
+    };
+  }
+}
 </script>
 
 </body>
