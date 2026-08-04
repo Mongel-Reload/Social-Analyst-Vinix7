@@ -1,39 +1,54 @@
-const https = require('https');
-
 // System instruction for Gemini
 const SYSTEM_INSTRUCTION = `Anda adalah analis media sosial yang memberikan rekomendasi berdasarkan hasil klasifikasi sentimen. Gunakan hanya data JSON yang diberikan. Jangan membuat angka, fakta, topik, atau komentar yang tidak tersedia. Setiap rekomendasi harus menyebutkan dasar datanya. Jangan memberikan prediksi persentase peningkatan tanpa model forecasting. Jangan mengklaim hubungan sebab-akibat tanpa bukti. Gunakan bahasa Indonesia formal dan mudah dipahami. Hasilkan rekomendasi untuk tim digital marketing.`;
 
-// Helper function to make HTTPS request
-function makeRequest(url, options, data) {
-  return new Promise((resolve, reject) => {
-    const req = https.request(url, options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => body += chunk);
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(body);
-          if (res.statusCode >= 200 && res.statusCode < 300) {
-            resolve(parsed);
-          } else {
-            reject(new Error(parsed.error?.message || `HTTP ${res.statusCode}`));
-          }
-        } catch (e) {
-          reject(new Error('Invalid JSON response'));
-        }
-      });
+// Helper function to make HTTPS request using fetch (more reliable in Netlify Functions)
+async function makeRequest(url, options, data) {
+  try {
+    console.log('Making request to:', url);
+    console.log('Request options:', options);
+    
+    // Add timeout using AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    const response = await fetch(url, {
+      ...options,
+      body: data ? JSON.stringify(data) : undefined,
+      signal: controller.signal
     });
     
-    req.on('error', reject);
-    req.setTimeout(30000, () => {
-      req.destroy();
-      reject(new Error('Request timeout'));
-    });
+    clearTimeout(timeoutId);
     
-    if (data) {
-      req.write(JSON.stringify(data));
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+    
+    const body = await response.text();
+    console.log('Response body length:', body.length);
+    
+    try {
+      const parsed = JSON.parse(body);
+      
+      if (response.ok) {
+        return parsed;
+      } else {
+        throw new Error(parsed.error?.message || `HTTP ${response.status}`);
+      }
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        throw new Error('Invalid JSON response');
+      }
+      throw e;
     }
-    req.end();
-  });
+  } catch (error) {
+    console.error('Request error:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
+    
+    throw error;
+  }
 }
 
 // Validate request data
