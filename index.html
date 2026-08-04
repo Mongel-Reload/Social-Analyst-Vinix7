@@ -1624,8 +1624,8 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       // Dispatch meta connected event - DISABLED TO PREVENT INFINITE LOOP
       // dispatchEvent(APP_EVENTS.META_CONNECTED, dashboardData.meta);
       
-      // Auto-load media list after successful connection
-      await loadMetaMedia();
+      // Auto-load media list after successful connection - DISABLED TO TEST INFINITE LOOP
+      // await loadMetaMedia();
       
     }catch(err){
       console.error(err);
@@ -1726,8 +1726,9 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
   }
 
   async function refreshMetaData(){
-    await testMetaConnection();
-    refreshMetaDependentPages();
+    // DISABLED TO TEST INFINITE LOOP
+    // await testMetaConnection();
+    // refreshMetaDependentPages();
   }
 
   async function analyzeMediaComments(mediaId, caption){
