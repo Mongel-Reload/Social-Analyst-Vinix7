@@ -2738,6 +2738,9 @@ function processDataset(data) {
   const firstRow = data[0];
   const columns = Object.keys(firstRow).map(c => c.toLowerCase());
   
+  console.log('Dataset columns:', columns);
+  console.log('First row:', firstRow);
+  
   // Check for required columns
   const hasUsername = columns.some(c => c.includes('username') || c.includes('user'));
   const hasKomentar = columns.some(c => c.includes('komentar') || c.includes('comment') || c.includes('text'));
@@ -2753,17 +2756,55 @@ function processDataset(data) {
   const komentarCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('komentar') || c.toLowerCase().includes('comment') || c.toLowerCase().includes('text'));
   const labelCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('label') || c.toLowerCase().includes('sentiment'));
   
+  console.log('Column mapping:', { usernameCol, komentarCol, labelCol });
+  
+  // Normalize label function
+  const normalizeLabel = (label) => {
+    if (!label) return null;
+    const normalized = label.toString().toLowerCase().trim();
+    
+    // Map various label formats to standard format
+    if (normalized.includes('positif') || normalized.includes('positive') || normalized.includes('pos') || normalized.includes('good') || normalized.includes('baik')) {
+      return 'Positif';
+    }
+    if (normalized.includes('negatif') || normalized.includes('negative') || normalized.includes('neg') || normalized.includes('bad') || normalized.includes('buruk')) {
+      return 'Negatif';
+    }
+    if (normalized.includes('netral') || normalized.includes('neutral') || normalized.includes('neu')) {
+      return 'Netral';
+    }
+    
+    // If no match, return original
+    return label;
+  };
+  
   // Normalize dataset
-  sentimentDataset = data.map(row => ({
-    username: usernameCol ? (row[usernameCol] || '-') : '-',
-    komentar: row[komentarCol] || '',
-    label: labelCol ? (row[labelCol] || null) : null
-  }));
+  sentimentDataset = data.map(row => {
+    const rawLabel = labelCol ? (row[labelCol] || null) : null;
+    const normalizedLabel = normalizeLabel(rawLabel);
+    
+    console.log('Label mapping:', { raw: rawLabel, normalized: normalizedLabel });
+    
+    return {
+      username: usernameCol ? (row[usernameCol] || '-') : '-',
+      komentar: row[komentarCol] || '',
+      label: normalizedLabel
+    };
+  });
+  
+  // Log label distribution
+  const labelCounts = {};
+  sentimentDataset.forEach(row => {
+    if (row.label) {
+      labelCounts[row.label] = (labelCounts[row.label] || 0) + 1;
+    }
+  });
+  console.log('Label distribution:', labelCounts);
   
   // Show preview
   showDatasetPreview();
   
-  alert(`Dataset berhasil dimuat! ${sentimentDataset.length} baris data.`);
+  alert(`Dataset berhasil dimuat! ${sentimentDataset.length} baris data.\nDistribusi label: ${JSON.stringify(labelCounts)}`);
 }
 
 function showDatasetPreview() {
@@ -2805,36 +2846,75 @@ function analyzeSentimentDataset() {
   
   try {
     // 1. Preprocessing
-    sentimentPreprocessed = sentimentDataset.map(row => ({
-      ...row,
-      preprocessed: preprocessText(row.komentar)
-    }));
+    console.log('Starting preprocessing...');
+    sentimentPreprocessed = sentimentDataset.map(row => {
+      const preprocessed = preprocessText(row.komentar);
+      console.log('Preprocessing:', { original: row.komentar.substring(0, 50), preprocessed });
+      return {
+        ...row,
+        preprocessed: preprocessed
+      };
+    });
+    
+    // Check if preprocessing results are empty
+    const emptyPreprocessed = sentimentPreprocessed.filter(r => !r.preprocessed || r.preprocessed.trim() === '').length;
+    console.log('Empty preprocessed count:', emptyPreprocessed);
     
     // Show preprocessing results
     showPreprocessingResults();
     
     // 2. Train/Test Split (80/20)
+    console.log('Splitting data...');
     const shuffled = [...sentimentPreprocessed].sort(() => Math.random() - 0.5);
     const splitIndex = Math.floor(shuffled.length * 0.8);
     const trainData = shuffled.slice(0, splitIndex);
     const testData = shuffled.slice(splitIndex);
     
+    console.log('Train data:', trainData.length, 'Test data:', testData.length);
+    
+    // Log label distribution in train data
+    const trainLabelCounts = {};
+    trainData.forEach(d => {
+      if (d.label) {
+        trainLabelCounts[d.label] = (trainLabelCounts[d.label] || 0) + 1;
+      }
+    });
+    console.log('Train label distribution:', trainLabelCounts);
+    
     // 3. TF-IDF Vectorization
+    console.log('Vectorizing with TF-IDF...');
     const vectorizer = new TFIDFVectorizer();
     const trainTexts = trainData.map(d => d.preprocessed);
     const testTexts = testData.map(d => d.preprocessed);
     
+    console.log('Sample train texts:', trainTexts.slice(0, 3));
+    
     const trainVectors = vectorizer.fitTransform(trainTexts);
     const testVectors = vectorizer.transform(testTexts);
     
+    console.log('Vocabulary size:', Object.keys(vectorizer.vocabulary).length);
+    console.log('Sample train vector:', trainVectors[0]);
+    
     // 4. Train Naive Bayes
+    console.log('Training Naive Bayes...');
     const classifier = new MultinomialNaiveBayes();
     const trainLabels = trainData.map(d => d.label || 'Netral');
+    
+    console.log('Train labels sample:', trainLabels.slice(0, 10));
+    console.log('Unique train labels:', [...new Set(trainLabels)]);
+    
     classifier.fit(trainVectors, trainLabels);
     
+    console.log('Classifier classes:', classifier.classes);
+    console.log('Classifier priors:', classifier.classPriors);
+    
     // 5. Predict
+    console.log('Predicting...');
     const predictions = classifier.predict(testVectors);
     const probabilities = classifier.predict_proba(testVectors);
+    
+    console.log('Predictions sample:', predictions.slice(0, 10));
+    console.log('Unique predictions:', [...new Set(predictions)]);
     
     // Store predictions with confidence
     sentimentPredictions = testData.map((row, i) => ({
@@ -2844,14 +2924,27 @@ function analyzeSentimentDataset() {
       confidencePercent: Math.max(...Object.values(probabilities[i])) * 100
     }));
     
+    // Log prediction distribution
+    const predCounts = {};
+    predictions.forEach(p => {
+      predCounts[p] = (predCounts[p] || 0) + 1;
+    });
+    console.log('Prediction distribution:', predCounts);
+    
     // Show prediction results
     showPredictionResults();
     
     // 6. Evaluate if labels exist
     const hasLabels = sentimentDataset.some(row => row.label);
+    console.log('Has labels:', hasLabels);
+    
     if (hasLabels) {
       const testLabels = testData.map(d => d.label || 'Netral');
+      console.log('Test labels sample:', testLabels.slice(0, 10));
+      
       sentimentEvaluation = calculateEvaluationMetrics(testLabels, predictions, ['Positif', 'Netral', 'Negatif']);
+      
+      console.log('Evaluation metrics:', sentimentEvaluation);
       
       // Show evaluation results
       showEvaluationResults();
@@ -2883,7 +2976,7 @@ function analyzeSentimentDataset() {
   } catch (error) {
     hideLoading();
     alert('Error saat menganalisis dataset: ' + error.message);
-    console.error(error);
+    console.error('Analysis error:', error);
   }
 }
 
