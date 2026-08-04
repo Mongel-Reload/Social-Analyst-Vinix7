@@ -1236,10 +1236,16 @@ function loginWithGoogle(){
 }
 
 function loginWithEmailPassword(email, password){
+  console.log('Attempting login with email:', email);
   auth.signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
       console.log('Email login success:', userCredential.user);
-      enterApp();
+      try{
+        enterApp();
+      }catch(err){
+        console.error('Error in enterApp:', err);
+        alert('Error saat masuk aplikasi: ' + err.message);
+      }
     })
     .catch((error) => {
       console.error('Email login error:', error);
@@ -1272,19 +1278,40 @@ function showLoginForm(){
   $('#authTitle').textContent='Selamat Datang 👋';
 }
 
-function enterApp(){ $('#login').style.display='none'; $('#app').style.display='block'; initDashboard(); 
-  // Load state from sessionStorage
-  const hasState = loadStateFromStorage();
-  if(hasState){
-    console.log('State loaded from sessionStorage');
-    // Update UI with loaded state
-    if(dashboardData.meta.connected){
-      renderKonten();
-      renderDampak();
-      updateMediaDropdown(dashboardData.media);
+function enterApp(){ 
+  console.log('enterApp called');
+  try{
+    $('#login').style.display='none'; 
+    $('#app').style.display='block'; 
+    initDashboard(); 
+    console.log('initDashboard completed');
+    
+    // Load state from sessionStorage
+    const hasState = loadStateFromStorage();
+    console.log('loadStateFromStorage result:', hasState);
+    if(hasState){
+      console.log('State loaded from sessionStorage');
+      // Update UI with loaded state
+      if(dashboardData.meta.connected){
+        renderKonten();
+        renderDampak();
+        updateMediaDropdown(dashboardData.media);
+      }
     }
+    showPage('dashboard'); 
+    fillContent(); 
+    updatePeriod(); 
+    renderCharts(); 
+    const user = auth.currentUser; 
+    if(user && $('#userEmail')){ 
+      $('#userEmail').textContent = user.email; 
+    }
+    console.log('enterApp completed successfully');
+  }catch(err){
+    console.error('Error in enterApp:', err);
+    alert('Error saat masuk aplikasi: ' + err.message);
   }
-  showPage('dashboard'); fillContent(); updatePeriod(); renderCharts(); const user = auth.currentUser; if(user && $('#userEmail')){ $('#userEmail').textContent = user.email; } }
+}
 
 function toggleUserMenu(){
   const menu = $('#userMenu');
