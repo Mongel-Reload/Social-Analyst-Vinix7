@@ -1533,14 +1533,28 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
 <script id="netlify-meta-client">
 (function(){
   async function fetchMeta(endpoint, payload){
-    const res = await fetch('/.netlify/functions/' + endpoint, {
-      method: payload ? 'POST' : 'GET',
-      headers: {'Content-Type':'application/json'},
-      body: payload ? JSON.stringify(payload) : undefined
-    });
-    const data = await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error || data.message || 'Request gagal');
-    return data;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const res = await fetch('/.netlify/functions/' + endpoint, {
+        method: payload ? 'POST' : 'GET',
+        headers: {'Content-Type':'application/json'},
+        body: payload ? JSON.stringify(payload) : undefined,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      const data = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.error || data.message || 'Request gagal');
+      return data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Request timeout - Netlify function tidak merespon dalam 30 detik');
+      }
+      throw err;
+    }
   }
 
   function setMetaStatus(message, ok=true){
