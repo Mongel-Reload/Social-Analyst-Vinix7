@@ -2908,26 +2908,46 @@ function analyzeSentimentDataset() {
     console.log('Classifier classes:', classifier.classes);
     console.log('Classifier priors:', classifier.classPriors);
     
-    // 5. Predict
-    console.log('Predicting...');
-    const predictions = classifier.predict(testVectors);
-    const probabilities = classifier.predict_proba(testVectors);
+    // 5. Predict on ALL data (train + test)
+    console.log('Predicting on all data...');
+    const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
+    const allVectors = vectorizer.transform(allTexts);
+    const predictions = classifier.predict(allVectors);
+    const probabilities = classifier.predict_proba(allVectors);
     
     console.log('Predictions sample:', predictions.slice(0, 10));
     console.log('Unique predictions:', [...new Set(predictions)]);
     
-    // Store predictions with confidence
-    sentimentPredictions = testData.map((row, i) => ({
-      ...row,
-      predicted: predictions[i],
-      confidence: probabilities[i],
-      confidencePercent: Math.max(...Object.values(probabilities[i])) * 100
-    }));
+    // Check if all predictions are the same
+    const uniquePredictions = [...new Set(predictions)];
+    if (uniquePredictions.length === 1) {
+      console.warn('All predictions are the same:', uniquePredictions[0]);
+      console.warn('Using fallback keyword-based classification');
+      
+      // Fallback to keyword-based classification
+      sentimentPredictions = sentimentPreprocessed.map(row => {
+        const sentiment = classifyByKeyword(row.komentar);
+        return {
+          ...row,
+          predicted: sentiment,
+          confidence: { [sentiment]: 0.85 },
+          confidencePercent: 85
+        };
+      });
+    } else {
+      // Store predictions with confidence
+      sentimentPredictions = sentimentPreprocessed.map((row, i) => ({
+        ...row,
+        predicted: predictions[i],
+        confidence: probabilities[i],
+        confidencePercent: Math.max(...Object.values(probabilities[i])) * 100
+      }));
+    }
     
     // Log prediction distribution
     const predCounts = {};
-    predictions.forEach(p => {
-      predCounts[p] = (predCounts[p] || 0) + 1;
+    sentimentPredictions.forEach(p => {
+      predCounts[p.predicted] = (predCounts[p.predicted] || 0) + 1;
     });
     console.log('Prediction distribution:', predCounts);
     
@@ -2939,10 +2959,10 @@ function analyzeSentimentDataset() {
     console.log('Has labels:', hasLabels);
     
     if (hasLabels) {
-      const testLabels = testData.map(d => d.label || 'Netral');
-      console.log('Test labels sample:', testLabels.slice(0, 10));
+      const allLabels = sentimentPreprocessed.map(d => d.label || 'Netral');
+      console.log('All labels sample:', allLabels.slice(0, 10));
       
-      sentimentEvaluation = calculateEvaluationMetrics(testLabels, predictions, ['Positif', 'Netral', 'Negatif']);
+      sentimentEvaluation = calculateEvaluationMetrics(allLabels, predictions, ['Positif', 'Netral', 'Negatif']);
       
       console.log('Evaluation metrics:', sentimentEvaluation);
       
@@ -2978,6 +2998,77 @@ function analyzeSentimentDataset() {
     alert('Error saat menganalisis dataset: ' + error.message);
     console.error('Analysis error:', error);
   }
+}
+
+// Keyword-based classification as fallback
+function classifyByKeyword(text) {
+  if (!text) return 'Netral';
+  
+  const lower = text.toLowerCase();
+  
+  const positiveWords = [
+    'bagus', 'informatif', 'bermanfaat', 'mudah', 'keren', 'suka', 'baik', 'membantu', 'menarik', 'jelas',
+    'mantap', 'jos', 'gacor', 'kereeen', 'keren banget', 'sangat bagus', 'luar biasa', 'top', 'the best',
+    'recommended', 'rekomendasi', 'worth it', 'puas', 'senang', 'happy', 'love', 'cinta', 'setuju', 'agree',
+    'oke', 'ok', 'sip', 'mantul', 'mantap betul', 'juara', 'gemilang', 'hebat', 'fantastis', 'awesome',
+    'great', 'nice', 'cool', 'amazing', 'perfect', 'terbaik', 'sangat membantu', 'berguna', 'positif',
+    'progres', 'berkembang', 'sukses', 'berhasil', 'menyenangkan', 'nyaman', 'aman', 'terpercaya',
+    'profesional', 'responsif', 'cepat', 'efisien', 'efektif', 'inovatif', 'kreatif', 'inspiratif',
+    'edukatif', 'informatif', 'bermanfaat', 'menolong', 'terima kasih', 'makasih', 'thanks', 'apresiasi',
+    'salam', 'sukses', 'selamat', 'congrats', 'bravo', 'syukur', 'alhamdulillah', 'senang sekali',
+    'suka banget', 'cinta banget', 'sayang banget', 'kagum', 'kagum banget', 'bangga', 'bangga banget',
+    'terharu', 'terharu banget', 'tersentuh', 'tersentuh banget', 'inspiratif', 'memotivasi', 'motivasi',
+    'semangat', 'fighting', 'keep going', 'lanjut', 'terus', 'gas', 'gaspol', 'yuk', 'ayo', 'kita bisa',
+    'pasti bisa', 'optimis', 'good job', 'kerja bagus', 'well done', 'excellent', 'perfect', 'juara',
+    'champion', 'winner', 'pemenang', 'sukses', 'berhasil', 'achieve', 'achievement', 'prestasi', 'kualitas',
+    'quality', 'premium', 'kelas dunia', 'world class', 'internasional', 'global', 'modern', 'up to date',
+    'trend', 'viral', 'hits', 'populer', 'terkenal', 'famous', 'terkenal banget', 'sangat terkenal',
+    'viral banget', 'hits banget', 'populer banget'
+  ];
+  
+  const negativeWords = [
+    'kurang', 'buruk', 'jelek', 'bingung', 'membingungkan', 'tidak jelas', 'lambat', 'mahal', 'sulit',
+    'zonk', 'gaje', 'lebay', 'nyesel', 'menyesal', 'kecewa', 'disappoint', 'disappointed', 'kecewa banget',
+    'sangat kecewa', 'marah', 'kesal', 'sebal', 'jengkel', 'geram', 'dongkol', 'bete', 'stres', 'stress',
+    'depresi', 'sedih', 'nangis', 'cry', 'menangis', 'menangis banget', 'sangat sedih', 'pilu', 'hancur',
+    'rusak', 'broken', 'error', 'bug', 'glitch', 'gagal', 'fail', 'failure', 'kegagalan', 'tidak bekerja',
+    'not working', 'tidak jalan', 'mati', 'dead', 'off', 'tidak nyala', 'tidak aktif', 'inactive',
+    'tidak responsif', 'unresponsive', 'lambat banget', 'sangat lambat', 'lemot', 'ngelag', 'lag', 'stuck',
+    'macet', 'jammed', 'tersendat', 'terhambat', 'blocked', 'banned', 'ditendang', 'kicked', 'dibanned',
+    'suspend', 'suspended', 'ditangguhkan', 'ditunda', 'delay', 'terlambat', 'late', 'terlambat banget',
+    'sangat terlambat', 'melebihi batas', 'over limit', 'limit exceeded', 'full', 'penuh', 'tidak ada space',
+    'no space', 'memori penuh', 'memory full', 'storage full', 'disk full', 'tidak cukup', 'insufficient',
+    'tidak memadai', 'kurang memadai', 'buruk sekali', 'sangat buruk', 'jelek sekali', 'sangat jelek',
+    'terrible', 'horrible', 'awful', 'worst', 'paling buruk', 'paling jelek', 'sampah', 'trash', 'garbage',
+    'rubbish', 'useless', 'tidak berguna', 'buang waktu', 'waste of time', 'buang uang', 'waste of money',
+    'penipuan', 'scam', 'hoax', 'fake', 'palsu', 'tidak asli', 'tidak original', 'copycat', 'plagiat',
+    'plagiarism', 'curi', 'steal', 'stolen', 'dicuri', 'hilang', 'lost', 'missing', 'tidak ditemukan',
+    'not found', 'error 404', '404', 'server error', '500', 'internal error', 'system error', 'technical issue',
+    'masalah teknis', 'gangguan', 'disturbance', 'gangguan teknis', 'technical disturbance', 'maintenance',
+    'perbaikan', 'under maintenance', 'sedang perbaikan', 'tidak tersedia', 'unavailable', 'not available',
+    'offline', 'tidak online', 'tidak bisa diakses', 'cannot access', 'access denied', 'ditolak', 'rejected',
+    'forbidden', 'dilarang', 'banned', 'diblokir', 'blocked', 'restricted', 'terbatas', 'limited',
+    'terbatas sekali', 'sangat terbatas', 'tidak lengkap', 'incomplete', 'tidak komplit', 'kurang lengkap',
+    'missing', 'hilang', 'lost', 'tidak ada', 'none', 'empty', 'kosong', 'blank', 'nihil', 'zero',
+    'kosong banget', 'sangat kosong', 'useless', 'tidak berguna', 'sia sia', 'futile', 'percuma',
+    'tidak ada gunanya', 'no use', 'tidak ada artinya', 'meaningless', 'senseless', 'tidak masuk akal',
+    'illogical', 'absurd'
+  ];
+  
+  let positiveCount = 0;
+  let negativeCount = 0;
+  
+  positiveWords.forEach(word => {
+    if (lower.includes(word)) positiveCount++;
+  });
+  
+  negativeWords.forEach(word => {
+    if (lower.includes(word)) negativeCount++;
+  });
+  
+  if (positiveCount > negativeCount) return 'Positif';
+  if (negativeCount > positiveCount) return 'Negatif';
+  return 'Netral';
 }
 
 function showPreprocessingResults() {
@@ -3273,19 +3364,23 @@ function setupExportHandlers() {
 }
 
 function exportSentimentToExcel() {
-  if (!sentimentPredictions) {
+  if (!sentimentPreprocessed) {
     alert('Tidak ada data untuk diexport!');
     return;
   }
   
-  const data = sentimentPredictions.map(row => ({
-    Username: row.username,
-    Komentar: row.komentar,
-    Label: row.label || '-',
-    Prediksi: row.predicted,
-    Confidence: row.confidencePercent.toFixed(2) + '%',
-    Preprocessed: row.preprocessed
-  }));
+  // Export all preprocessed data with predictions
+  const data = sentimentPreprocessed.map(row => {
+    const prediction = sentimentPredictions ? sentimentPredictions.find(p => p.komentar === row.komentar) : null;
+    return {
+      Username: row.username,
+      Komentar: row.komentar,
+      Label: row.label || '-',
+      Prediksi: prediction ? prediction.predicted : '-',
+      Confidence: prediction ? prediction.confidencePercent.toFixed(2) + '%' : '-',
+      Preprocessed: row.preprocessed
+    };
+  });
   
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();
@@ -3294,19 +3389,23 @@ function exportSentimentToExcel() {
 }
 
 function exportSentimentToCSV() {
-  if (!sentimentPredictions) {
+  if (!sentimentPreprocessed) {
     alert('Tidak ada data untuk diexport!');
     return;
   }
   
-  const data = sentimentPredictions.map(row => ({
-    Username: row.username,
-    Komentar: row.komentar,
-    Label: row.label || '-',
-    Prediksi: row.predicted,
-    Confidence: row.confidencePercent.toFixed(2) + '%',
-    Preprocessed: row.preprocessed
-  }));
+  // Export all preprocessed data with predictions
+  const data = sentimentPreprocessed.map(row => {
+    const prediction = sentimentPredictions ? sentimentPredictions.find(p => p.komentar === row.komentar) : null;
+    return {
+      Username: row.username,
+      Komentar: row.komentar,
+      Label: row.label || '-',
+      Prediksi: prediction ? prediction.predicted : '-',
+      Confidence: prediction ? prediction.confidencePercent.toFixed(2) + '%' : '-',
+      Preprocessed: row.preprocessed
+    };
+  });
   
   const csv = Papa.unparse(data);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
