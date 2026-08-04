@@ -2054,18 +2054,25 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
     const mediaList = document.getElementById('metaMediaList');
     if(mediaList) mediaList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Memuat postingan...</p>';
     
+    console.log('loadMetaMedia called');
+    
     try{
       const data = await fetchMeta('meta-media?limit=25');
+      
+      console.log('Meta media response:', data);
       
       if(data.success === false){
         throw new Error(data.error?.message || 'Gagal mengambil media');
       }
       
       if(!data.media || data.media.length === 0){
+        console.log('No media data in response');
         if(mediaList) mediaList.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px">Belum ada postingan pada akun Instagram Business ini.</p>';
         hideLoading();
         return;
       }
+      
+      console.log('Media data received:', data.media.length, 'items');
       
       // Store media in dashboardData
       dashboardData.media = data.media;
@@ -2078,6 +2085,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
       
       // Render media list
       if(mediaList){
+        console.log('Rendering media list...');
         mediaList.innerHTML = data.media.map(item => {
           const likes = item.like_count >= 1000 ? (item.like_count/1000).toFixed(1).replace('.0','') + 'K' : item.like_count;
           return `
@@ -2090,6 +2098,7 @@ document.addEventListener('DOMContentLoaded',()=>{ try{ if($('#loginForm')){ $('
             <button class="btn" style="padding:6px 12px;font-size:12px" onclick="analyzeMediaComments('${item.id}', '${item.caption?.replace(/'/g, "\\'") || 'No caption'}')">Analisis Komentar</button>
           </div>
         `}).join('');
+        console.log('Media list rendered');
       }
       
       // Dispatch media loaded event - DISABLED TO PREVENT INFINITE LOOP
