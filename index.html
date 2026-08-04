@@ -728,8 +728,14 @@ function renderDashboard(){
   
   if(!dashboardEmpty || !dashboardContent) return;
   
+  console.log('renderDashboard called', {
+    metaConnected: dashboardData.meta.connected,
+    mediaCount: dashboardData.media?.length || 0
+  });
+  
   // Check if Meta is connected
   if(!dashboardData.meta.connected){
+    console.log('Meta not connected, showing empty state');
     dashboardEmpty.style.display = 'block';
     dashboardContent.style.display = 'none';
     return;
@@ -737,6 +743,7 @@ function renderDashboard(){
   
   // Check if media data exists
   if(!dashboardData.media || dashboardData.media.length === 0){
+    console.log('No media data, showing empty state');
     dashboardEmpty.style.display = 'block';
     dashboardContent.style.display = 'none';
     return;
@@ -744,6 +751,8 @@ function renderDashboard(){
   
   dashboardEmpty.style.display = 'none';
   dashboardContent.style.display = 'block';
+  
+  console.log('Rendering dashboard content with', dashboardData.media.length, 'posts');
   
   // Add activity log
   addActivityLog('Dashboard diperbarui');
