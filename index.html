@@ -6,6 +6,7 @@
 <meta name="description" content="Dashboard analisis sentimen, engagement, konten, dan rekomendasi strategi media sosial berbasis Meta Graph API.">
 <title>KokoroLens Social Intelligence - Meta Analytics Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -302,7 +303,132 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
     <section id="meta" class="page"><div class="head"><div><h1>Meta API</h1><p>Integrasi dengan Meta Graph API untuk data Facebook Page dan Instagram Business.</p></div><div class="toolbar"><button class="btn primary" id="testMeta">Uji Koneksi</button><button class="btn" id="syncMeta">Sinkronisasi Data</button></div></div><div class="grid2" style="margin-bottom:15px"><div class="card"><h3>Status Koneksi</h3><p style="color:var(--muted);line-height:1.6">Credentials Meta dikonfigurasi melalui environment variable pada server.</p><p id="statusMeta" style="color:#a5f3fc;font-weight:900">Status: menunggu koneksi.</p><div id="metaAccountInfo" style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);display:none"><div style="font-size:12px;color:#9aa4b2;margin-bottom:8px">Akun Terhubung</div><div id="metaPageInfo" style="display:none;margin-bottom:8px"><div style="color:#22d3ee;font-weight:700">Facebook Page</div><div id="metaPageName" style="color:#d1d5db"></div></div><div id="metaIGInfo" style="display:none"><div style="color:#e1306c;font-weight:700">Instagram Business</div><div id="metaIGUsername" style="color:#d1d5db"></div><div id="metaIGFollowers" style="color:#9aa4b2;font-size:12px"></div><div id="metaIGMediaCount" style="color:#9aa4b2;font-size:12px"></div></div><div id="metaLastChecked" style="color:#64748b;font-size:11px;margin-top:8px"></div></div></div><div class="card"><h3>Daftar Postingan</h3><div id="metaMediaList" style="max-height:400px;overflow-y:auto"><p style="color:var(--muted);text-align:center;padding:40px">Klik "Uji Koneksi" terlebih dahulu untuk mengambil data postingan.</p></div></div></div></section>
     <section id="konten" class="page"><div class="head"><div><h1>Konten</h1></div><div class="toolbar"><div class="custom-select" id="monthCustomKonten"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomKonten"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="kontenEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📱</div><h3 style="margin-bottom:12px">Belum Ada Data Konten</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data performa konten Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="kontenContent" style="display:none"><div class="grid3"><div class="card kpi"><small>Content Score</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Best Format</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Avg Engagement</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Content Performance</h3><canvas id="kontenChart"></canvas></div><div class="table" style="margin-top:15px"><table><thead><tr><th>Judul</th><th>Format</th><th>Likes</th><th>Komentar</th><th>Share</th><th>Views</th><th>Reach</th><th>ER</th><th>Status</th></tr></thead><tbody id="contentRows"></tbody></table></div></div></section>
     <section id="input" class="page"><div class="head"><div><h1>Input Data</h1><p>Input konten manual tetap ada, dataset engagement ditambahkan di bawahnya.</p></div><button class="btn primary" id="downloadTemplate">Download Template CSV</button></div><div class="card"><h3>Input Konten Manual</h3><div class="formgrid"><div class="field"><label>Upload Foto/Video</label><input type="file" id="contentFile" accept="image/*,video/*" onchange="handleFileUpload(this)"></div><div id="filePreview" class="field hidden" style="grid-column:1/-1"><label>Preview</label><div id="previewContainer" style="max-width:100%;max-height:300px;overflow:hidden;border-radius:16px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;padding:10px"></div></div><div class="field"><label>Jenis Konten</label><select id="contentType"><option>Reels</option><option>Carousel</option><option>Video</option><option>Image</option></select></div><div class="field"><label>Judul</label><input id="contentTitle" placeholder="Masukkan judul konten"></div><div class="field"><label>Tanggal Upload</label><input id="contentDate" type="date"></div><div class="field"><label>Waktu Upload</label><input id="contentTime" type="time"></div><div class="field"><label>Likes</label><input id="contentLikes" type="number" placeholder="0"></div><div class="field"><label>Komentar</label><input id="contentComments" type="number" placeholder="0"></div><div class="field"><label>Share</label><input id="contentShare" type="number" placeholder="0"></div><div class="field"><label>Views</label><input id="contentViews" type="number" placeholder="0"></div><div class="field"><label>Reach</label><input id="contentReach" type="number" placeholder="0"></div><div class="field"><label>Saves</label><input id="contentSaves" type="number" placeholder="0"></div></div><button class="btn primary" id="analyzeManual">Analisa Konten</button><p id="manualResult" style="color:#a5f3fc;font-weight:900"></p></div><div id="inputDatasetEmpty" class="card" style="margin-top:15px;text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📊</div><h3 style="margin-bottom:12px">Belum Ada Dataset</h3><p style="color:var(--muted);margin-bottom:24px">Upload file CSV untuk analisis engagement data.</p></div><div id="inputDatasetContent" style="display:none"><div class="card"><h3>Dataset Engagement</h3><input type="file" id="datasetFile" accept=".csv" style="margin-bottom:12px"><button class="btn" id="analyzeDataset">Analisa Dataset</button><div id="datasetInsight" style="margin-top:12px"></div></div><div class="table" style="margin-top:15px"><table><thead id="dsHead"></thead><tbody id="dsBody"></tbody></table></div><div class="card" style="margin-top:15px"><h3>Dataset Chart</h3><canvas id="datasetChart"></canvas></div></div></section>
-    <section id="sentimen" class="page"><div class="head"><div><h1>Sentimen</h1><p>Klasifikasi berbasis TF-IDF + Multinomial Naive Bayes (Machine Learning). Bisa analisa teks manual atau tarik komentar asli langsung dari Meta Graph API.</p></div></div><div class="card" style="margin-bottom:15px"><h3>Proses Analisis Sentimen</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px"><div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#22d3ee">🔤 Fallback (Keyword-Based)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Cleaning:</b> Hapus URL dan karakter khusus</li><li><b>Case Folding:</b> Konversi ke lowercase</li><li><b>Tokenizing:</b> Pecah teks menjadi kata-kata</li><li><b>Stopword Removal:</b> Hapus kata umum (dan, yang, dll)</li><li><b>Keyword Matching:</b> Cek kata positif/negatif</li><li><b>Scoring:</b> Beri skor berdasarkan kecocokan</li><li><b>Classification:</b> Tentukan label sentimen</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(34,211,238,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#22d3ee">70-75%</div></div></div><div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:16px"><h4 style="margin:0 0 12px 0;color:#8b5cf6">🤖 ML (TF-IDF + Naive Bayes)</h4><ul style="margin:0;padding-left:20px;line-height:1.8;color:#d1d5db;font-size:13px"><li><b>Text Preprocessing:</b> Case folding, hapus URL/mention/hashtag/emoji/angka/tanda baca</li><li><b>Stopword Removal:</b> Hapus kata umum bahasa Indonesia</li><li><b>Stemming:</b> Konversi ke kata dasar (Sastrawi)</li><li><b>TF-IDF Vectorization:</b> Konversi ke vector representations</li><li><b>Multinomial Naive Bayes:</b> Klasifikasi sentimen</li><li><b>Confidence Score:</b> Probabilitas kelas (Positif/Netral/Negatif)</li><li><b>Classification:</b> Label sentimen dengan confidence tertinggi</li></ul><div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(139,92,246,.2)"><div style="font-size:11px;color:#9aa4b2;margin-bottom:4px">Estimasi Akurasi</div><div style="font-size:18px;font-weight:900;color:#8b5cf6">85-90%</div></div></div></div></div><div class="card" style="margin-bottom:15px"><h3>Input Analisis</h3><div class="field"><label>Tipe Input</label><select id="sentimentInputType"><option value="text">Teks Manual</option><option value="media">Postingan Meta API</option></select></div><div id="sentimentTextField" class="field"><label>Teks Komentar</label><textarea id="sentimentText" rows="4" style="width:100%;height:100px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:12px;outline:none;resize:vertical" placeholder="Masukkan teks komentar untuk dianalisis..."></textarea></div><div id="sentimentMediaField" class="field hidden"><label>Pilih Postingan (dari Meta API)</label><select id="sentimentMediaSelect" style="width:100%;height:45px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.06);color:white;padding:12px;outline:none"><option value="">Hubungkan Meta API terlebih dahulu...</option></select></div><button class="btn primary" id="sentimentAnalyzeBtn" style="margin-top:12px">Analisis Sentimen</button></div><div id="sentimentResult" class="card hidden" style="margin-bottom:15px"><h3>Hasil Analisis</h3><div class="grid3" style="margin-bottom:15px"><div class="card kpi"><small>Total Komentar</small><strong id="sentimentResultCount">0</strong></div><div class="card kpi"><small>Sentimen Dominan</small><strong id="sentimentResultLabel">-</strong></div><div class="card kpi"><small>Skor Rata-rata</small><strong id="sentimentResultScore">0.00</strong></div></div><div class="table" style="margin-top:15px"><table><thead><tr><th>Username</th><th>Komentar</th><th>Sentimen</th><th>Skor</th><th>Confidence</th><th>Positif</th><th>Netral</th><th>Negatif</th></tr></thead><tbody id="sentimentCommentsBody"></tbody></table></div></div></section>
+    <section id="sentimen" class="page">
+      <div class="head">
+        <div><h1>Analisis Sentimen</h1><p>Evaluasi Model Machine Learning - Multinomial Naive Bayes untuk Klasifikasi Sentimen Komentar Instagram</p></div>
+      </div>
+      
+      <!-- 1. Upload Dataset -->
+      <div class="card" style="margin-bottom:15px">
+        <h3 style="margin-bottom:15px">📁 Upload Dataset</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">
+          <div>
+            <label style="display:block;margin-bottom:8px;color:#9aa4b2;font-size:13px">Upload CSV</label>
+            <input type="file" id="sentimentCsvUpload" accept=".csv" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#d1d5db;padding:10px;border-radius:8px">
+          </div>
+          <div>
+            <label style="display:block;margin-bottom:8px;color:#9aa4b2;font-size:13px">Upload Excel (.xlsx)</label>
+            <input type="file" id="sentimentExcelUpload" accept=".xlsx" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#d1d5db;padding:10px;border-radius:8px">
+          </div>
+        </div>
+        <div id="sentimentDropzone" style="background:rgba(34,211,238,.05);border:2px dashed rgba(34,211,238,.3);border-radius:12px;padding:30px;text-align:center;margin-bottom:15px;cursor:pointer">
+          <div style="font-size:48px;margin-bottom:12px">📂</div>
+          <div style="color:#d1d5db;margin-bottom:8px">Drag & Drop file CSV/Excel di sini</div>
+          <div style="color:#9aa4b2;font-size:13px">Format: Username, Komentar, Label (opsional)</div>
+        </div>
+        <button class="btn primary" id="analyzeSentimentDataset" style="width:100%">Analisis Dataset</button>
+      </div>
+      
+      <!-- 2. Preview Dataset -->
+      <div id="sentimentPreviewSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📊 Preview Dataset (10 baris pertama)</h3>
+        <div class="table" style="max-height:300px;overflow-y:auto">
+          <table>
+            <thead id="sentimentPreviewHead"></thead>
+            <tbody id="sentimentPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 3. Hasil Preprocessing -->
+      <div id="sentimentPreprocessingSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing</h3>
+        <div class="table" style="max-height:300px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Komentar Asli</th><th>Hasil Preprocessing</th></tr></thead>
+            <tbody id="sentimentPreprocessingBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 4. Hasil Prediksi -->
+      <div id="sentimentPredictionSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">🤖 Hasil Prediksi</h3>
+        <div class="table" style="max-height:300px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Username</th><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Confidence</th></tr></thead>
+            <tbody id="sentimentPredictionBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 5. KPI Evaluation -->
+      <div id="sentimentEvaluationSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📈 Evaluasi Model</h3>
+        <div class="grid4">
+          <div class="card kpi"><small>Accuracy</small><strong id="sentimentAccuracy">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Precision</small><strong id="sentimentPrecision">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Recall</small><strong id="sentimentRecall">-</strong><span>-</span></div>
+          <div class="card kpi"><small>F1 Score</small><strong id="sentimentF1">-</strong><span>-</span></div>
+        </div>
+      </div>
+      
+      <!-- 6. Confusion Matrix -->
+      <div id="sentimentConfusionSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">🎯 Confusion Matrix</h3>
+        <canvas id="confusionMatrixChart"></canvas>
+      </div>
+      
+      <!-- 7. Classification Report -->
+      <div id="sentimentClassificationSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📋 Classification Report</h3>
+        <div class="table">
+          <table>
+            <thead><tr><th>Label</th><th>Precision</th><th>Recall</th><th>F1 Score</th><th>Support</th></tr></thead>
+            <tbody id="sentimentClassificationBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 8. Distribusi Sentimen Pie Chart -->
+      <div id="sentimentPieSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">🥧 Distribusi Sentimen</h3>
+        <canvas id="sentimentPieChart"></canvas>
+      </div>
+      
+      <!-- 9. Distribusi Sentimen Bar Chart -->
+      <div id="sentimentBarSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📊 Jumlah Komentar per Label</h3>
+        <canvas id="sentimentBarChart"></canvas>
+      </div>
+      
+      <!-- 10. Tabel Hasil Akhir -->
+      <div id="sentimentFinalSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">✅ Hasil Akhir</h3>
+        <div class="table" style="max-height:300px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi</th><th>Status</th></tr></thead>
+            <tbody id="sentimentFinalBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 11. Ringkasan Evaluasi -->
+      <div id="sentimentSummarySection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📝 Ringkasan Evaluasi</h3>
+        <div id="sentimentSummaryText" style="color:#d1d5db;line-height:1.8"></div>
+      </div>
+      
+      <!-- 12. Export Buttons -->
+      <div id="sentimentExportSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">💾 Export Hasil</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px">
+          <button class="btn" id="exportSentimentExcel">Export Excel</button>
+          <button class="btn" id="exportSentimentPDF">Export PDF</button>
+          <button class="btn" id="exportSentimentCSV">Export CSV</button>
+        </div>
+      </div>
+    </section>
     <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul style="line-height:1.9;color:#d1d5db"><li>Menunggu data untuk analisis dampak...</li></ul></div></div></div></section>
 
     <section id="laporan" class="page"><div class="head"><div><h1>Laporan</h1><p>Ringkasan eksekutif untuk atasan.</p></div></div><div id="laporanEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📄</div><h3 style="margin-bottom:12px">Belum Ada Data Laporan</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat laporan performa media sosial Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="laporanContent" style="display:none"><div class="head" style="margin-bottom:18px"><button class="btn primary" id="exportExecutive">Export Laporan Hasil PDF</button></div><div class="report"><b>Ringkasan Eksekutif</b><br>Menunggu data dari Meta Graph API...</div><div class="grid4" style="margin-top:15px"><div class="card kpi"><small>Total Konten</small><strong id="reportTotalKonten">-</strong></div><div class="card kpi"><small>ER</small><strong id="reportER">-</strong></div><div class="card kpi"><small>Reach</small><strong id="reportReach">-</strong></div><div class="card kpi"><small>Sentimen</small><strong id="reportSentimen">-</strong></div></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Report Summary</h3><canvas id="reportChart"></canvas></div><div class="card"><h3>Kesimpulan</h3><ul style="line-height:1.9;color:#d1d5db"><li>Menunggu data untuk laporan...</li></ul></div></div></div></section>
@@ -2219,6 +2345,895 @@ function bindMetaButtons(){
     };
   }
 }
+
+// ============================================
+// SENTIMENT ANALYSIS - ML EVALUATION
+// ============================================
+
+// Global state for sentiment analysis
+let sentimentDataset = null;
+let sentimentPreprocessed = null;
+let sentimentPredictions = null;
+let sentimentEvaluation = null;
+
+// Indonesian stopwords
+const indonesianStopwords = [
+  'dan', 'yang', 'di', 'ke', 'ini', 'itu', 'untuk', 'dengan', 'saya', 'aku', 'ada', 'akan', 'juga',
+  'atau', 'dari', 'pada', 'adalah', 'sebagai', 'oleh', 'karena', 'tersebut', 'dalam', 'dapat', 'tidak',
+  'lebih', 'sudah', 'masih', 'hanya', 'mereka', 'kita', 'kami', 'anda', 'ini', 'itu', 'tersebut',
+  'yaitu', 'yakni', 'adalah', 'ialah', 'merupakan', 'yakni', 'yaitu', 'juga', 'lagi', 'pun', 'saja',
+  'sedangkan', 'namun', 'tetapi', 'kemudian', 'lalu', 'selanjutnya', 'selama', 'sementara', 'setelah',
+  'sebelum', 'ketika', 'saat', 'waktu', 'tempat', 'cara', 'bagaimana', 'mengapa', 'apa', 'siapa', 'mana',
+  'kapan', 'berapa', 'berapa', 'berapa banyak', 'berapa sering', 'seberapa', 'sebanyak', 'sebanyak-banyaknya',
+  'semua', 'tiap', 'setiap', 'para', 'per', 'masing-masing', 'masing', 'sendiri', 'sendirinya', 'sendirinya',
+  'bersama', 'bersama-sama', 'secara', 'bersama-sama', 'bersama', 'dalam', 'di', 'ke', 'dari', 'kepada',
+  'kepada', 'untuk', 'tentang', 'mengenai', 'mengenai', 'tentang', 'oleh', 'oleh', 'oleh karena', 'karena',
+  'sebab', 'akibat', 'dampak', 'pengaruh', 'efek', 'hasil', 'akibatnya', 'dampaknya', 'pengaruhnya', 'efeknya',
+  'hasilnya', 'sebabnya', 'kenapa', 'mengapa', 'bagaimana', 'bagaimana cara', 'cara', 'bagaimanakah', 'bagaimanakah',
+  'apakah', 'adakah', 'benarkah', 'betulkah', 'bukankah', 'bukan', 'ya', 'tidak', 'mungkin', 'mungkin saja',
+  'kemungkinan', 'pasti', 'tentu', 'jelas', 'nyata', 'faktanya', 'kenyataannya', 'sebenarnya', 'sesungguhnya',
+  'hakikatnya', 'intinya', 'pokoknya', 'utamanya', 'terutama', 'terutamanya', 'khususnya', 'khusus', 'umumnya',
+  'umum', 'secara umum', 'pada umumnya', 'biasanya', 'biasa', 'lazim', 'kerap', 'sering', 'acap', 'kerap kali',
+  'sering kali', 'acap kali', 'kadang', 'kadang-kadang', 'sesekali', 'jarang', 'langka', 'sangat jarang', 'hampir tidak pernah',
+  'tidak pernah', 'pernah', 'pernahkah', 'sudahkah', 'belumlah', 'apakah', 'bukankah', 'bukan', 'bukan', 'bukan',
+  'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan',
+  'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan', 'bukan'
+];
+
+// Simple stemming function (Indonesian)
+function stemWord(word) {
+  if (word.length <= 3) return word;
+  
+  // Remove common suffixes
+  const suffixes = ['kan', 'an', 'i', 'nya', 'lah', 'kah', 'tah', 'pun'];
+  for (const suffix of suffixes) {
+    if (word.endsWith(suffix)) {
+      return word.slice(0, -suffix.length);
+    }
+  }
+  
+  return word;
+}
+
+// Preprocessing pipeline
+function preprocessText(text) {
+  if (!text) return '';
+  
+  // Case folding
+  let processed = text.toLowerCase();
+  
+  // Cleaning - remove URLs, mentions, hashtags, special characters
+  processed = processed.replace(/https?:\/\/\S+/g, '');
+  processed = processed.replace(/@\w+/g, '');
+  processed = processed.replace(/#\w+/g, '');
+  processed = processed.replace(/[^\w\s]/g, ' ');
+  processed = processed.replace(/\d+/g, ' ');
+  processed = processed.replace(/\s+/g, ' ').trim();
+  
+  // Tokenizing
+  const tokens = processed.split(' ').filter(token => token.length > 2);
+  
+  // Stopword removal
+  const filtered = tokens.filter(token => !indonesianStopwords.includes(token));
+  
+  // Stemming
+  const stemmed = filtered.map(token => stemWord(token));
+  
+  return stemmed.join(' ');
+}
+
+// TF-IDF Vectorizer
+class TFIDFVectorizer {
+  constructor() {
+    this.vocabulary = {};
+    this.idf = {};
+    this.documentCount = 0;
+  }
+  
+  fit(documents) {
+    this.documentCount = documents.length;
+    const termDocCount = {};
+    
+    // Count document frequency for each term
+    documents.forEach(doc => {
+      const terms = doc.split(' ').filter(t => t);
+      const uniqueTerms = new Set(terms);
+      uniqueTerms.forEach(term => {
+        termDocCount[term] = (termDocCount[term] || 0) + 1;
+      });
+    });
+    
+    // Calculate IDF
+    this.vocabulary = Object.keys(termDocCount);
+    this.vocabulary.forEach(term => {
+      this.idf[term] = Math.log(this.documentCount / (termDocCount[term] || 1));
+    });
+  }
+  
+  transform(documents) {
+    return documents.map(doc => {
+      const terms = doc.split(' ').filter(t => t);
+      const termCount = {};
+      terms.forEach(term => {
+        termCount[term] = (termCount[term] || 0) + 1;
+      });
+      
+      const vector = {};
+      this.vocabulary.forEach(term => {
+        const tf = termCount[term] || 0;
+        const idf = this.idf[term] || 0;
+        vector[term] = tf * idf;
+      });
+      
+      return vector;
+    });
+  }
+  
+  fitTransform(documents) {
+    this.fit(documents);
+    return this.transform(documents);
+  }
+}
+
+// Multinomial Naive Bayes Classifier
+class MultinomialNaiveBayes {
+  constructor() {
+    this.classes = [];
+    this.classPriors = {};
+    this.featureLogProb = {};
+    this.featureCount = {};
+  }
+  
+  fit(X, y) {
+    const nSamples = X.length;
+    const nFeatures = Object.keys(X[0] || {}).length;
+    
+    // Get unique classes
+    this.classes = [...new Set(y)];
+    
+    // Calculate class priors
+    this.classes.forEach(cls => {
+      this.classPriors[cls] = Math.log(y.filter(label => label === cls).length / nSamples);
+      this.featureCount[cls] = {};
+      this.featureLogProb[cls] = {};
+    });
+    
+    // Calculate feature probabilities for each class
+    this.classes.forEach(cls => {
+      const classDocs = X.filter((_, i) => y[i] === cls);
+      const totalFeatures = classDocs.reduce((sum, doc) => {
+        return sum + Object.values(doc).reduce((a, b) => a + b, 0);
+      }, 0);
+      
+      Object.keys(X[0] || {}).forEach(feature => {
+        const featureSum = classDocs.reduce((sum, doc) => sum + (doc[feature] || 0), 0);
+        // Laplace smoothing
+        this.featureLogProb[cls][feature] = Math.log((featureSum + 1) / (totalFeatures + nFeatures));
+      });
+    });
+  }
+  
+  predict(X) {
+    return X.map(doc => {
+      let maxLogProb = -Infinity;
+      let predictedClass = this.classes[0];
+      
+      this.classes.forEach(cls => {
+        let logProb = this.classPriors[cls];
+        Object.keys(doc).forEach(feature => {
+          const featureValue = doc[feature] || 0;
+          if (featureValue > 0) {
+            logProb += featureValue * (this.featureLogProb[cls][feature] || Math.log(1 / (Object.keys(doc).length + 1)));
+          }
+        });
+        
+        if (logProb > maxLogProb) {
+          maxLogProb = logProb;
+          predictedClass = cls;
+        }
+      });
+      
+      return predictedClass;
+    });
+  }
+  
+  predict_proba(X) {
+    return X.map(doc => {
+      const logProbs = {};
+      let totalLogProb = 0;
+      
+      this.classes.forEach(cls => {
+        let logProb = this.classPriors[cls];
+        Object.keys(doc).forEach(feature => {
+          const featureValue = doc[feature] || 0;
+          if (featureValue > 0) {
+            logProb += featureValue * (this.featureLogProb[cls][feature] || Math.log(1 / (Object.keys(doc).length + 1)));
+          }
+        });
+        logProbs[cls] = logProb;
+        totalLogProb += Math.exp(logProb);
+      });
+      
+      // Convert to probabilities
+      const probs = {};
+      this.classes.forEach(cls => {
+        probs[cls] = Math.exp(logProbs[cls]) / totalLogProb;
+      });
+      
+      return probs;
+    });
+  }
+}
+
+// Calculate evaluation metrics
+function calculateEvaluationMetrics(yTrue, yPred, classes) {
+  const metrics = {
+    accuracy: 0,
+    precision: {},
+    recall: {},
+    f1: {},
+    confusionMatrix: {},
+    classificationReport: []
+  };
+  
+  // Calculate confusion matrix
+  classes.forEach(cls1 => {
+    metrics.confusionMatrix[cls1] = {};
+    classes.forEach(cls2 => {
+      metrics.confusionMatrix[cls1][cls2] = 0;
+    });
+  });
+  
+  yTrue.forEach((trueLabel, i) => {
+    const predLabel = yPred[i];
+    metrics.confusionMatrix[trueLabel][predLabel]++;
+  });
+  
+  // Calculate accuracy
+  const correct = yTrue.filter((label, i) => label === yPred[i]).length;
+  metrics.accuracy = correct / yTrue.length;
+  
+  // Calculate precision, recall, F1 for each class
+  classes.forEach(cls => {
+    const tp = metrics.confusionMatrix[cls][cls];
+    const fp = classes.reduce((sum, c) => sum + (c !== cls ? metrics.confusionMatrix[c][cls] : 0), 0);
+    const fn = classes.reduce((sum, c) => sum + (c !== cls ? metrics.confusionMatrix[cls][c] : 0), 0);
+    const support = yTrue.filter(label => label === cls).length;
+    
+    const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
+    const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
+    const f1 = precision + recall > 0 ? 2 * (precision * recall) / (precision + recall) : 0;
+    
+    metrics.precision[cls] = precision;
+    metrics.recall[cls] = recall;
+    metrics.f1[cls] = f1;
+    
+    metrics.classificationReport.push({
+      label: cls,
+      precision: precision,
+      recall: recall,
+      f1: f1,
+      support: support
+    });
+  });
+  
+  // Weighted average
+  const totalSupport = yTrue.length;
+  metrics.weightedPrecision = classes.reduce((sum, cls) => {
+    const support = yTrue.filter(label => label === cls).length;
+    return sum + metrics.precision[cls] * support;
+  }, 0) / totalSupport;
+  
+  metrics.weightedRecall = classes.reduce((sum, cls) => {
+    const support = yTrue.filter(label => label === cls).length;
+    return sum + metrics.recall[cls] * support;
+  }, 0) / totalSupport;
+  
+  metrics.weightedF1 = classes.reduce((sum, cls) => {
+    const support = yTrue.filter(label => label === cls).length;
+    return sum + metrics.f1[cls] * support;
+  }, 0) / totalSupport;
+  
+  return metrics;
+}
+
+// File upload handlers
+function setupSentimentUploadHandlers() {
+  const csvUpload = document.getElementById('sentimentCsvUpload');
+  const excelUpload = document.getElementById('sentimentExcelUpload');
+  const dropzone = document.getElementById('sentimentDropzone');
+  const analyzeBtn = document.getElementById('analyzeSentimentDataset');
+  
+  if (csvUpload) {
+    csvUpload.addEventListener('change', handleCSVUpload);
+  }
+  
+  if (excelUpload) {
+    excelUpload.addEventListener('change', handleExcelUpload);
+  }
+  
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'rgba(34, 211, 238, 0.6)';
+      dropzone.style.background = 'rgba(34, 211, 238, 0.1)';
+    });
+    
+    dropzone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'rgba(34, 211, 238, 0.3)';
+      dropzone.style.background = 'rgba(34, 211, 238, 0.05)';
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'rgba(34, 211, 238, 0.3)';
+      dropzone.style.background = 'rgba(34, 211, 238, 0.05)';
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.name.endsWith('.csv')) {
+          handleCSVFile(file);
+        } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+          handleExcelFile(file);
+        } else {
+          alert('Format file tidak didukung. Gunakan CSV atau Excel (.xlsx)');
+        }
+      }
+    });
+  }
+  
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', analyzeSentimentDataset);
+  }
+}
+
+function handleCSVUpload(e) {
+  const file = e.target.files[0];
+  if (file) {
+    handleCSVFile(file);
+  }
+}
+
+function handleCSVFile(file) {
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      processDataset(results.data);
+    },
+    error: function(error) {
+      alert('Error parsing CSV: ' + error.message);
+    }
+  });
+}
+
+function handleExcelUpload(e) {
+  const file = e.target.files[0];
+  if (file) {
+    handleExcelFile(file);
+  }
+}
+
+function handleExcelFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+    processDataset(jsonData);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processDataset(data) {
+  // Validate dataset
+  if (!data || data.length === 0) {
+    alert('Dataset kosong!');
+    return;
+  }
+  
+  const firstRow = data[0];
+  const columns = Object.keys(firstRow).map(c => c.toLowerCase());
+  
+  // Check for required columns
+  const hasUsername = columns.some(c => c.includes('username') || c.includes('user'));
+  const hasKomentar = columns.some(c => c.includes('komentar') || c.includes('comment') || c.includes('text'));
+  const hasLabel = columns.some(c => c.includes('label') || c.includes('sentiment'));
+  
+  if (!hasKomentar) {
+    alert('Dataset harus memiliki kolom "Komentar" atau "Comment"!');
+    return;
+  }
+  
+  // Normalize column names
+  const usernameCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('username') || c.toLowerCase().includes('user'));
+  const komentarCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('komentar') || c.toLowerCase().includes('comment') || c.toLowerCase().includes('text'));
+  const labelCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('label') || c.toLowerCase().includes('sentiment'));
+  
+  // Normalize dataset
+  sentimentDataset = data.map(row => ({
+    username: usernameCol ? (row[usernameCol] || '-') : '-',
+    komentar: row[komentarCol] || '',
+    label: labelCol ? (row[labelCol] || null) : null
+  }));
+  
+  // Show preview
+  showDatasetPreview();
+  
+  alert(`Dataset berhasil dimuat! ${sentimentDataset.length} baris data.`);
+}
+
+function showDatasetPreview() {
+  const previewSection = document.getElementById('sentimentPreviewSection');
+  const previewHead = document.getElementById('sentimentPreviewHead');
+  const previewBody = document.getElementById('sentimentPreviewBody');
+  
+  if (!previewSection || !previewHead || !previewBody) return;
+  
+  previewSection.style.display = 'block';
+  
+  // Show header
+  previewHead.innerHTML = `
+    <tr>
+      <th>Username</th>
+      <th>Komentar</th>
+      <th>Label</th>
+    </tr>
+  `;
+  
+  // Show first 10 rows
+  const previewData = sentimentDataset.slice(0, 10);
+  previewBody.innerHTML = previewData.map(row => `
+    <tr>
+      <td>${row.username}</td>
+      <td>${row.komentar.substring(0, 100)}${row.komentar.length > 100 ? '...' : ''}</td>
+      <td>${row.label || '-'}</td>
+    </tr>
+  `).join('');
+}
+
+function analyzeSentimentDataset() {
+  if (!sentimentDataset || sentimentDataset.length === 0) {
+    alert('Silakan upload dataset terlebih dahulu!');
+    return;
+  }
+  
+  showLoading('Menganalisis dataset...');
+  
+  try {
+    // 1. Preprocessing
+    sentimentPreprocessed = sentimentDataset.map(row => ({
+      ...row,
+      preprocessed: preprocessText(row.komentar)
+    }));
+    
+    // Show preprocessing results
+    showPreprocessingResults();
+    
+    // 2. Train/Test Split (80/20)
+    const shuffled = [...sentimentPreprocessed].sort(() => Math.random() - 0.5);
+    const splitIndex = Math.floor(shuffled.length * 0.8);
+    const trainData = shuffled.slice(0, splitIndex);
+    const testData = shuffled.slice(splitIndex);
+    
+    // 3. TF-IDF Vectorization
+    const vectorizer = new TFIDFVectorizer();
+    const trainTexts = trainData.map(d => d.preprocessed);
+    const testTexts = testData.map(d => d.preprocessed);
+    
+    const trainVectors = vectorizer.fitTransform(trainTexts);
+    const testVectors = vectorizer.transform(testTexts);
+    
+    // 4. Train Naive Bayes
+    const classifier = new MultinomialNaiveBayes();
+    const trainLabels = trainData.map(d => d.label || 'Netral');
+    classifier.fit(trainVectors, trainLabels);
+    
+    // 5. Predict
+    const predictions = classifier.predict(testVectors);
+    const probabilities = classifier.predict_proba(testVectors);
+    
+    // Store predictions with confidence
+    sentimentPredictions = testData.map((row, i) => ({
+      ...row,
+      predicted: predictions[i],
+      confidence: probabilities[i],
+      confidencePercent: Math.max(...Object.values(probabilities[i])) * 100
+    }));
+    
+    // Show prediction results
+    showPredictionResults();
+    
+    // 6. Evaluate if labels exist
+    const hasLabels = sentimentDataset.some(row => row.label);
+    if (hasLabels) {
+      const testLabels = testData.map(d => d.label || 'Netral');
+      sentimentEvaluation = calculateEvaluationMetrics(testLabels, predictions, ['Positif', 'Netral', 'Negatif']);
+      
+      // Show evaluation results
+      showEvaluationResults();
+      
+      // Show confusion matrix
+      showConfusionMatrix();
+      
+      // Show classification report
+      showClassificationReport();
+      
+      // Show sentiment distribution charts
+      showSentimentDistribution();
+    } else {
+      // Show sentiment distribution without evaluation
+      showSentimentDistribution();
+    }
+    
+    // Show final results
+    showFinalResults();
+    
+    // Show summary
+    showEvaluationSummary();
+    
+    // Show export buttons
+    document.getElementById('sentimentExportSection').style.display = 'block';
+    
+    hideLoading();
+    
+  } catch (error) {
+    hideLoading();
+    alert('Error saat menganalisis dataset: ' + error.message);
+    console.error(error);
+  }
+}
+
+function showPreprocessingResults() {
+  const section = document.getElementById('sentimentPreprocessingSection');
+  const body = document.getElementById('sentimentPreprocessingBody');
+  
+  if (!section || !body) return;
+  
+  section.style.display = 'block';
+  
+  const previewData = sentimentPreprocessed.slice(0, 10);
+  body.innerHTML = previewData.map(row => `
+    <tr>
+      <td>${row.komentar.substring(0, 80)}${row.komentar.length > 80 ? '...' : ''}</td>
+      <td>${row.preprocessed}</td>
+    </tr>
+  `).join('');
+}
+
+function showPredictionResults() {
+  const section = document.getElementById('sentimentPredictionSection');
+  const body = document.getElementById('sentimentPredictionBody');
+  
+  if (!section || !body) return;
+  
+  section.style.display = 'block';
+  
+  const previewData = sentimentPredictions.slice(0, 10);
+  body.innerHTML = previewData.map(row => `
+    <tr>
+      <td>${row.username}</td>
+      <td>${row.komentar.substring(0, 50)}${row.komentar.length > 50 ? '...' : ''}</td>
+      <td>${row.label || '-'}</td>
+      <td><span class="badge ${row.predicted === 'Positif' ? 'pos' : row.predicted === 'Negatif' ? 'neg' : 'neu'}">${row.predicted}</span></td>
+      <td>${row.confidencePercent.toFixed(2)}%</td>
+    </tr>
+  `).join('');
+}
+
+function showEvaluationResults() {
+  const section = document.getElementById('sentimentEvaluationSection');
+  
+  if (!section || !sentimentEvaluation) return;
+  
+  section.style.display = 'block';
+  
+  document.getElementById('sentimentAccuracy').textContent = (sentimentEvaluation.accuracy * 100).toFixed(2) + '%';
+  document.getElementById('sentimentPrecision').textContent = (sentimentEvaluation.weightedPrecision * 100).toFixed(2) + '%';
+  document.getElementById('sentimentRecall').textContent = (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%';
+  document.getElementById('sentimentF1').textContent = (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%';
+}
+
+function showConfusionMatrix() {
+  const section = document.getElementById('sentimentConfusionSection');
+  
+  if (!section || !sentimentEvaluation) return;
+  
+  section.style.display = 'block';
+  
+  const ctx = document.getElementById('confusionMatrixChart').getContext('2d');
+  
+  const labels = ['Positif', 'Netral', 'Negatif'];
+  const matrix = [];
+  labels.forEach(rowLabel => {
+    const row = [];
+    labels.forEach(colLabel => {
+      row.push(sentimentEvaluation.confusionMatrix[rowLabel][colLabel] || 0);
+    });
+    matrix.push(row);
+  });
+  
+  if (charts.confusionMatrixChart) {
+    charts.confusionMatrixChart.destroy();
+  }
+  
+  charts.confusionMatrixChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: labels.map((label, i) => ({
+        label: label,
+        data: matrix[i],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(239, 68, 68, 0.7)'
+        ][i]
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#cbd5e1' }
+        },
+        title: {
+          display: true,
+          text: 'Confusion Matrix',
+          color: '#cbd5e1'
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        },
+        y: {
+          ticks: { color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        }
+      }
+    }
+  });
+}
+
+function showClassificationReport() {
+  const section = document.getElementById('sentimentClassificationSection');
+  const body = document.getElementById('sentimentClassificationBody');
+  
+  if (!section || !body || !sentimentEvaluation) return;
+  
+  section.style.display = 'block';
+  
+  body.innerHTML = sentimentEvaluation.classificationReport.map(row => `
+    <tr>
+      <td>${row.label}</td>
+      <td>${(row.precision * 100).toFixed(2)}%</td>
+      <td>${(row.recall * 100).toFixed(2)}%</td>
+      <td>${(row.f1 * 100).toFixed(2)}%</td>
+      <td>${row.support}</td>
+    </tr>
+  `).join('');
+}
+
+function showSentimentDistribution() {
+  const pieSection = document.getElementById('sentimentPieSection');
+  const barSection = document.getElementById('sentimentBarSection');
+  
+  if (!pieSection || !barSection) return;
+  
+  const predictions = sentimentPredictions || sentimentPreprocessed || sentimentDataset;
+  const sentimentCounts = {
+    Positif: 0,
+    Netral: 0,
+    Negatif: 0
+  };
+  
+  predictions.forEach(row => {
+    const sentiment = row.predicted || row.label || 'Netral';
+    if (sentimentCounts[sentiment] !== undefined) {
+      sentimentCounts[sentiment]++;
+    }
+  });
+  
+  // Pie Chart
+  pieSection.style.display = 'block';
+  const pieCtx = document.getElementById('sentimentPieChart').getContext('2d');
+  
+  if (charts.sentimentPieChart) {
+    charts.sentimentPieChart.destroy();
+  }
+  
+  charts.sentimentPieChart = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Positif', 'Netral', 'Negatif'],
+      datasets: [{
+        data: [sentimentCounts.Positif, sentimentCounts.Netral, sentimentCounts.Negatif],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(239, 68, 68, 0.7)'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#cbd5e1' }
+        }
+      }
+    }
+  });
+  
+  // Bar Chart
+  barSection.style.display = 'block';
+  const barCtx = document.getElementById('sentimentBarChart').getContext('2d');
+  
+  if (charts.sentimentBarChart) {
+    charts.sentimentBarChart.destroy();
+  }
+  
+  charts.sentimentBarChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Positif', 'Netral', 'Negatif'],
+      datasets: [{
+        label: 'Jumlah Komentar',
+        data: [sentimentCounts.Positif, sentimentCounts.Netral, sentimentCounts.Negatif],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.7)',
+          'rgba(245, 158, 11, 0.7)',
+          'rgba(239, 68, 68, 0.7)'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#cbd5e1' }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        },
+        y: {
+          ticks: { color: '#94a3b8' },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        }
+      }
+    }
+  });
+}
+
+function showFinalResults() {
+  const section = document.getElementById('sentimentFinalSection');
+  const body = document.getElementById('sentimentFinalBody');
+  
+  if (!section || !body) return;
+  
+  section.style.display = 'block';
+  
+  const hasLabels = sentimentDataset.some(row => row.label);
+  
+  body.innerHTML = sentimentPredictions.map(row => {
+    const status = hasLabels && row.label
+      ? (row.label === row.predicted ? '✓ Sesuai' : '✗ Tidak Sesuai')
+      : '-';
+    
+    return `
+      <tr>
+        <td>${row.komentar.substring(0, 60)}${row.komentar.length > 60 ? '...' : ''}</td>
+        <td>${row.label || '-'}</td>
+        <td><span class="badge ${row.predicted === 'Positif' ? 'pos' : row.predicted === 'Negatif' ? 'neg' : 'neu'}">${row.predicted}</span></td>
+        <td>${status}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function showEvaluationSummary() {
+  const section = document.getElementById('sentimentSummarySection');
+  const text = document.getElementById('sentimentSummaryText');
+  
+  if (!section || !text) return;
+  
+  section.style.display = 'block';
+  
+  if (sentimentEvaluation) {
+    text.innerHTML = `
+      <p>Model <b>Multinomial Naive Bayes</b> berhasil mengklasifikasikan <b>${(sentimentEvaluation.accuracy * 100).toFixed(2)}%</b> data uji dengan nilai <b>Precision</b> sebesar <b>${(sentimentEvaluation.weightedPrecision * 100).toFixed(2)}%</b>, <b>Recall</b> sebesar <b>${(sentimentEvaluation.weightedRecall * 100).toFixed(2)}%</b>, dan <b>F1-Score</b> sebesar <b>${(sentimentEvaluation.weightedF1 * 100).toFixed(2)}%</b>.</p>
+      <p style="margin-top:12px">Berdasarkan hasil tersebut, model memiliki performa yang <b>${sentimentEvaluation.accuracy > 0.8 ? 'sangat baik' : sentimentEvaluation.accuracy > 0.7 ? 'baik' : 'cukup'}</b> dalam melakukan klasifikasi sentimen komentar Instagram.</p>
+    `;
+  } else {
+    text.innerHTML = `
+      <p>Dataset berhasil dianalisis menggunakan model <b>Multinomial Naive Bayes</b>.</p>
+      <p style="margin-top:12px">Karena dataset tidak memiliki kolom Label, evaluasi model tidak dapat dilakukan. Silakan tambahkan kolom Label untuk melakukan evaluasi model.</p>
+    `;
+  }
+}
+
+// Export functions
+function setupExportHandlers() {
+  const exportExcel = document.getElementById('exportSentimentExcel');
+  const exportPDF = document.getElementById('exportSentimentPDF');
+  const exportCSV = document.getElementById('exportSentimentCSV');
+  
+  if (exportExcel) {
+    exportExcel.addEventListener('click', exportSentimentToExcel);
+  }
+  
+  if (exportPDF) {
+    exportPDF.addEventListener('click', exportSentimentToPDF);
+  }
+  
+  if (exportCSV) {
+    exportCSV.addEventListener('click', exportSentimentToCSV);
+  }
+}
+
+function exportSentimentToExcel() {
+  if (!sentimentPredictions) {
+    alert('Tidak ada data untuk diexport!');
+    return;
+  }
+  
+  const data = sentimentPredictions.map(row => ({
+    Username: row.username,
+    Komentar: row.komentar,
+    Label: row.label || '-',
+    Prediksi: row.predicted,
+    Confidence: row.confidencePercent.toFixed(2) + '%',
+    Preprocessed: row.preprocessed
+  }));
+  
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sentiment Analysis');
+  XLSX.writeFile(wb, 'sentiment_analysis.xlsx');
+}
+
+function exportSentimentToCSV() {
+  if (!sentimentPredictions) {
+    alert('Tidak ada data untuk diexport!');
+    return;
+  }
+  
+  const data = sentimentPredictions.map(row => ({
+    Username: row.username,
+    Komentar: row.komentar,
+    Label: row.label || '-',
+    Prediksi: row.predicted,
+    Confidence: row.confidencePercent.toFixed(2) + '%',
+    Preprocessed: row.preprocessed
+  }));
+  
+  const csv = Papa.unparse(data);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'sentiment_analysis.csv';
+  link.click();
+}
+
+function exportSentimentToPDF() {
+  alert('Export PDF akan diimplementasikan dengan html2canvas dan jsPDF');
+  // Implementation will be added
+}
+
+// Initialize sentiment analysis on page load
+document.addEventListener('DOMContentLoaded', () => {
+  setupSentimentUploadHandlers();
+  setupExportHandlers();
+});
+
 </script>
 
 </body>
