@@ -536,6 +536,7 @@ exports.handler = async (event, context) => {
     
     console.log('Calling Sylor API...');
     console.log('Base URL:', baseUrl);
+    console.log('Input payload length:', inputPayload.length);
     
     // Try each model in the fallback list
     let sylorResponse;
@@ -729,6 +730,12 @@ exports.handler = async (event, context) => {
     } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
       errorCode = 'NETWORK_ERROR';
       errorMessage = 'Gagal melakukan request ke API';
+    } else if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
+      errorCode = 'BAD_GATEWAY';
+      errorMessage = 'Sylor API sedang mengalami gangguan atau tidak merespons';
+    } else if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
+      errorCode = 'SERVICE_UNAVAILABLE';
+      errorMessage = 'Sylor API sedang tidak tersedia';
     }
     
     console.log('Error code:', errorCode);

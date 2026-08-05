@@ -3812,6 +3812,12 @@ async function generateAIRecommendation() {
         case 'ALL_MODELS_FAILED':
           errorMessage += `Semua model gagal. Model yang dicoba: ${error.details || error.attemptedModels?.join(', ') || 'unknown'}. Error terakhir: ${error.details || 'Unknown'}`;
           break;
+        case 'BAD_GATEWAY':
+          errorMessage += 'Sylor API sedang mengalami gangguan atau tidak merespons (Bad Gateway). Silakan coba lagi dalam beberapa saat.';
+          break;
+        case 'SERVICE_UNAVAILABLE':
+          errorMessage += 'Sylor API sedang tidak tersedia (Service Unavailable). Silakan coba lagi dalam beberapa saat.';
+          break;
         default:
           errorMessage += error.message || error.details || `Error: ${error.code || 'Unknown'}. Silakan coba lagi nanti.`;
       }
