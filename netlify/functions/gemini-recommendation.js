@@ -1,129 +1,55 @@
-// System instruction for Sylor AI
-const SYSTEM_INSTRUCTION = `Anda adalah Senior Digital Marketing Strategist dan Social Media Analyst.
+// System instruction for Sylor AI (ringkas)
+const SYSTEM_INSTRUCTION = `Anda adalah Social Media Strategist.
 
-Anda menerima hasil klasifikasi sentimen yang diproses menggunakan TF-IDF dan Multinomial Naive Bayes.
+Gunakan hasil klasifikasi sentimen TF-IDF dan Multinomial Naive Bayes yang diberikan.
 
-Tugas Anda bukan mengulang angka sentimen, melainkan mengubah hasil analisis menjadi rekomendasi yang praktis dan relevan.
+Jangan mengulang seluruh angka analisis.
+Hasilkan rekomendasi singkat dan praktis berdasarkan data.
 
-Gunakan hanya data pada input.
+Kembalikan hanya JSON valid tanpa Markdown.
 
-Pisahkan dengan jelas:
-1. Temuan berdasarkan data.
-2. Interpretasi.
-3. Strategi.
-4. Ide konten.
-5. Keterbatasan data.
-
-Jangan mengarang demografi, waktu posting terbaik, tren historis, atau performa kompetitor apabila datanya tidak tersedia.
-
-Hasilkan tepat:
-- satu ringkasan eksekutif (maksimal 120 kata);
-- maksimal tiga insight utama;
-- maksimal tiga strategi konten;
-- tepat tiga ide konten;
-- maksimal tiga tindakan prioritas.
-
-Setiap rekomendasi harus memiliki dasar data.
-
-Gunakan Bahasa Indonesia profesional.
-
-Kembalikan hanya JSON valid tanpa Markdown dan tanpa code fence.
-
-Output harus mengikuti struktur:
+Struktur wajib:
 {
   "executive_summary": "",
-  "key_insights": [
-    {
-      "finding": "",
-      "data_basis": "",
-      "interpretation": ""
-    }
-  ],
-  "content_strategy": [
-    {
-      "title": "",
-      "objective": "",
-      "recommendation": "",
-      "data_basis": "",
-      "priority": "High | Medium | Low"
-    }
-  ],
-  "content_ideas": [
-    {
-      "title": "",
-      "format": "Reels | Carousel | Story | Single Post",
-      "objective": "",
-      "concept": "",
-      "hook": "",
-      "caption_angle": "",
-      "call_to_action": "",
-      "data_basis": ""
-    }
-  ],
-  "priority_actions": [
-    {
-      "priority_number": 1,
-      "action": "",
-      "reason": "",
-      "success_metric": ""
-    }
-  ],
-  "limitations": []
+  "key_insights": [],
+  "content_ideas": [],
+  "priority_actions": []
 }
 
 Ketentuan:
-- content_ideas harus tepat 3.
-- key_insights maksimal 3.
-- content_strategy maksimal 3.
-- priority_actions maksimal 3.
-- executive_summary maksimal 120 kata.
-- Jangan menghasilkan field di luar schema.
-- Jangan mengembalikan Markdown.`;
+- executive_summary maksimal 80 kata;
+- key_insights tepat 3;
+- content_ideas tepat 3;
+- priority_actions tepat 3;
+- setiap rekomendasi harus memiliki data_basis;
+- jangan mengarang data yang tidak tersedia.`;
 
-// JSON Schema for structured output
+// JSON Schema for structured output (ringkas)
 const RECOMMENDATION_SCHEMA = {
   type: "object",
   additionalProperties: false,
   required: [
     "executive_summary",
     "key_insights",
-    "content_strategy",
     "content_ideas",
-    "priority_actions",
-    "limitations"
+    "priority_actions"
   ],
   properties: {
     executive_summary: {
       type: "string",
-      description: "Ringkasan singkat maksimal 120 kata"
+      description: "Ringkasan singkat maksimal 80 kata"
     },
     key_insights: {
       type: "array",
+      minItems: 3,
       maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["finding", "data_basis", "interpretation"],
+        required: ["insight", "data_basis"],
         properties: {
-          finding: { type: "string" },
-          data_basis: { type: "string" },
-          interpretation: { type: "string" }
-        }
-      }
-    },
-    content_strategy: {
-      type: "array",
-      maxItems: 3,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["title", "objective", "recommendation", "data_basis", "priority"],
-        properties: {
-          title: { type: "string" },
-          objective: { type: "string" },
-          recommendation: { type: "string" },
-          data_basis: { type: "string" },
-          priority: { type: "string", enum: [" High", "Medium", "Low"] }
+          insight: { type: "string" },
+          data_basis: { type: "string" }
         }
       }
     },
@@ -134,14 +60,11 @@ const RECOMMENDATION_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "format", "objective", "concept", "hook", "caption_angle", "call_to_action", "data_basis"],
+        required: ["title", "format", "concept", "call_to_action", "data_basis"],
         properties: {
           title: { type: "string" },
           format: { type: "string", enum: ["Reels", "Carousel", "Story", "Single Post"] },
-          objective: { type: "string" },
           concept: { type: "string" },
-          hook: { type: "string" },
-          caption_angle: { type: "string" },
           call_to_action: { type: "string" },
           data_basis: { type: "string" }
         }
@@ -149,22 +72,18 @@ const RECOMMENDATION_SCHEMA = {
     },
     priority_actions: {
       type: "array",
+      minItems: 3,
       maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["priority_number", "action", "reason", "success_metric"],
+        required: ["action", "reason", "success_metric"],
         properties: {
-          priority_number: { type: "number" },
           action: { type: "string" },
           reason: { type: "string" },
           success_metric: { type: "string" }
         }
       }
-    },
-    limitations: {
-      type: "array",
-      items: { type: "string" }
     }
   }
 };
@@ -181,18 +100,18 @@ function jsonResponse(statusCode, body) {
   };
 }
 
-// Helper function to make HTTPS request using fetch
-async function makeRequest(url, options, data) {
+// Helper function to make HTTPS request using fetch (ringkas, timeout 20 detik)
+async function makeRequest(url, options, data, startedAt) {
   try {
-    console.log('=== Sylor API Request ===');
-    console.log('Endpoint:', url);
-    console.log('Method:', options.method);
-    console.log('Headers:', JSON.stringify(options.headers, (key, value) => key === 'Authorization' ? '***' : value));
-    console.log('Body length:', data ? JSON.stringify(data).length : 0);
-    console.log('Body preview:', data ? JSON.stringify(data).substring(0, 500) : 'N/A');
+    console.log({
+      stage: 'provider_request_started',
+      elapsedMs: Date.now() - startedAt,
+      url,
+      payloadBytes: data ? JSON.stringify(data).length : 0
+    });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
     
     const response = await fetch(url, {
       ...options,
@@ -202,55 +121,44 @@ async function makeRequest(url, options, data) {
     
     clearTimeout(timeoutId);
     
-    console.log('=== Sylor API Response ===');
-    console.log('HTTP Status:', response.status);
-    console.log('HTTP Status Text:', response.statusText);
-    console.log('Response OK:', response.ok);
-    console.log('Content-Type:', response.headers.get('content-type'));
+    console.log({
+      stage: 'provider_headers_received',
+      elapsedMs: Date.now() - startedAt,
+      status: response.status,
+      contentType: response.headers.get('content-type')
+    });
     
     const body = await response.text();
-    console.log('Response body length:', body.length);
+    
+    console.log({
+      stage: 'provider_body_received',
+      elapsedMs: Date.now() - startedAt,
+      bodyLength: body.length
+    });
     
     if (!response.ok) {
-      console.log('Response body (first 1000 chars):', body.substring(0, 1000));
-      
-      // Check if response is HTML
-      if (body.trim().startsWith('<') || body.includes('<html') || body.includes('<HTML')) {
-        console.error('=== HTML RESPONSE DETECTED ===');
-        console.error('HTML response (first 1000 chars):', body.substring(0, 1000));
-        console.error('This indicates the API endpoint may be incorrect or the API is down');
-        throw new Error(`Sylor API returned HTML error page. Status: ${response.status}. This usually means the endpoint is incorrect or the API is down. Response: ${body.substring(0, 200)}`);
-      }
+      throw new Error(`HTTP ${response.status}: ${body.substring(0, 200)}`);
+    }
+    
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Non-JSON response: ${contentType}`);
     }
     
     try {
       const parsed = JSON.parse(body);
-      
-      if (response.ok) {
-        return parsed;
-      } else {
-        const sylorError = parsed.error?.message || parsed.error || `HTTP ${response.status}`;
-        console.error('Sylor API Error:', sylorError);
-        throw new Error(sylorError);
-      }
+      console.log({
+        stage: 'provider_json_parsed',
+        elapsedMs: Date.now() - startedAt
+      });
+      return parsed;
     } catch (e) {
-      if (e instanceof SyntaxError) {
-        console.error('=== JSON PARSE ERROR ===');
-        console.error('Response body (first 500 chars):', body.substring(0, 500));
-        throw new Error(`Invalid JSON response from Sylor API. Response: ${body.substring(0, 200)}`);
-      }
-      throw e;
+      throw new Error('Invalid JSON response');
     }
   } catch (error) {
-    console.error('=== Request Error ===');
-    console.error('Error message:', error.message);
-    console.error('Error name:', error.name);
-    console.error('Error code:', error.code);
-    
     if (error.name === 'AbortError') {
       throw new Error('Request timeout');
     }
-    
     throw error;
   }
 }
@@ -288,7 +196,7 @@ function safeParseJSON(text) {
   }
 }
 
-// Validate input payload
+// Validate input payload (ringkas: maksimal 3 komentar per kelas, 250 char)
 function validateInputPayload(data) {
   if (!data || typeof data !== 'object') {
     return { valid: false, errors: ['Request body must be a valid object'] };
@@ -304,43 +212,63 @@ function validateInputPayload(data) {
     };
   }
   
-  // Validate account if present
-  if (data.account && typeof data.account !== 'object') {
-    errors.push('account must be an object');
-  }
-  
-  // Validate sentiment if present
-  if (data.sentiment && typeof data.sentiment !== 'object') {
-    errors.push('sentiment must be an object');
-  }
-  
-  // Validate performance if present
-  if (data.performance && typeof data.performance !== 'object') {
-    errors.push('performance must be an object');
-  }
-  
-  // Limit representative comments
+  // Limit representative comments to 3 per class, 250 chars
   if (data.sentiment && data.sentiment.representative_comments) {
-    if (data.sentiment.representative_comments.length > 50) {
-      data.sentiment.representative_comments = data.sentiment.representative_comments.slice(0, 50);
-      console.log('Limited representative comments to 50');
+    const comments = data.sentiment.representative_comments;
+    
+    // Limit to 3 comments per sentiment class
+    if (comments.positive && comments.positive.length > 3) {
+      comments.positive = comments.positive.slice(0, 3);
+    }
+    if (comments.neutral && comments.neutral.length > 3) {
+      comments.neutral = comments.neutral.slice(0, 3);
+    }
+    if (comments.negative && comments.negative.length > 3) {
+      comments.negative = comments.negative.slice(0, 3);
     }
     
-    // Truncate comment text
-    data.sentiment.representative_comments = data.sentiment.representative_comments.map(comment => ({
-      ...comment,
-      text: comment.text ? comment.text.substring(0, 500) : ''
-    }));
+    // Truncate comment text to 250 chars
+    if (comments.positive) {
+      comments.positive = comments.positive.map(c => ({ ...c, text: c.text ? c.text.substring(0, 250) : '' }));
+    }
+    if (comments.neutral) {
+      comments.neutral = comments.neutral.map(c => ({ ...c, text: c.text ? c.text.substring(0, 250) : '' }));
+    }
+    if (comments.negative) {
+      comments.negative = comments.negative.map(c => ({ ...c, text: c.text ? c.text.substring(0, 250) : '' }));
+    }
+    
+    console.log('Limited comments to 3 per class, 250 chars each');
+  }
+  
+  // Limit frequent terms to 5 per class
+  if (data.frequent_terms) {
+    if (data.frequent_terms.positive && data.frequent_terms.positive.length > 5) {
+      data.frequent_terms.positive = data.frequent_terms.positive.slice(0, 5);
+    }
+    if (data.frequent_terms.neutral && data.frequent_terms.neutral.length > 5) {
+      data.frequent_terms.neutral = data.frequent_terms.neutral.slice(0, 5);
+    }
+    if (data.frequent_terms.negative && data.frequent_terms.negative.length > 5) {
+      data.frequent_terms.negative = data.frequent_terms.negative.slice(0, 5);
+    }
+  }
+  
+  // Limit top/low content to 3
+  if (data.top_content && data.top_content.length > 3) {
+    data.top_content = data.top_content.slice(0, 3);
+  }
+  if (data.low_performing_content && data.low_performing_content.length > 3) {
+    data.low_performing_content = data.low_performing_content.slice(0, 3);
   }
   
   return { valid: errors.length === 0, errors };
 }
 
-// Netlify Function handler
+// Netlify Function handler (ringkas, tanpa retry, hanya gpt-5.6-luna)
 exports.handler = async (event, context) => {
-  console.log('=== Sylor AI Recommendation Function Started ===');
-  console.log('Function: gemini-recommendation');
-  console.log('HTTP Method:', event.httpMethod);
+  const startedAt = Date.now();
+  console.log({ stage: 'function_started', elapsedMs: 0 });
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -351,74 +279,40 @@ exports.handler = async (event, context) => {
     });
   }
   
-  // Validate environment variables
+  // Validate environment variables (hanya gpt-5.6-luna)
   const apiKey = process.env.OPENAI_API_KEY?.trim();
-  const configuredModel = process.env.OPENAI_MODEL?.trim();
+  const configuredModel = process.env.OPENAI_MODEL?.trim() || 'gpt-5.6-luna';
   const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
   
-  // Allowed models
-  const allowedModels = ['gpt-5.6-luna', 'gpt-5.6-terra'];
-  
-  // Fallback model list
-  const fallbackModels = [
-    configuredModel,
-    ...allowedModels
-  ].filter(m => m && allowedModels.includes(m));
-  
-  console.log('Environment Check:');
-  console.log('  hasApiKey:', !!apiKey);
-  console.log('  keyLength:', apiKey ? apiKey.length : 0);
-  console.log('  configuredModel:', configuredModel);
-  console.log('  fallbackModels:', fallbackModels);
-  console.log('  baseUrl:', baseUrl);
-  
-  if (!apiKey) {
-    console.log('ERROR: OPENAI_API_KEY is not configured');
-    return jsonResponse(500, {
-      success: false,
-      code: 'API_KEY_MISSING',
-      message: 'API key AI belum dikonfigurasi pada server.',
-      details: {
-        hasApiKey: false,
-        keyLength: 0
-      }
-    });
-  }
-  
-  if (!configuredModel) {
-    console.log('ERROR: OPENAI_MODEL is not configured');
-    return jsonResponse(500, {
-      success: false,
-      code: 'MODEL_MISSING',
-      message: 'Model AI belum dikonfigurasi pada server.',
-      details: {
-        model: null,
-        allowedModels: allowedModels
-      }
-    });
-  }
-  
-  if (!allowedModels.includes(configuredModel)) {
-    console.log('ERROR: Model not allowed:', configuredModel);
+  // Hanya izinkan gpt-5.6-luna
+  if (configuredModel !== 'gpt-5.6-luna') {
+    console.log({ stage: 'model_validation_failed', elapsedMs: Date.now() - startedAt, model: configuredModel });
     return jsonResponse(500, {
       success: false,
       code: 'MODEL_NOT_ALLOWED',
-      message: `Model ${configuredModel} tidak termasuk model yang diizinkan.`,
-      details: {
-        configuredModel: configuredModel,
-        allowedModels: allowedModels
-      }
+      message: 'Hanya model gpt-5.6-luna yang diizinkan untuk mengurangi latency.',
+      details: { configuredModel }
     });
   }
+  
+  if (!apiKey) {
+    console.log({ stage: 'api_key_missing', elapsedMs: Date.now() - startedAt });
+    return jsonResponse(500, {
+      success: false,
+      code: 'API_KEY_MISSING',
+      message: 'API key AI belum dikonfigurasi pada server.'
+    });
+  }
+  
+  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model: configuredModel });
   
   try {
     // Parse request body
     let requestData;
     try {
       requestData = JSON.parse(event.body);
-      console.log('Request data parsed successfully');
+      console.log({ stage: 'request_parsed', elapsedMs: Date.now() - startedAt });
     } catch (e) {
-      console.log('ERROR: Invalid JSON in request body', e.message);
       return jsonResponse(400, { 
         success: false,
         code: 'INVALID_JSON',
@@ -426,154 +320,98 @@ exports.handler = async (event, context) => {
       });
     }
     
-    // Validate input payload
+    // Validate and lighten payload
     const validation = validateInputPayload(requestData);
     if (!validation.valid) {
-      console.log('ERROR: Validation failed', validation.errors);
+      console.log({ stage: 'payload_validation_failed', elapsedMs: Date.now() - startedAt, errors: validation.errors });
       return jsonResponse(400, { 
         success: false,
         code: 'INVALID_PAYLOAD',
-        message: validation.errors[0] || 'Data analisis tidak valid',
-        details: {
-          errors: validation.errors
-        }
+        message: validation.errors[0] || 'Data analisis tidak valid'
       });
     }
-    console.log('Request validation passed');
     
-    // Build input for Sylor API
     const inputPayload = JSON.stringify(requestData);
-    console.log('Input payload length:', inputPayload.length);
+    const payloadBytes = inputPayload.length;
+    console.log({ stage: 'payload_validated', elapsedMs: Date.now() - startedAt, payloadBytes });
     
-    console.log('Calling Sylor API...');
-    console.log('Base URL:', baseUrl);
-    console.log('Input payload length:', inputPayload.length);
-    
-    // Try each model in the fallback list using OpenAI-style endpoint (more common)
-    let sylorResponse;
-    let useAnthropicFormat = false; // Use OpenAI-style by default
-    let successfulModel = null;
-    let lastError = null;
-    
-    for (const modelToTry of fallbackModels) {
-      console.log(`=== Trying model: ${modelToTry} ===`);
-      
-      try {
-        // Use OpenAI-style endpoint (more commonly supported)
-        const openaiUrl = `${baseUrl}/v1/chat/completions`;
-        
-        const requestBody = {
-          model: modelToTry,
-          max_tokens: 6000,
-          messages: [
-            {
-              role: 'system',
-              content: SYSTEM_INSTRUCTION
-            },
-            {
-              role: 'user',
-              content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
-            }
-          ]
-        };
-        
-        console.log(`Request URL: ${openaiUrl}`);
-        console.log(`Request body length: ${JSON.stringify(requestBody).length}`);
-        
-        sylorResponse = await makeRequest(openaiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          }
-        }, requestBody);
-        
-        successfulModel = modelToTry;
-        console.log(`✓ Successfully connected with model: ${modelToTry} (OpenAI-style format)`);
-        break; // Success, exit loop
-      } catch (e) {
-        lastError = e;
-        console.log(`✗ Model ${modelToTry} failed:`, e.message);
-        continue; // Try next model
-      }
-    }
-    
-    // If all models failed with OpenAI-style, try anthropic-messages as last resort
-    if (!successfulModel && fallbackModels.length > 0) {
-      console.log('=== All OpenAI-style attempts failed. Trying anthropic-messages format as last resort ===');
-      
-      for (const modelToTry of fallbackModels) {
-        console.log(`Trying anthropic-messages with model: ${modelToTry}`);
-        
-        try {
-          const sylorUrl = `${baseUrl}/v1/messages`;
-          
-          const requestBody = {
-            model: modelToTry,
-            max_tokens: 6000,
-            system: SYSTEM_INSTRUCTION,
-            messages: [
-              {
-                role: 'user',
-                content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
-              }
-            ]
-          };
-          
-          sylorResponse = await makeRequest(sylorUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiKey}`,
-              'anthropic-version': '2023-06-01'
-            }
-          }, requestBody);
-          
-          successfulModel = modelToTry;
-          useAnthropicFormat = true;
-          console.log(`✓ Successfully connected with model: ${modelToTry} (anthropic-messages format)`);
-          break; // Success, exit loop
-        } catch (e) {
-          lastError = e;
-          console.log(`✗ anthropic-messages with model ${modelToTry} failed:`, e.message);
-          continue;
-        }
-      }
-    }
-    
-    // If all models failed
-    if (!successfulModel) {
-      console.error('All models failed. Last error:', lastError?.message);
-      return jsonResponse(500, { 
+    // Check payload size (target < 15 KB)
+    if (payloadBytes > 15000) {
+      console.log({ stage: 'payload_too_large', elapsedMs: Date.now() - startedAt, payloadBytes });
+      return jsonResponse(400, {
         success: false,
-        code: 'ALL_MODELS_FAILED',
-        message: `All models failed. Last error: ${lastError?.message || 'Unknown error'}`,
-        attemptedModels: fallbackModels
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'Payload terlalu besar. Batas maksimal 15 KB.',
+        details: { payloadBytes }
       });
     }
     
-    console.log(`Successfully used model: ${successfulModel}`);
-    console.log('Response body:', JSON.stringify(sylorResponse).substring(0, 500));
+    // Gunakan endpoint anthropic-messages (format Sylor)
+    const sylorUrl = `${baseUrl}/v1/messages`;
     
-    // Parse response based on format
-    let outputText;
-    if (useAnthropicFormat) {
-      // Anthropic format
-      if (sylorResponse.content && Array.isArray(sylorResponse.content)) {
-        const textBlock = sylorResponse.content.find(block => block.type === 'text');
-        if (textBlock && textBlock.text) {
-          outputText = textBlock.text;
+    const requestBody = {
+      model: configuredModel,
+      max_tokens: 900, // Dikurangi dari 6000
+      system: SYSTEM_INSTRUCTION,
+      messages: [
+        {
+          role: 'user',
+          content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
         }
+      ]
+    };
+    
+    console.log({ stage: 'calling_provider', elapsedMs: Date.now() - startedAt, url: sylorUrl });
+    
+    // Single request, no retry
+    let sylorResponse;
+    try {
+      sylorResponse = await makeRequest(sylorUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'anthropic-version': '2023-06-01'
+        }
+      }, requestBody, startedAt);
+    } catch (error) {
+      console.log({ stage: 'provider_request_failed', elapsedMs: Date.now() - startedAt, error: error.message });
+      
+      if (error.message.includes('timeout') || error.name === 'AbortError') {
+        return jsonResponse(504, {
+          success: false,
+          code: 'PROVIDER_TIMEOUT',
+          message: 'Provider AI membutuhkan waktu terlalu lama untuk menghasilkan rekomendasi.'
+        });
       }
-    } else {
-      // OpenAI format
-      if (sylorResponse.choices && sylorResponse.choices[0] && sylorResponse.choices[0].message) {
-        outputText = sylorResponse.choices[0].message.content;
+      
+      if (error.message.includes('Non-JSON')) {
+        return jsonResponse(502, {
+          success: false,
+          code: 'PROVIDER_NON_JSON',
+          message: 'Provider AI mengembalikan format yang tidak sesuai.'
+        });
+      }
+      
+      return jsonResponse(502, {
+        success: false,
+        code: 'PROVIDER_ERROR',
+        message: 'Provider AI gagal memproses permintaan.',
+        details: { error: error.message }
+      });
+    }
+    
+    // Parse Anthropic format response
+    let outputText;
+    if (sylorResponse.content && Array.isArray(sylorResponse.content)) {
+      const textBlock = sylorResponse.content.find(block => block.type === 'text');
+      if (textBlock && textBlock.text) {
+        outputText = textBlock.text;
       }
     }
     
     if (!outputText) {
-      console.error('No text content in response');
+      console.log({ stage: 'empty_response', elapsedMs: Date.now() - startedAt });
       return jsonResponse(500, { 
         success: false,
         code: 'EMPTY_RESPONSE',
@@ -581,15 +419,13 @@ exports.handler = async (event, context) => {
       });
     }
     
-    console.log('Output text length:', outputText.length);
-    
     // Parse JSON
     let parsedResponse;
     try {
       parsedResponse = safeParseJSON(outputText);
-      console.log('JSON parsed successfully');
+      console.log({ stage: 'recommendation_parsed', elapsedMs: Date.now() - startedAt });
     } catch (e) {
-      console.error('JSON parsing error:', e.message);
+      console.log({ stage: 'json_parse_failed', elapsedMs: Date.now() - startedAt, error: e.message });
       return jsonResponse(500, { 
         success: false,
         code: 'INVALID_JSON',
@@ -597,61 +433,51 @@ exports.handler = async (event, context) => {
       });
     }
     
-    // Return success response
+    // Validate output has exactly 3 items each
+    if (!parsedResponse.key_insights || parsedResponse.key_insights.length !== 3) {
+      return jsonResponse(500, {
+        success: false,
+        code: 'INVALID_OUTPUT',
+        message: 'Output harus memiliki tepat 3 key_insights'
+      });
+    }
+    if (!parsedResponse.content_ideas || parsedResponse.content_ideas.length !== 3) {
+      return jsonResponse(500, {
+        success: false,
+        code: 'INVALID_OUTPUT',
+        message: 'Output harus memiliki tepat 3 content_ideas'
+      });
+    }
+    if (!parsedResponse.priority_actions || parsedResponse.priority_actions.length !== 3) {
+      return jsonResponse(500, {
+        success: false,
+        code: 'INVALID_OUTPUT',
+        message: 'Output harus memiliki tepat 3 priority_actions'
+      });
+    }
+    
+    console.log({ stage: 'response_returned', elapsedMs: Date.now() - startedAt });
+    
     return jsonResponse(200, {
       success: true,
       data: parsedResponse
     });
     
   } catch (error) {
-    console.error('=== Sylor AI Recommendation Error ===');
-    console.error('Error message:', error.message);
-    console.error('Error name:', error.name);
-    console.error('Error code:', error.code);
-    console.error('Model used:', configuredModel);
-    console.error('Base URL:', baseUrl);
+    console.log({ stage: 'internal_error', elapsedMs: Date.now() - startedAt, error: error.message });
     
-    let errorCode = 'UNKNOWN_ERROR';
-    let errorMessage = 'Failed to generate recommendation';
-    
-    if (error.message.includes('HTML') || error.message.includes('Sylor API returned HTML')) {
-      errorCode = 'API_ENDPOINT_ERROR';
-      errorMessage = 'Sylor API endpoint tidak valid atau API sedang down. Periksa OPENAI_BASE_URL dan coba lagi.';
-    } else if (error.message.includes('API key') || error.message.includes('401') || error.message.includes('403')) {
-      errorCode = 'AUTH_FAILED';
-      errorMessage = 'API key invalid atau tidak memiliki akses';
-    } else if (error.message.includes('quota') || error.message.includes('429')) {
-      errorCode = 'QUOTA_EXCEEDED';
-      errorMessage = 'Kuota API telah mencapai batas';
-    } else if (error.message.includes('timeout') || error.name === 'AbortError') {
-      errorCode = 'TIMEOUT';
-      errorMessage = 'Request ke API timeout';
-    } else if (error.message.includes('model') || error.message.includes('404')) {
-      errorCode = 'MODEL_NOT_FOUND';
-      errorMessage = `Model ${configuredModel} tidak tersedia`;
-    } else if (error.message.includes('parameter') || error.message.includes('unsupported')) {
-      errorCode = 'UNSUPPORTED_PARAMETER';
-      errorMessage = 'Parameter tidak didukung oleh model';
-    } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
-      errorCode = 'NETWORK_ERROR';
-      errorMessage = 'Gagal melakukan request ke API';
-    } else if (error.message.includes('502') || error.message.includes('Bad Gateway')) {
-      errorCode = 'BAD_GATEWAY';
-      errorMessage = 'Sylor API sedang mengalami gangguan atau tidak merespons';
-    } else if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
-      errorCode = 'SERVICE_UNAVAILABLE';
-      errorMessage = 'Sylor API sedang tidak tersedia';
+    if (error.name === 'AbortError') {
+      return jsonResponse(504, {
+        success: false,
+        code: 'PROVIDER_TIMEOUT',
+        message: 'Provider AI membutuhkan waktu terlalu lama untuk menghasilkan rekomendasi.'
+      });
     }
     
-    console.log('Error code:', errorCode);
-    
-    return jsonResponse(500, { 
+    return jsonResponse(500, {
       success: false,
-      code: errorCode,
-      message: errorMessage,
-      details: error.message,
-      model: configuredModel,
-      baseUrl: baseUrl
+      code: 'INTERNAL_ERROR',
+      message: 'Terjadi kesalahan pada layanan rekomendasi.'
     });
   }
 };

@@ -10,11 +10,12 @@ function jsonResponse(statusCode, body) {
   };
 }
 
-// Helper function to make HTTPS request using fetch
+// Helper function to make HTTPS request using fetch (with latency measurement)
 async function makeRequest(url, options, data) {
+  const startedAt = Date.now();
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout for health check
     
     const response = await fetch(url, {
       ...options,
@@ -25,13 +26,20 @@ async function makeRequest(url, options, data) {
     clearTimeout(timeoutId);
     
     const body = await response.text();
+    const latencyMs = Date.now() - startedAt;
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${body.substring(0, 200)}`);
     }
     
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`Non-JSON response: ${contentType}`);
+    }
+    
     try {
-      return JSON.parse(body);
+      const parsed = JSON.parse(body);
+      return { data: parsed, latencyMs };
     } catch (e) {
       throw new Error('Invalid JSON response');
     }
@@ -43,11 +51,10 @@ async function makeRequest(url, options, data) {
   }
 }
 
-// Netlify Function handler for AI health check
+// Netlify Function handler for AI health check (minimal prompt)
 exports.handler = async (event, context) => {
-  console.log('=== AI Health Check Started ===');
-  console.log('Function: ai-health');
-  console.log('HTTP Method:', event.httpMethod);
+  const startedAt = Date.now();
+  console.log({ stage: 'health_check_started', elapsedMs: 0 });
   
   // Allow both GET and POST
   if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {
@@ -58,13 +65,21 @@ exports.handler = async (event, context) => {
     });
   }
   
-  // Validate environment variables
+  // Validate environment variables (hanya gpt-5.6-luna)
   const apiKey = process.env.OPENAI_API_KEY?.trim();
-  const configuredModel = process.env.OPENAI_MODEL?.trim();
+  const configuredModel = process.env.OPENAI_MODEL?.trim() || 'gpt-5.6-luna';
   const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
   
-  // Allowed models
-  const allowedModels = ['gpt-5.6-luna', 'gpt-5.6-terra'];
+  // Hanya izinkan gpt-5.6-luna
+  if (configuredModel !== 'gpt-5.6-luna') {
+    return jsonResponse(503, {
+      success: false,
+      code: 'MODEL_NOT_ALLOWED',
+      message: 'Hanya model gpt-5.6-luna yang diizinkan.',
+      provider: 'Sylor',
+      model: configuredModel
+    });
+  }
   
   const healthStatus = {
     success: true,
@@ -72,13 +87,10 @@ exports.handler = async (event, context) => {
     model: configuredModel,
     hasApiKey: !!apiKey,
     keyLength: apiKey ? apiKey.length : 0,
-    baseUrlValid: !!baseUrl,
     baseUrl: baseUrl,
-    modelAllowed: configuredModel ? allowedModels.includes(configuredModel) : false,
-    allowedModels: allowedModels,
     providerReachable: false,
     contentType: null,
-    testRequest: null,
+    latencyMs: 0,
     timestamp: new Date().toISOString()
   };
   
@@ -90,87 +102,69 @@ exports.handler = async (event, context) => {
     return jsonResponse(503, healthStatus);
   }
   
-  // Check model
-  if (!configuredModel) {
-    healthStatus.success = false;
-    healthStatus.code = 'MODEL_MISSING';
-    healthStatus.message = 'OPENAI_MODEL is not configured';
-    return jsonResponse(503, healthStatus);
-  }
+  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model: configuredModel });
   
-  // Check model is allowed
-  if (!allowedModels.includes(configuredModel)) {
-    healthStatus.success = false;
-    healthStatus.code = 'MODEL_NOT_ALLOWED';
-    healthStatus.message = `Model ${configuredModel} is not in the allowed list`;
-    return jsonResponse(503, healthStatus);
-  }
-  
-  // Test provider connectivity with a minimal request
+  // Test provider connectivity with minimal prompt
   try {
-    console.log('Testing provider connectivity...');
-    console.log('Base URL:', baseUrl);
-    console.log('Model:', configuredModel);
+    console.log({ stage: 'testing_provider', elapsedMs: Date.now() - startedAt });
     
-    const testUrl = `${baseUrl}/v1/chat/completions`;
+    // Gunakan endpoint anthropic-messages
+    const testUrl = `${baseUrl}/v1/messages`;
     
     const requestBody = {
       model: configuredModel,
-      max_tokens: 10,
+      max_tokens: 30, // Minimal output
+      system: 'You are a helpful assistant. Respond with only JSON.',
       messages: [
         {
-          role: 'system',
-          content: 'You are a helpful assistant.'
-        },
-        {
           role: 'user',
-          content: 'Say "OK"'
+          content: 'Respond with JSON: {"ok":true}'
         }
       ]
     };
     
-    const response = await makeRequest(testUrl, {
+    const { data, latencyMs } = await makeRequest(testUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${apiKey}`,
+        'anthropic-version': '2023-06-01'
       }
     }, requestBody);
     
     healthStatus.providerReachable = true;
     healthStatus.contentType = 'application/json';
-    healthStatus.testRequest = {
-      status: 'success',
-      model: configuredModel,
-      responsePreview: JSON.stringify(response).substring(0, 200)
-    };
+    healthStatus.latencyMs = latencyMs;
     
-    console.log('Provider connectivity test passed');
+    // Check if latency is too high
+    if (latencyMs > 15000) {
+      healthStatus.success = false;
+      healthStatus.code = 'PROVIDER_SLOW';
+      healthStatus.message = 'Provider response time too high';
+    }
+    
+    console.log({ stage: 'health_check_complete', elapsedMs: Date.now() - startedAt, latencyMs });
     
   } catch (error) {
-    console.error('Provider connectivity test failed:', error.message);
+    console.log({ stage: 'health_check_failed', elapsedMs: Date.now() - startedAt, error: error.message });
     healthStatus.providerReachable = false;
-    healthStatus.testRequest = {
-      status: 'failed',
-      error: error.message
-    };
     
     // Determine error code
-    if (error.message.includes('HTML') || error.message.includes('Sylor API returned HTML')) {
-      healthStatus.code = 'PROVIDER_HTML_RESPONSE';
-      healthStatus.message = 'Provider returned HTML instead of JSON';
+    if (error.message.includes('timeout')) {
+      healthStatus.code = 'TIMEOUT';
+      healthStatus.message = 'Request to provider timed out';
     } else if (error.message.includes('401') || error.message.includes('403')) {
       healthStatus.code = 'AUTH_FAILED';
       healthStatus.message = 'API key authentication failed';
     } else if (error.message.includes('404')) {
       healthStatus.code = 'ENDPOINT_NOT_FOUND';
       healthStatus.message = 'API endpoint not found';
-    } else if (error.message.includes('timeout')) {
-      healthStatus.code = 'TIMEOUT';
-      healthStatus.message = 'Request to provider timed out';
     } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
       healthStatus.code = 'NETWORK_ERROR';
       healthStatus.message = 'Failed to reach provider';
+    } else if (error.message.includes('Non-JSON')) {
+      healthStatus.code = 'PROVIDER_NON_JSON';
+      healthStatus.message = 'Provider returned non-JSON response';
     } else {
       healthStatus.code = 'PROVIDER_ERROR';
       healthStatus.message = error.message;
