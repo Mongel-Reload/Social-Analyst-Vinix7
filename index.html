@@ -4659,6 +4659,14 @@ async function generateAIRecommendation() {
           break;
         case 'PROVIDER_ERROR':
           errorMessage += 'Provider AI gagal memproses permintaan.';
+          if (error.details) {
+            if (error.details.httpStatus) {
+              errorMessage += ` (HTTP Status: ${error.details.httpStatus})`;
+            }
+            if (error.details.responseSnippet && error.details.responseSnippet !== 'N/A') {
+              errorMessage += `\n\nResponse: ${error.details.responseSnippet}`;
+            }
+          }
           break;
         case 'INVALID_OUTPUT':
           errorMessage += 'Output AI tidak sesuai format yang diharapkan.';

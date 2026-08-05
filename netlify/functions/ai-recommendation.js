@@ -133,16 +133,23 @@ async function makeRequest(url, options, data, startedAt) {
     console.log({
       stage: 'provider_body_received',
       elapsedMs: Date.now() - startedAt,
-      bodyLength: body.length
+      bodyLength: body.length,
+      bodyPreview: body.substring(0, 500)
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${body.substring(0, 200)}`);
+      const error = new Error(`HTTP ${response.status}: ${body.substring(0, 200)}`);
+      error.httpStatus = response.status;
+      error.responseBody = body;
+      throw error;
     }
     
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
-      throw new Error(`Non-JSON response: ${contentType}`);
+      const error = new Error(`Non-JSON response: ${contentType}`);
+      error.httpStatus = response.status;
+      error.responseBody = body;
+      throw error;
     }
     
     try {
@@ -153,7 +160,10 @@ async function makeRequest(url, options, data, startedAt) {
       });
       return parsed;
     } catch (e) {
-      throw new Error('Invalid JSON response');
+      const error = new Error('Invalid JSON response');
+      error.httpStatus = response.status;
+      error.responseBody = body;
+      throw error;
     }
   } catch (error) {
     if (error.name === 'AbortError') {
@@ -365,7 +375,13 @@ exports.handler = async (event, context) => {
         }
       }, requestBody, startedAt);
     } catch (error) {
-      console.log({ stage: 'provider_request_failed', elapsedMs: Date.now() - startedAt, error: error.message });
+      console.log({ 
+        stage: 'provider_request_failed', 
+        elapsedMs: Date.now() - startedAt, 
+        error: error.message,
+        httpStatus: error.httpStatus,
+        responseBody: error.responseBody?.substring(0, 500)
+      });
       
       if (error.message.includes('timeout') || error.name === 'AbortError') {
         return jsonResponse(504, {
@@ -379,7 +395,10 @@ exports.handler = async (event, context) => {
         return jsonResponse(502, {
           success: false,
           code: 'PROVIDER_NON_JSON',
-          message: 'Provider AI mengembalikan format yang tidak sesuai.'
+          message: 'Provider AI mengembalikan format yang tidak sesuai.',
+          details: {
+            contentType: error.responseBody?.substring(0, 200) || 'Unknown'
+          }
         });
       }
       
@@ -387,7 +406,13 @@ exports.handler = async (event, context) => {
         success: false,
         code: 'PROVIDER_ERROR',
         message: 'Provider AI gagal memproses permintaan.',
-        details: { error: error.message }
+        details: { 
+          error: error.message,
+          httpStatus: error.httpStatus || 'Unknown',
+          responseSnippet: error.responseBody?.substring(0, 200) || 'N/A'
+        },
+        baseUrl: baseUrl,
+        model: configuredModel
       });
     }
     
