@@ -397,17 +397,62 @@ exports.handler = async (event, context) => {
     console.log('Base URL:', baseUrl);
     console.log('Input payload length:', inputPayload.length);
     
-    // Try each model in the fallback list
+    // Try each model in the fallback list using OpenAI-style endpoint (more common)
     let sylorResponse;
-    let useAnthropicFormat = true;
+    let useAnthropicFormat = false; // Use OpenAI-style by default
     let successfulModel = null;
     let lastError = null;
     
     for (const modelToTry of fallbackModels) {
-      console.log(`Trying model: ${modelToTry}`);
+      console.log(`=== Trying model: ${modelToTry} ===`);
       
       try {
-        // Try anthropic-messages format first
+        // Use OpenAI-style endpoint (more commonly supported)
+        const openaiUrl = `${baseUrl}/v1/chat/completions`;
+        
+        const requestBody = {
+          model: modelToTry,
+          max_tokens: 6000,
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_INSTRUCTION
+            },
+            {
+              role: 'user',
+              content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
+            }
+          ]
+        };
+        
+        console.log(`Request URL: ${openaiUrl}`);
+        console.log(`Request body length: ${JSON.stringify(requestBody).length}`);
+        
+        sylorResponse = await makeRequest(openaiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          }
+        }, requestBody);
+        
+        successfulModel = modelToTry;
+        console.log(`✓ Successfully connected with model: ${modelToTry} (OpenAI-style format)`);
+        break; // Success, exit loop
+      } catch (e) {
+        lastError = e;
+        console.log(`✗ Model ${modelToTry} failed:`, e.message);
+        continue; // Try next model
+      }
+    }
+    
+    // If all models failed with OpenAI-style, try anthropic-messages as last resort
+    if (!successfulModel && fallbackModels.length > 0) {
+      console.log('=== All OpenAI-style attempts failed. Trying anthropic-messages format as last resort ===');
+      
+      for (const modelToTry of fallbackModels) {
+        console.log(`Trying anthropic-messages with model: ${modelToTry}`);
+        
         try {
           const sylorUrl = `${baseUrl}/v1/messages`;
           
@@ -433,54 +478,14 @@ exports.handler = async (event, context) => {
           }, requestBody);
           
           successfulModel = modelToTry;
-          console.log(`Sylor API response received (anthropic-messages format) with model: ${modelToTry}`);
+          useAnthropicFormat = true;
+          console.log(`✓ Successfully connected with model: ${modelToTry} (anthropic-messages format)`);
           break; // Success, exit loop
         } catch (e) {
-          console.log(`Anthropic-messages format failed for model ${modelToTry}:`, e.message);
-          
-          // Fallback to OpenAI-style chat/completions endpoint
-          if (e.message.includes('HTML') || e.message.includes('Invalid JSON') || e.message.includes('not supported')) {
-            console.log(`Trying OpenAI-style chat/completions endpoint for model ${modelToTry}...`);
-            useAnthropicFormat = false;
-            
-            const openaiUrl = `${baseUrl}/v1/chat/completions`;
-            
-            const requestBody = {
-              model: modelToTry,
-              max_tokens: 6000,
-              messages: [
-                {
-                  role: 'system',
-                  content: SYSTEM_INSTRUCTION
-                },
-                {
-                  role: 'user',
-                  content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
-                }
-              ]
-            };
-            
-            sylorResponse = await makeRequest(openaiUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-              }
-            }, requestBody);
-            
-            successfulModel = modelToTry;
-            console.log(`Sylor API response received (OpenAI-style format) with model: ${modelToTry}`);
-            break; // Success, exit loop
-          } else {
-            lastError = e;
-            console.log(`Model ${modelToTry} failed with error: ${e.message}`);
-            continue; // Try next model
-          }
+          lastError = e;
+          console.log(`✗ anthropic-messages with model ${modelToTry} failed:`, e.message);
+          continue;
         }
-      } catch (e) {
-        lastError = e;
-        console.log(`Model ${modelToTry} failed completely: ${e.message}`);
-        continue; // Try next model
       }
     }
     
