@@ -2,15 +2,108 @@ import re
 import string
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 
+class LinguisticFeatureExtractor:
+    """Extract linguistic features from text before preprocessing"""
+    
+    # Emoji definitions
+    POSITIVE_EMOJIS = ['😊', '😁', '😍', '❤️', '👍', '🎉', '🥳', '😄', '🤗', '💖', '✨', '🌟', '👏', '🙌', '💪']
+    NEGATIVE_EMOJIS = ['😡', '😠', '😭', '😢', '👎', '💔', '😤', '😞', '😔', '😣', '😫', '😩', '💔', '👊', '🤬']
+    NEUTRAL_EMOJIS = ['😐', '🤔', '🙃', '😶', '🙂', '😏', '🤷', '😑', '🤨', '😒']
+    
+    # Intensifiers (penguat)
+    INTENSIFIERS = ['sangat', 'paling', 'banget', 'sekali', 'amat', 'terlalu', 'benar-benar', 'super', 'sungguh', 'amat']
+    
+    # Softeners (pelemah)
+    SOFTENERS = ['lumayan', 'cukup', 'agak', 'sedikit', 'kurang', 'hampir']
+    
+    # Negation words (TIDAK dihapus dari stopwords)
+    NEGATIONS = ['tidak', 'bukan', 'belum', 'jangan', 'kurang', 'tak', 'tiada', 'bukanlah']
+    
+    def extract_features(self, text):
+        """Extract all linguistic features from text"""
+        if not text or not isinstance(text, str):
+            return self._empty_features()
+        
+        features = {
+            'uppercase_count': self._count_uppercase(text),
+            'uppercase_word_count': self._count_uppercase_words(text),
+            'uppercase_ratio': self._calculate_uppercase_ratio(text),
+            'positive_emoji_count': self._count_emojis(text, self.POSITIVE_EMOJIS),
+            'negative_emoji_count': self._count_emojis(text, self.NEGATIVE_EMOJIS),
+            'neutral_emoji_count': self._count_emojis(text, self.NEUTRAL_EMOJIS),
+            'intensifier_count': self._count_words(text, self.INTENSIFIERS),
+            'softener_count': self._count_words(text, self.SOFTENERS),
+            'negation_count': self._count_words(text, self.NEGATIONS),
+            'exclamation_count': text.count('!'),
+            'question_count': text.count('?'),
+            'repeated_character_count': self._count_repeated_characters(text)
+        }
+        
+        return features
+    
+    def _empty_features(self):
+        """Return empty feature dict"""
+        return {
+            'uppercase_count': 0,
+            'uppercase_word_count': 0,
+            'uppercase_ratio': 0.0,
+            'positive_emoji_count': 0,
+            'negative_emoji_count': 0,
+            'neutral_emoji_count': 0,
+            'intensifier_count': 0,
+            'softener_count': 0,
+            'negation_count': 0,
+            'exclamation_count': 0,
+            'question_count': 0,
+            'repeated_character_count': 0
+        }
+    
+    def _count_uppercase(self, text):
+        """Count uppercase characters"""
+        return sum(1 for c in text if c.isupper())
+    
+    def _count_uppercase_words(self, text):
+        """Count words that are entirely uppercase"""
+        words = text.split()
+        return sum(1 for word in words if word.isupper() and len(word) > 1)
+    
+    def _calculate_uppercase_ratio(self, text):
+        """Calculate ratio of uppercase characters"""
+        if len(text) == 0:
+            return 0.0
+        uppercase = self._count_uppercase(text)
+        return uppercase / len(text)
+    
+    def _count_emojis(self, text, emoji_list):
+        """Count emojis from a specific category"""
+        return sum(text.count(emoji) for emoji in emoji_list)
+    
+    def _count_words(self, text, word_list):
+        """Count occurrences of specific words (case-insensitive)"""
+        text_lower = text.lower()
+        return sum(word_list.count(word) for word in word_list if word in text_lower)
+    
+    def _count_repeated_characters(self, text):
+        """Count repeated characters in words (e.g., baguuuus, kereeeen)"""
+        count = 0
+        words = text.split()
+        for word in words:
+            # Check for 3+ consecutive same characters
+            if re.search(r'(.)\1{2,}', word):
+                count += 1
+        return count
+
 class TextPreprocessor:
     def __init__(self):
         factory = StemmerFactory()
         self.stemmer = factory.create_stemmer()
         
-        # Indonesian stopwords
-        self.stopwords = set([
+        # Indonesian stopwords (KECUALI kata negasi)
+        negation_words = {'tidak', 'bukan', 'belum', 'jangan', 'kurang', 'tak', 'tiada', 'bukanlah'}
+        
+        base_stopwords = [
             'yang', 'dan', 'di', 'ke', 'dari', 'pada', 'untuk', 'dengan', 'adalah',
-            'itu', 'ini', 'atau', 'juga', 'tidak', 'sudah', 'akan', 'bisa', 'lebih',
+            'itu', 'ini', 'atau', 'juga', 'sudah', 'akan', 'bisa', 'lebih',
             'karena', 'seperti', 'ada', 'mereka', 'kita', 'saya', 'anda', 'kami',
             'mereka', 'dia', 'beliau', 'nya', 'nya', 'si', 'sih', 'dong', 'deh',
             'lah', 'kah', 'tah', 'pun', 'jika', 'apabila', 'kalau', 'sementara',
@@ -31,11 +124,14 @@ class TextPreprocessor:
             'umumnya', 'biasanya', 'lazimnya', 'kerap', 'sering', 'acap', 'kerap kali',
             'sering kali', 'acap kali', 'kadang', 'kadang-kadang', 'sesekali',
             'jarang', 'langka', 'sangat jarang', 'tidak pernah', 'tak pernah',
-            'belum pernah', 'pernah', 'telah', 'sudah', 'masih', 'belum', 'belum lagi',
+            'belum pernah', 'pernah', 'telah', 'sudah', 'masih', 'belum lagi',
             'belum pun', 'belum pula', 'belum juga', 'belum lagi', 'belum pun',
             'belum pula', 'belum juga', 'belum lagi', 'belum pun', 'belum pula',
             'belum juga', 'belum lagi', 'belum pun', 'belum pula', 'belum juga'
-        ])
+        ]
+        
+        # Filter out negation words from stopwords
+        self.stopwords = set([w for w in base_stopwords if w not in negation_words])
     
     def case_folding(self, text):
         """Convert text to lowercase"""

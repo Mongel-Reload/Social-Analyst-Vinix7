@@ -20,7 +20,7 @@ if os.path.exists(model_path):
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    """Predict sentiment for a single text"""
+    """Predict sentiment for a single text with linguistic features"""
     try:
         data = request.get_json()
         
@@ -32,7 +32,7 @@ def predict():
         if not text or not isinstance(text, str):
             return jsonify({'error': 'Text must be a non-empty string'}), 400
         
-        if classifier.pipeline is None:
+        if classifier.classifier is None:
             return jsonify({'error': 'Model not trained. Please train the model first.'}), 400
         
         result = classifier.predict(text)
@@ -47,7 +47,7 @@ def predict():
 
 @app.route('/predict-batch', methods=['POST'])
 def predict_batch():
-    """Predict sentiment for multiple texts"""
+    """Predict sentiment for multiple texts with linguistic features"""
     try:
         data = request.get_json()
         
@@ -62,7 +62,7 @@ def predict_batch():
         if not texts:
             return jsonify({'error': 'Texts list cannot be empty'}), 400
         
-        if classifier.pipeline is None:
+        if classifier.classifier is None:
             return jsonify({'error': 'Model not trained. Please train the model first.'}), 400
         
         results = classifier.predict_batch(texts)
@@ -142,7 +142,8 @@ def health():
     return jsonify({
         'ok': True,
         'status': 'healthy',
-        'model_loaded': classifier.pipeline is not None
+        'model_loaded': classifier.classifier is not None,
+        'features': 'TF-IDF + Linguistic Features'
     })
 
 if __name__ == '__main__':

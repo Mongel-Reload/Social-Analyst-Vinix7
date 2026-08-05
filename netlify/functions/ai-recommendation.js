@@ -205,7 +205,7 @@ function validateInputPayload(data) {
   const errors = [];
   
   // Check if payload is empty
-  if (!data.account && !data.sentiment && !data.performance) {
+  if (!data.sentiment_summary && !data.linguistic_summary && !data.representative_comments) {
     return {
       valid: false,
       errors: ['Data analisis belum tersedia untuk menghasilkan rekomendasi.']
@@ -213,8 +213,8 @@ function validateInputPayload(data) {
   }
   
   // Limit representative comments to 3 per class, 250 chars
-  if (data.sentiment && data.sentiment.representative_comments) {
-    const comments = data.sentiment.representative_comments;
+  if (data.representative_comments) {
+    const comments = data.representative_comments;
     
     // Limit to 3 comments per sentiment class
     if (comments.positive && comments.positive.length > 3) {
@@ -252,14 +252,6 @@ function validateInputPayload(data) {
     if (data.frequent_terms.negative && data.frequent_terms.negative.length > 5) {
       data.frequent_terms.negative = data.frequent_terms.negative.slice(0, 5);
     }
-  }
-  
-  // Limit top/low content to 3
-  if (data.top_content && data.top_content.length > 3) {
-    data.top_content = data.top_content.slice(0, 3);
-  }
-  if (data.low_performing_content && data.low_performing_content.length > 3) {
-    data.low_performing_content = data.low_performing_content.slice(0, 3);
   }
   
   return { valid: errors.length === 0, errors };
