@@ -324,7 +324,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <div id="sentimentDropzone" style="background:rgba(34,211,238,.05);border:2px dashed rgba(34,211,238,.3);border-radius:12px;padding:30px;text-align:center;margin-bottom:15px;cursor:pointer">
           <div style="font-size:48px;margin-bottom:12px">📂</div>
           <div style="color:#d1d5db;margin-bottom:8px">Drag & Drop file CSV/Excel di sini</div>
-          <div style="color:#9aa4b2;font-size:13px">Format: tanggal_upload, username, komentar</div>
+          <div style="color:#9aa4b2;font-size:13px">Kolom: tanggal upload, username, komentar (format fleksibel)</div>
         </div>
         <button class="btn primary" id="analyzeSentimentDataset" style="width:100%">Analisis Dataset</button>
       </div>
@@ -2764,6 +2764,103 @@ function handleExcelFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
+// Normalize header name: case-insensitive, handle spaces/underscores/hyphens
+function normalizeHeader(header) {
+  if (!header) return '';
+  return String(header)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/_+/g, '_');
+}
+
+// Header aliases mapping
+const HEADER_ALIASES = {
+  tanggal_upload: ['tanggal_upload', 'tanggal upload', 'tanggal', 'upload_date', 'date', 'tanggal posting'],
+  username: ['username', 'user_name', 'user', 'nama pengguna', 'akun'],
+  komentar: ['komentar', 'comment', 'comments', 'text', 'isi komentar']
+};
+
+// Find column name from aliases
+function findColumnByAlias(headers, targetColumn) {
+  const aliases = HEADER_ALIASES[targetColumn] || [targetColumn];
+  const normalizedHeaders = headers.map(h => normalizeHeader(h));
+  
+  for (const alias of aliases) {
+    const normalizedAlias = normalizeHeader(alias);
+    const index = normalizedHeaders.indexOf(normalizedAlias);
+    if (index !== -1) {
+      return headers[index]; // Return original header name
+    }
+  }
+  return null;
+}
+
+// Normalize date formats to YYYY-MM-DD
+function normalizeDate(dateValue) {
+  if (!dateValue) return null;
+  
+  // Handle Excel serial date (number)
+  if (typeof dateValue === 'number') {
+    const excelDate = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
+    if (!isNaN(excelDate.getTime())) {
+      return excelDate.toISOString().split('T')[0];
+    }
+    return null;
+  }
+  
+  const dateStr = String(dateValue).trim();
+  
+  // Try DD/MM/YYYY or D/M/YYYY
+  const ddmmyyyy = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (ddmmyyyy) {
+    const [, day, month, year] = ddmmyyyy;
+    const date = new Date(`${year}-${month}-${day}`);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  }
+  
+  // Try YYYY-MM-DD
+  const yyyymmdd = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (yyyymmdd) {
+    const [, year, month, day] = yyyymmdd;
+    const date = new Date(`${year}-${month}-${day}`);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  }
+  
+  // Try parsing as-is
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date.toISOString().split('T')[0];
+  }
+  
+  return null;
+}
+
+// Forward fill for date column (handle merged cells)
+function forwardFillDate(data, dateColumn) {
+  if (!dateColumn || data.length === 0) return data;
+  
+  let lastDate = null;
+  return data.map(row => {
+    const currentValue = row[dateColumn];
+    const normalizedValue = normalizeDate(currentValue);
+    
+    if (normalizedValue) {
+      lastDate = normalizedValue;
+      return { ...row, [dateColumn]: normalizedValue };
+    } else if (lastDate) {
+      return { ...row, [dateColumn]: lastDate };
+    } else {
+      return row;
+    }
+  });
+}
+
 function processDataset(data) {
   // Validate dataset
   if (!data || data.length === 0) {
@@ -2771,76 +2868,74 @@ function processDataset(data) {
     return;
   }
   
-  const firstRow = data[0];
-  const columns = Object.keys(firstRow).map(c => c.toLowerCase());
+  const headers = Object.keys(data[0]);
+  console.log('Original headers:', headers);
   
-  console.log('Dataset columns:', columns);
-  console.log('First row:', firstRow);
+  // Find required columns using aliases
+  const tanggalUploadCol = findColumnByAlias(headers, 'tanggal_upload');
+  const usernameCol = findColumnByAlias(headers, 'username');
+  const komentarCol = findColumnByAlias(headers, 'komentar');
   
-  // Check for required columns
-  const hasUsername = columns.some(c => c.includes('username') || c.includes('user'));
-  const hasKomentar = columns.some(c => c.includes('komentar') || c.includes('comment') || c.includes('text'));
-  const hasLabel = columns.some(c => c.includes('label') || c.includes('sentiment'));
+  console.log('Column mapping:', { tanggalUploadCol, usernameCol, komentarCol });
   
-  if (!hasKomentar) {
-    alert('Dataset harus memiliki kolom "Komentar" atau "Comment"!');
+  // Validate required columns
+  if (!komentarCol) {
+    alert('Dataset harus memiliki kolom tanggal upload, username, dan komentar.\nHeader terbaca: ' + headers.join(', '));
+    return;
+  }
+  if (!usernameCol) {
+    alert('Dataset harus memiliki kolom tanggal upload, username, dan komentar.\nHeader terbaca: ' + headers.join(', '));
+    return;
+  }
+  if (!tanggalUploadCol) {
+    alert('Dataset harus memiliki kolom tanggal upload, username, dan komentar.\nHeader terbaca: ' + headers.join(', '));
     return;
   }
   
-  // Normalize column names
-  const usernameCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('username') || c.toLowerCase().includes('user'));
-  const komentarCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('komentar') || c.toLowerCase().includes('comment') || c.toLowerCase().includes('text'));
-  const labelCol = Object.keys(firstRow).find(c => c.toLowerCase().includes('label') || c.toLowerCase().includes('sentiment'));
+  // Forward fill tanggal_upload for merged cells
+  let processedData = forwardFillDate(data, tanggalUploadCol);
   
-  console.log('Column mapping:', { usernameCol, komentarCol, labelCol });
+  // Normalize dataset and trim values
+  let skippedCount = 0;
+  sentimentDataset = [];
   
-  // Normalize label function
-  const normalizeLabel = (label) => {
-    if (!label) return null;
-    const normalized = label.toString().toLowerCase().trim();
+  for (const row of processedData) {
+    const tanggalUpload = String(row[tanggalUploadCol] || '').trim();
+    const username = String(row[usernameCol] || '').trim();
+    const komentar = String(row[komentarCol] || '').trim();
     
-    // Map various label formats to standard format
-    if (normalized.includes('positif') || normalized.includes('positive') || normalized.includes('pos') || normalized.includes('good') || normalized.includes('baik')) {
-      return 'Positif';
-    }
-    if (normalized.includes('negatif') || normalized.includes('negative') || normalized.includes('neg') || normalized.includes('bad') || normalized.includes('buruk')) {
-      return 'Negatif';
-    }
-    if (normalized.includes('netral') || normalized.includes('neutral') || normalized.includes('neu')) {
-      return 'Netral';
+    // Skip rows with empty komentar or username
+    if (!komentar || !username) {
+      skippedCount++;
+      continue;
     }
     
-    // If no match, return original
-    return label;
-  };
+    sentimentDataset.push({
+      tanggal_upload: tanggalUpload,
+      username: username,
+      komentar: komentar
+    });
+  }
   
-  // Normalize dataset
-  sentimentDataset = data.map(row => {
-    const rawLabel = labelCol ? (row[labelCol] || null) : null;
-    const normalizedLabel = normalizeLabel(rawLabel);
-    
-    console.log('Label mapping:', { raw: rawLabel, normalized: normalizedLabel });
-    
-    return {
-      username: usernameCol ? (row[usernameCol] || '-') : '-',
-      komentar: row[komentarCol] || '',
-      label: normalizedLabel
-    };
-  });
+  // Check if any valid rows remain
+  if (sentimentDataset.length === 0) {
+    alert('Tidak ada baris valid dalam dataset. Semua baris memiliki komentar atau username kosong.');
+    return;
+  }
   
-  // Log label distribution
-  const labelCounts = {};
-  sentimentDataset.forEach(row => {
-    if (row.label) {
-      labelCounts[row.label] = (labelCounts[row.label] || 0) + 1;
-    }
-  });
-  console.log('Label distribution:', labelCounts);
+  console.log('Processed dataset:', sentimentDataset.slice(0, 5));
   
   // Show preview
   showDatasetPreview();
   
-  alert(`Dataset berhasil dimuat! ${sentimentDataset.length} baris data.\nDistribusi label: ${JSON.stringify(labelCounts)}`);
+  // Show success message with skipped count
+  let message = `Dataset berhasil dibaca. ${sentimentDataset.length} baris valid`;
+  if (skippedCount > 0) {
+    message += ` dan ${skippedCount} baris dilewati karena komentar atau username kosong.`;
+  } else {
+    message += '.';
+  }
+  alert(message);
 }
 
 function showDatasetPreview() {
@@ -2855,9 +2950,9 @@ function showDatasetPreview() {
   // Show header
   previewHead.innerHTML = `
     <tr>
+      <th>Tanggal Upload</th>
       <th>Username</th>
       <th>Komentar</th>
-      <th>Label</th>
     </tr>
   `;
   
@@ -2865,9 +2960,9 @@ function showDatasetPreview() {
   const previewData = sentimentDataset.slice(0, 10);
   previewBody.innerHTML = previewData.map(row => `
     <tr>
+      <td>${row.tanggal_upload}</td>
       <td>${row.username}</td>
       <td>${row.komentar.substring(0, 100)}${row.komentar.length > 100 ? '...' : ''}</td>
-      <td>${row.label || '-'}</td>
     </tr>
   `).join('');
 }
@@ -2875,16 +2970,6 @@ function showDatasetPreview() {
 async function analyzeSentimentDataset() {
   if (!sentimentDataset || sentimentDataset.length === 0) {
     alert('Silakan upload dataset terlebih dahulu!');
-    return;
-  }
-  
-  // Validate CSV columns
-  const requiredColumns = ['tanggal_upload', 'username', 'komentar'];
-  const availableColumns = Object.keys(sentimentDataset[0] || {});
-  const missingColumns = requiredColumns.filter(col => !availableColumns.includes(col));
-  
-  if (missingColumns.length > 0) {
-    alert(`CSV harus memiliki kolom: ${requiredColumns.join(', ')}\nKolom yang hilang: ${missingColumns.join(', ')}`);
     return;
   }
   
