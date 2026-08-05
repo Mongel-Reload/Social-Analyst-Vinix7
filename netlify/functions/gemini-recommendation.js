@@ -1,58 +1,84 @@
 // System instruction for Sylor AI
-const SYSTEM_INSTRUCTION = `Anda adalah Senior Digital Marketing Strategist.
+const SYSTEM_INSTRUCTION = `Anda adalah Senior Digital Marketing Strategist dan Social Media Analyst.
 
-Tugas: Berikan rekomendasi strategi media sosial yang dapat langsung diterapkan berdasarkan data analisis sentimen.
+Anda menerima hasil klasifikasi sentimen yang diproses menggunakan TF-IDF dan Multinomial Naive Bayes.
 
-Jangan hanya mengulang data analisis. Berikan insight dan rekomendasi yang actionable.
+Tugas Anda bukan mengulang angka sentimen, melainkan mengubah hasil analisis menjadi rekomendasi yang praktis dan relevan.
 
-Gunakan Bahasa Indonesia.
+Gunakan hanya data pada input.
 
-Output harus dalam format JSON sesuai schema berikut:
+Pisahkan dengan jelas:
+1. Temuan berdasarkan data.
+2. Interpretasi.
+3. Strategi.
+4. Ide konten.
+5. Keterbatasan data.
 
+Jangan mengarang demografi, waktu posting terbaik, tren historis, atau performa kompetitor apabila datanya tidak tersedia.
+
+Hasilkan tepat:
+- satu ringkasan eksekutif (maksimal 120 kata);
+- maksimal tiga insight utama;
+- maksimal tiga strategi konten;
+- tepat tiga ide konten;
+- maksimal tiga tindakan prioritas.
+
+Setiap rekomendasi harus memiliki dasar data.
+
+Gunakan Bahasa Indonesia profesional.
+
+Kembalikan hanya JSON valid tanpa Markdown dan tanpa code fence.
+
+Output harus mengikuti struktur:
 {
-  "executive_summary": "Ringkasan singkat maksimal 150 kata",
+  "executive_summary": "",
   "key_insights": [
     {
-      "insight": "Insight penting berdasarkan data",
-      "data_basis": "Data yang mendukung insight"
+      "finding": "",
+      "data_basis": "",
+      "interpretation": ""
     }
   ],
   "content_strategy": [
     {
-      "title": "Judul strategi",
-      "reason": "Alasan strategi ini diperlukan",
-      "recommendation": "Rekomendasi spesifik",
+      "title": "",
+      "objective": "",
+      "recommendation": "",
+      "data_basis": "",
       "priority": "High | Medium | Low"
     }
   ],
   "content_ideas": [
     {
-      "title": "Judul ide konten",
+      "title": "",
       "format": "Reels | Carousel | Story | Single Post",
-      "objective": "Tujuan konten",
-      "concept": "Konsep konten",
-      "caption_angle": "Sudut pandang caption",
-      "call_to_action": "Call to action",
-      "reason": "Berdasarkan data analisis"
+      "objective": "",
+      "concept": "",
+      "hook": "",
+      "caption_angle": "",
+      "call_to_action": "",
+      "data_basis": ""
     }
   ],
   "priority_actions": [
     {
-      "action": "Tindakan prioritas",
-      "reason": "Alasan tindakan ini prioritas",
-      "priority": "High | Medium | Low"
+      "priority_number": 1,
+      "action": "",
+      "reason": "",
+      "success_metric": ""
     }
-  ]
+  ],
+  "limitations": []
 }
 
-Batas:
-- executive_summary: maksimal 150 kata
-- key_insights: maksimal 3 insight
-- content_strategy: maksimal 3 strategi
-- content_ideas: tepat 3 ide
-- priority_actions: maksimal 3 tindakan
-
-Jangan menulis Markdown. Kembalikan output hanya sesuai JSON Schema.`;
+Ketentuan:
+- content_ideas harus tepat 3.
+- key_insights maksimal 3.
+- content_strategy maksimal 3.
+- priority_actions maksimal 3.
+- executive_summary maksimal 120 kata.
+- Jangan menghasilkan field di luar schema.
+- Jangan mengembalikan Markdown.`;
 
 // JSON Schema for structured output
 const RECOMMENDATION_SCHEMA = {
@@ -63,12 +89,13 @@ const RECOMMENDATION_SCHEMA = {
     "key_insights",
     "content_strategy",
     "content_ideas",
-    "priority_actions"
+    "priority_actions",
+    "limitations"
   ],
   properties: {
     executive_summary: {
       type: "string",
-      description: "Ringkasan singkat maksimal 150 kata"
+      description: "Ringkasan singkat maksimal 120 kata"
     },
     key_insights: {
       type: "array",
@@ -76,10 +103,11 @@ const RECOMMENDATION_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["insight", "data_basis"],
+        required: ["finding", "data_basis", "interpretation"],
         properties: {
-          insight: { type: "string" },
-          data_basis: { type: "string" }
+          finding: { type: "string" },
+          data_basis: { type: "string" },
+          interpretation: { type: "string" }
         }
       }
     },
@@ -89,12 +117,13 @@ const RECOMMENDATION_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "reason", "recommendation", "priority"],
+        required: ["title", "objective", "recommendation", "data_basis", "priority"],
         properties: {
           title: { type: "string" },
-          reason: { type: "string" },
+          objective: { type: "string" },
           recommendation: { type: "string" },
-          priority: { type: "string", enum: ["High", "Medium", "Low"] }
+          data_basis: { type: "string" },
+          priority: { type: "string", enum: [" High", "Medium", "Low"] }
         }
       }
     },
@@ -105,15 +134,16 @@ const RECOMMENDATION_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "format", "objective", "concept", "caption_angle", "call_to_action", "reason"],
+        required: ["title", "format", "objective", "concept", "hook", "caption_angle", "call_to_action", "data_basis"],
         properties: {
           title: { type: "string" },
           format: { type: "string", enum: ["Reels", "Carousel", "Story", "Single Post"] },
           objective: { type: "string" },
           concept: { type: "string" },
+          hook: { type: "string" },
           caption_angle: { type: "string" },
           call_to_action: { type: "string" },
-          reason: { type: "string" }
+          data_basis: { type: "string" }
         }
       }
     },
@@ -123,16 +153,33 @@ const RECOMMENDATION_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["action", "reason", "priority"],
+        required: ["priority_number", "action", "reason", "success_metric"],
         properties: {
+          priority_number: { type: "number" },
           action: { type: "string" },
           reason: { type: "string" },
-          priority: { type: "string", enum: ["High", "Medium", "Low"] }
+          success_metric: { type: "string" }
         }
       }
+    },
+    limitations: {
+      type: "array",
+      items: { type: "string" }
     }
   }
 };
+
+// Helper function for JSON responses
+function jsonResponse(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store'
+    },
+    body: JSON.stringify(body)
+  };
+}
 
 // Helper function to make HTTPS request using fetch
 async function makeRequest(url, options, data) {
@@ -297,29 +344,26 @@ exports.handler = async (event, context) => {
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ 
-        success: false,
-        code: 'METHOD_NOT_ALLOWED',
-        message: 'Method not allowed' 
-      })
-    };
+    return jsonResponse(405, { 
+      success: false,
+      code: 'METHOD_NOT_ALLOWED',
+      message: 'Method not allowed' 
+    });
   }
   
   // Validate environment variables
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
   const configuredModel = process.env.OPENAI_MODEL?.trim();
-  const baseUrl = process.env.OPENAI_BASE_URL?.trim() || 'https://api.sylorapi.com';
+  const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
   
-  // Fallback model list in case configured model is not available
+  // Allowed models
+  const allowedModels = ['gpt-5.6-luna', 'gpt-5.6-terra'];
+  
+  // Fallback model list
   const fallbackModels = [
     configuredModel,
-    'gpt-4o',
-    'gpt-4o-mini',
-    'gpt-4-turbo',
-    'gpt-3.5-turbo'
-  ].filter(m => m); // Remove undefined/null
+    ...allowedModels
+  ].filter(m => m && allowedModels.includes(m));
   
   console.log('Environment Check:');
   console.log('  hasApiKey:', !!apiKey);
@@ -330,34 +374,41 @@ exports.handler = async (event, context) => {
   
   if (!apiKey) {
     console.log('ERROR: OPENAI_API_KEY is not configured');
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        success: false,
-        code: 'API_KEY_MISSING',
-        message: 'OPENAI_API_KEY is not configured',
+    return jsonResponse(500, {
+      success: false,
+      code: 'API_KEY_MISSING',
+      message: 'API key AI belum dikonfigurasi pada server.',
+      details: {
         hasApiKey: false,
-        keyLength: 0,
-        model: configuredModel,
-        baseUrl: baseUrl
-      })
-    };
+        keyLength: 0
+      }
+    });
   }
   
   if (!configuredModel) {
     console.log('ERROR: OPENAI_MODEL is not configured');
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        success: false,
-        code: 'MODEL_MISSING',
-        message: 'OPENAI_MODEL is not configured',
-        hasApiKey: true,
-        keyLength: apiKey.length,
+    return jsonResponse(500, {
+      success: false,
+      code: 'MODEL_MISSING',
+      message: 'Model AI belum dikonfigurasi pada server.',
+      details: {
         model: null,
-        baseUrl: baseUrl
-      })
-    };
+        allowedModels: allowedModels
+      }
+    });
+  }
+  
+  if (!allowedModels.includes(configuredModel)) {
+    console.log('ERROR: Model not allowed:', configuredModel);
+    return jsonResponse(500, {
+      success: false,
+      code: 'MODEL_NOT_ALLOWED',
+      message: `Model ${configuredModel} tidak termasuk model yang diizinkan.`,
+      details: {
+        configuredModel: configuredModel,
+        allowedModels: allowedModels
+      }
+    });
   }
   
   try {
@@ -368,28 +419,25 @@ exports.handler = async (event, context) => {
       console.log('Request data parsed successfully');
     } catch (e) {
       console.log('ERROR: Invalid JSON in request body', e.message);
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ 
-          success: false,
-          code: 'INVALID_JSON',
-          message: 'Invalid JSON in request body' 
-        })
-      };
+      return jsonResponse(400, { 
+        success: false,
+        code: 'INVALID_JSON',
+        message: 'Invalid JSON in request body' 
+      });
     }
     
     // Validate input payload
     const validation = validateInputPayload(requestData);
     if (!validation.valid) {
       console.log('ERROR: Validation failed', validation.errors);
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ 
-          success: false,
-          code: 'INVALID_PAYLOAD',
-          message: validation.errors[0] || 'Data analisis belum tersedia untuk menghasilkan rekomendasi.' 
-        })
-      };
+      return jsonResponse(400, { 
+        success: false,
+        code: 'INVALID_PAYLOAD',
+        message: validation.errors[0] || 'Data analisis tidak valid',
+        details: {
+          errors: validation.errors
+        }
+      });
     }
     console.log('Request validation passed');
     
@@ -496,15 +544,12 @@ exports.handler = async (event, context) => {
     // If all models failed
     if (!successfulModel) {
       console.error('All models failed. Last error:', lastError?.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ 
-          success: false,
-          code: 'ALL_MODELS_FAILED',
-          message: `All models failed. Last error: ${lastError?.message || 'Unknown error'}`,
-          attemptedModels: fallbackModels
-        })
-      };
+      return jsonResponse(500, { 
+        success: false,
+        code: 'ALL_MODELS_FAILED',
+        message: `All models failed. Last error: ${lastError?.message || 'Unknown error'}`,
+        attemptedModels: fallbackModels
+      });
     }
     
     console.log(`Successfully used model: ${successfulModel}`);
@@ -529,14 +574,11 @@ exports.handler = async (event, context) => {
     
     if (!outputText) {
       console.error('No text content in response');
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ 
-          success: false,
-          code: 'EMPTY_RESPONSE',
-          message: 'No text content in response' 
-        })
-      };
+      return jsonResponse(500, { 
+        success: false,
+        code: 'EMPTY_RESPONSE',
+        message: 'No text content in response' 
+      });
     }
     
     console.log('Output text length:', outputText.length);
@@ -548,27 +590,18 @@ exports.handler = async (event, context) => {
       console.log('JSON parsed successfully');
     } catch (e) {
       console.error('JSON parsing error:', e.message);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ 
-          success: false,
-          code: 'INVALID_JSON',
-          message: `Response is not valid JSON: ${e.message}` 
-        })
-      };
+      return jsonResponse(500, { 
+        success: false,
+        code: 'INVALID_JSON',
+        message: `Response is not valid JSON: ${e.message}` 
+      });
     }
     
     // Return success response
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        success: true,
-        data: parsedResponse
-      })
-    };
+    return jsonResponse(200, {
+      success: true,
+      data: parsedResponse
+    });
     
   } catch (error) {
     console.error('=== Sylor AI Recommendation Error ===');
@@ -612,19 +645,13 @@ exports.handler = async (event, context) => {
     
     console.log('Error code:', errorCode);
     
-    return {
-      statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        success: false,
-        code: errorCode,
-        message: errorMessage,
-        details: error.message,
-        model: configuredModel,
-        baseUrl: baseUrl
-      })
-    };
+    return jsonResponse(500, { 
+      success: false,
+      code: errorCode,
+      message: errorMessage,
+      details: error.message,
+      model: configuredModel,
+      baseUrl: baseUrl
+    });
   }
 };

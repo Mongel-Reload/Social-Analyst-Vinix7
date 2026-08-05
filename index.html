@@ -3697,6 +3697,35 @@ function extractTopics(words) {
     .filter(t => t.count > 0);
 }
 
+// Safe API response parser
+async function parseApiResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+  const rawBody = await response.text();
+
+  if (!contentType.includes('application/json')) {
+    console.error('Expected JSON but received:', {
+      status: response.status,
+      contentType,
+      preview: rawBody.slice(0, 300)
+    });
+
+    throw new Error(
+      `Endpoint mengembalikan ${contentType || 'format tidak diketahui'}, bukan JSON. HTTP ${response.status}.` 
+    );
+  }
+
+  try {
+    return JSON.parse(rawBody);
+  } catch (error) {
+    console.error('Invalid JSON response:', {
+      status: response.status,
+      preview: rawBody.slice(0, 300)
+    });
+
+    throw new Error('Backend mengembalikan JSON yang tidak valid.');
+  }
+}
+
 // Generate AI Recommendation via Netlify Function
 async function generateAIRecommendation() {
   if (!sentimentPredictions) {
@@ -3726,29 +3755,21 @@ async function generateAIRecommendation() {
     console.log('Response status:', response.status);
     console.log('Response ok:', response.ok);
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error response:', errorData);
-      console.error('Error code:', errorData.code);
-      console.error('Error message:', errorData.message);
-      console.error('Error details:', errorData.details);
-      console.error('Error model:', errorData.model);
-      console.error('Error baseUrl:', errorData.baseUrl);
-      
-      // Create detailed error object
-      const error = new Error(errorData.message || errorData.details || `HTTP ${response.status}`);
-      error.code = errorData.code;
-      error.details = errorData.details;
-      error.model = errorData.model;
-      error.baseUrl = errorData.baseUrl;
+    const data = await parseApiResponse(response);
+    
+    if (!response.ok || !data.success) {
+      const error = new Error(data.message || 'Gagal menghasilkan rekomendasi.');
+      error.code = data.code;
+      error.details = data.details;
+      error.model = data.model;
+      error.baseUrl = data.baseUrl;
       throw error;
     }
     
-    const aiResponse = await response.json();
-    console.log('AI Response:', aiResponse);
+    console.log('AI Response:', data);
     
     // Handle new response format from Sylor API
-    const recommendationData = aiResponse.success ? aiResponse.data : aiResponse;
+    const recommendationData = data.data || data;
     
     // Store recommendation data
     aiRecommendationData = recommendationData;
@@ -3872,7 +3893,7 @@ function displayAIRecommendation(response) {
   const summaryEl = document.getElementById('aiSummary');
   summaryEl.textContent = response.executive_summary || '';
   
-  // Key Insights
+  // Key Insights (new schema with finding, data_basis, interpretation)
   const findingsEl = document.getElementById('aiFindings');
   findingsEl.innerHTML = '';
   if (response.key_insights && Array.isArray(response.key_insights)) {
@@ -3884,24 +3905,31 @@ function displayAIRecommendation(response) {
       div.style.borderRadius = '8px';
       div.style.borderLeft = '4px solid #3b82f6';
       
-      const title = document.createElement('strong');
-      title.textContent = insight.insight || '';
-      title.style.display = 'block';
-      title.style.marginBottom = '4px';
-      title.style.color = '#3b82f6';
+      const finding = document.createElement('strong');
+      finding.textContent = insight.finding || '';
+      finding.style.display = 'block';
+      finding.style.marginBottom = '4px';
+      finding.style.color = '#3b82f6';
       
-      const evidence = document.createElement('div');
-      evidence.style.fontSize = '13px';
-      evidence.style.color = '#9aa4b2';
-      evidence.textContent = 'Dasar: ' + (insight.data_basis || '');
+      const dataBasis = document.createElement('div');
+      dataBasis.style.fontSize = '13px';
+      dataBasis.style.color = '#9aa4b2';
+      dataBasis.style.marginBottom = '4px';
+      dataBasis.textContent = 'Dasar: ' + (insight.data_basis || '');
       
-      div.appendChild(title);
-      div.appendChild(evidence);
+      const interpretation = document.createElement('div');
+      interpretation.style.fontSize = '13px';
+      interpretation.style.color = '#d1d5db';
+      interpretation.textContent = 'Interpretasi: ' + (insight.interpretation || '');
+      
+      div.appendChild(finding);
+      div.appendChild(dataBasis);
+      div.appendChild(interpretation);
       findingsEl.appendChild(div);
     });
   }
   
-  // Content Strategy
+  // Content Strategy (new schema with objective, data_basis)
   const positiveEl = document.getElementById('aiPositive');
   positiveEl.innerHTML = '';
   if (response.content_strategy && Array.isArray(response.content_strategy)) {
@@ -3919,11 +3947,11 @@ function displayAIRecommendation(response) {
       title.style.marginBottom = '4px';
       title.style.color = '#22c55e';
       
-      const reason = document.createElement('div');
-      reason.style.fontSize = '13px';
-      reason.style.color = '#d1d5db';
-      reason.style.marginBottom = '4px';
-      reason.textContent = 'Alasan: ' + (strategy.reason || '');
+      const objective = document.createElement('div');
+      objective.style.fontSize = '13px';
+      objective.style.color = '#d1d5db';
+      objective.style.marginBottom = '4px';
+      objective.textContent = 'Tujuan: ' + (strategy.objective || '');
       
       const recommendation = document.createElement('div');
       recommendation.style.fontSize = '13px';
@@ -3931,21 +3959,27 @@ function displayAIRecommendation(response) {
       recommendation.style.marginBottom = '4px';
       recommendation.textContent = 'Rekomendasi: ' + (strategy.recommendation || '');
       
+      const dataBasis = document.createElement('div');
+      dataBasis.style.fontSize = '12px';
+      dataBasis.style.color = '#9aa4b2';
+      dataBasis.style.marginBottom = '4px';
+      dataBasis.textContent = 'Dasar: ' + (strategy.data_basis || '');
+      
       const priority = document.createElement('div');
       priority.style.fontSize = '12px';
       priority.style.color = '#fca5a5';
-      priority.style.marginTop = '4px';
       priority.textContent = 'Prioritas: ' + (strategy.priority || '');
       
       div.appendChild(title);
-      div.appendChild(reason);
+      div.appendChild(objective);
       div.appendChild(recommendation);
+      div.appendChild(dataBasis);
       div.appendChild(priority);
       positiveEl.appendChild(div);
     });
   }
   
-  // Content Ideas
+  // Content Ideas (new schema with hook, data_basis)
   const negativeEl = document.getElementById('aiNegative');
   negativeEl.innerHTML = '';
   if (response.content_ideas && Array.isArray(response.content_ideas)) {
@@ -3989,6 +4023,12 @@ function displayAIRecommendation(response) {
       concept.style.marginBottom = '4px';
       concept.textContent = 'Konsep: ' + (idea.concept || '');
       
+      const hook = document.createElement('div');
+      hook.style.fontSize = '12px';
+      hook.style.color = '#9aa4b2';
+      hook.style.marginBottom = '4px';
+      hook.textContent = 'Hook: ' + (idea.hook || '');
+      
       const caption = document.createElement('div');
       caption.style.fontSize = '12px';
       caption.style.color = '#9aa4b2';
@@ -4001,26 +4041,28 @@ function displayAIRecommendation(response) {
       cta.style.marginBottom = '4px';
       cta.textContent = 'CTA: ' + (idea.call_to_action || '');
       
-      const reason = document.createElement('div');
-      reason.style.fontSize = '12px';
-      reason.style.color = '#9aa4b2';
-      reason.textContent = 'Dasar: ' + (idea.reason || '');
+      const dataBasis = document.createElement('div');
+      dataBasis.style.fontSize = '12px';
+      dataBasis.style.color = '#9aa4b2';
+      dataBasis.textContent = 'Dasar: ' + (idea.data_basis || '');
       
       div.appendChild(header);
       div.appendChild(objective);
       div.appendChild(concept);
+      div.appendChild(hook);
       div.appendChild(caption);
       div.appendChild(cta);
-      div.appendChild(reason);
+      div.appendChild(dataBasis);
       negativeEl.appendChild(div);
     });
   }
   
-  // Priority Actions
+  // Priority Actions (new schema with priority_number, success_metric)
   const recommendationsEl = document.getElementById('aiRecommendations');
   recommendationsEl.innerHTML = '';
   if (response.priority_actions && Array.isArray(response.priority_actions)) {
-    response.priority_actions.forEach((action, index) => {
+    const sortedActions = [...response.priority_actions].sort((a, b) => (a.priority_number || 0) - (b.priority_number || 0));
+    sortedActions.forEach((action, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
       div.style.padding = '12px';
@@ -4045,7 +4087,7 @@ function displayAIRecommendation(response) {
       number.style.fontSize = '12px';
       number.style.fontWeight = 'bold';
       number.style.marginRight = '8px';
-      number.textContent = index + 1;
+      number.textContent = action.priority_number || (index + 1);
       
       const title = document.createElement('strong');
       title.textContent = action.action || '';
@@ -4060,25 +4102,38 @@ function displayAIRecommendation(response) {
       reason.style.marginBottom = '4px';
       reason.textContent = 'Alasan: ' + (action.reason || '');
       
-      const priority = document.createElement('div');
-      priority.style.fontSize = '12px';
-      priority.style.color = '#9aa4b2';
-      priority.textContent = 'Prioritas: ' + (action.priority || '');
+      const successMetric = document.createElement('div');
+      successMetric.style.fontSize = '12px';
+      successMetric.style.color = '#9aa4b2';
+      successMetric.textContent = 'Metric: ' + (action.success_metric || '');
       
       div.appendChild(header);
       div.appendChild(reason);
-      div.appendChild(priority);
+      div.appendChild(successMetric);
       recommendationsEl.appendChild(div);
+    });
+  }
+  
+  // Limitations
+  const limitationsEl = document.getElementById('aiLimitations');
+  limitationsEl.innerHTML = '';
+  if (response.limitations && Array.isArray(response.limitations)) {
+    response.limitations.forEach(limitation => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '8px';
+      div.style.padding = '8px 12px';
+      div.style.background = 'rgba(107, 114, 128, 0.2)';
+      div.style.borderRadius = '6px';
+      div.style.fontSize = '12px';
+      div.style.color = '#9ca3af';
+      div.textContent = '• ' + limitation;
+      limitationsEl.appendChild(div);
     });
   }
   
   // Clear priority actions section (using same element as recommendations for now)
   const priorityEl = document.getElementById('aiPriority');
   priorityEl.innerHTML = '';
-  
-  // Clear limitations
-  const limitationsEl = document.getElementById('aiLimitations');
-  limitationsEl.innerHTML = '';
 }
 
 </script>
