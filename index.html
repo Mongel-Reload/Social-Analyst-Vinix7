@@ -3729,10 +3729,19 @@ async function generateAIRecommendation() {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Error response:', errorData);
-      console.error('Error type:', errorData.type);
+      console.error('Error code:', errorData.code);
+      console.error('Error message:', errorData.message);
       console.error('Error details:', errorData.details);
       console.error('Error model:', errorData.model);
-      throw new Error(errorData.error || errorData.details || `HTTP ${response.status}`);
+      console.error('Error baseUrl:', errorData.baseUrl);
+      
+      // Create detailed error object
+      const error = new Error(errorData.message || errorData.details || `HTTP ${response.status}`);
+      error.code = errorData.code;
+      error.details = errorData.details;
+      error.model = errorData.model;
+      error.baseUrl = errorData.baseUrl;
+      throw error;
     }
     
     const aiResponse = await response.json();
@@ -3763,20 +3772,71 @@ async function generateAIRecommendation() {
     // Show user-friendly error message
     let errorMessage = 'Gagal menghasilkan rekomendasi. ';
     
-    if (error.message.includes('API Key not configured')) {
-      errorMessage += 'OpenAI API Key belum dikonfigurasi oleh administrator.';
-    } else if (error.message.includes('quota')) {
-      errorMessage += 'Kuota OpenAI API telah mencapai batas.';
-    } else if (error.message.includes('timeout')) {
-      errorMessage += 'Request timeout. Silakan coba lagi.';
-    } else if (error.message.includes('Validation failed')) {
-      errorMessage += 'Data analisis tidak valid.';
-    } else if (error.message.includes('Cannot connect')) {
-      errorMessage += 'Tidak dapat terhubung ke OpenAI API. Periksa koneksi internet.';
-    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      errorMessage += 'Gagal menghubungi server. Periksa koneksi internet.';
+    if (error.code) {
+      console.log('Error code from backend:', error.code);
+      
+      switch (error.code) {
+        case 'API_KEY_MISSING':
+          errorMessage += 'API Key belum dikonfigurasi oleh administrator.';
+          break;
+        case 'MODEL_MISSING':
+          errorMessage += 'Model belum dikonfigurasi.';
+          break;
+        case 'AUTH_FAILED':
+          errorMessage += 'API Key tidak valid atau tidak memiliki akses.';
+          break;
+        case 'QUOTA_EXCEEDED':
+          errorMessage += 'Kuota API telah mencapai batas.';
+          break;
+        case 'TIMEOUT':
+          errorMessage += 'Request ke API timeout. Silakan coba lagi.';
+          break;
+        case 'MODEL_NOT_FOUND':
+          errorMessage += `Model ${error.model || 'yang dikonfigurasi'} tidak tersedia.`;
+          break;
+        case 'UNSUPPORTED_PARAMETER':
+          errorMessage += 'Parameter tidak didukung oleh model.';
+          break;
+        case 'NETWORK_ERROR':
+          errorMessage += 'Gagal melakukan request ke API. Periksa koneksi internet.';
+          break;
+        case 'EMPTY_RESPONSE':
+          errorMessage += 'API mengembalikan response kosong.';
+          break;
+        case 'INVALID_JSON':
+          errorMessage += 'API mengembalikan format yang tidak valid.';
+          break;
+        case 'INVALID_PAYLOAD':
+          errorMessage += 'Data analisis tidak valid.';
+          break;
+        case 'ALL_MODELS_FAILED':
+          errorMessage += `Semua model gagal. Model yang dicoba: ${error.details || error.attemptedModels?.join(', ') || 'unknown'}. Error terakhir: ${error.details || 'Unknown'}`;
+          break;
+        default:
+          errorMessage += error.message || error.details || `Error: ${error.code || 'Unknown'}. Silakan coba lagi nanti.`;
+      }
     } else {
-      errorMessage += `Error: ${error.message}. Silakan coba lagi nanti.`;
+      // Fallback for old error format
+      if (error.message.includes('API Key not configured')) {
+        errorMessage += 'API Key belum dikonfigurasi oleh administrator.';
+      } else if (error.message.includes('quota')) {
+        errorMessage += 'Kuota API telah mencapai batas.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage += 'Request timeout. Silakan coba lagi.';
+      } else if (error.message.includes('Validation failed')) {
+        errorMessage += 'Data analisis tidak valid.';
+      } else if (error.message.includes('Cannot connect')) {
+        errorMessage += 'Tidak dapat terhubung ke API. Periksa koneksi internet.';
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage += 'Gagal menghubungi server. Periksa koneksi internet.';
+      } else {
+        errorMessage += `Error: ${error.message}. Silakan coba lagi nanti.`;
+      }
+    }
+    
+    // Add technical details for debugging
+    if (error.details && error.code) {
+      errorMessage += ` (Code: ${error.code})`;
     }
     
     document.getElementById('aiErrorMessage').textContent = errorMessage;
