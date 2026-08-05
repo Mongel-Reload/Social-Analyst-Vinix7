@@ -1,6 +1,9 @@
 // System instruction for Gemini
 const SYSTEM_INSTRUCTION = `Anda adalah analis media sosial yang memberikan rekomendasi berdasarkan hasil klasifikasi sentimen. Gunakan hanya data JSON yang diberikan. Jangan membuat angka, fakta, topik, atau komentar yang tidak tersedia. Setiap rekomendasi harus menyebutkan dasar datanya. Jangan memberikan prediksi persentase peningkatan tanpa model forecasting. Jangan mengklaim hubungan sebab-akibat tanpa bukti. Gunakan bahasa Indonesia formal dan mudah dipahami. Hasilkan rekomendasi untuk tim digital marketing.`;
 
+// Get model name from environment variable with fallback
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
 // Helper function to make HTTPS request using fetch (more reliable in Netlify Functions)
 async function makeRequest(url, options, data) {
   try {
@@ -140,8 +143,46 @@ function validateRequest(data) {
   return { valid: errors.length === 0, errors };
 }
 
+// Safe JSON parser that handles various formats
+function safeParseJSON(text) {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Invalid input: text is empty or not a string');
+  }
+  
+  text = text.trim();
+  
+  // Try direct JSON parse first
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    // If that fails, try to extract JSON from markdown code blocks
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[1].trim());
+      } catch (e2) {
+        throw new Error('Failed to parse JSON from markdown code block');
+      }
+    }
+    
+    // Try to find JSON between curly braces
+    const braceMatch = text.match(/\{[\s\S]*\}/);
+    if (braceMatch) {
+      try {
+        return JSON.parse(braceMatch[0]);
+      } catch (e3) {
+        throw new Error('Failed to parse JSON from curly braces');
+      }
+    }
+    
+    throw new Error('No valid JSON found in response');
+  }
+}
+
 // Validate Gemini response
 function validateGeminiResponse(response) {
+  console.log('Validating Gemini response...');
+  
   if (!response || typeof response !== 'object') {
     throw new Error('Invalid response format');
   }
@@ -160,22 +201,49 @@ function validateGeminiResponse(response) {
     throw new Error('No text in response');
   }
   
-  // Try to parse as JSON
+  console.log('Response text length:', text.length);
+  
+  // Try to parse as JSON using safe parser
+  let parsed;
   try {
-    const parsed = JSON.parse(text);
-    
-    // Validate required fields
-    const requiredFields = ['summary', 'main_findings', 'negative_issues', 'positive_drivers', 'recommendations', 'limitations'];
-    for (const field of requiredFields) {
-      if (!parsed[field]) {
-        throw new Error(`Missing required field: ${field}`);
-      }
-    }
-    
-    return parsed;
+    parsed = safeParseJSON(text);
   } catch (e) {
-    throw new Error('Response is not valid JSON');
+    console.error('JSON parsing error:', e.message);
+    throw new Error(`Response is not valid JSON: ${e.message}`);
   }
+  
+  console.log('JSON parsed successfully');
+  
+  // Validate required fields with fallback for missing fields
+  const requiredFields = ['summary', 'main_findings', 'negative_issues', 'positive_drivers', 'recommendations', 'limitations'];
+  const missingFields = [];
+  
+  for (const field of requiredFields) {
+    if (!parsed[field]) {
+      missingFields.push(field);
+    }
+  }
+  
+  if (missingFields.length > 0) {
+    console.warn('Missing fields in response:', missingFields);
+    // Add empty arrays/strings for missing fields
+    if (!parsed.summary) parsed.summary = 'Ringkasan tidak tersedia';
+    if (!parsed.main_findings) parsed.main_findings = [];
+    if (!parsed.negative_issues) parsed.negative_issues = [];
+    if (!parsed.positive_drivers) parsed.positive_drivers = [];
+    if (!parsed.recommendations) parsed.recommendations = [];
+    if (!parsed.limitations) parsed.limitations = [];
+  }
+  
+  // Ensure arrays are actually arrays
+  if (!Array.isArray(parsed.main_findings)) parsed.main_findings = [];
+  if (!Array.isArray(parsed.negative_issues)) parsed.negative_issues = [];
+  if (!Array.isArray(parsed.positive_drivers)) parsed.positive_drivers = [];
+  if (!Array.isArray(parsed.recommendations)) parsed.recommendations = [];
+  if (!Array.isArray(parsed.limitations)) parsed.limitations = [];
+  
+  console.log('Response validation completed');
+  return parsed;
 }
 
 // Netlify Function handler
@@ -308,9 +376,10 @@ Pastikan:
 - Gunakan bahasa Indonesia formal`;
 
     console.log('Calling Gemini API...');
+    console.log('Using model:', GEMINI_MODEL);
     
-    // Call Gemini API
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+    // Call Gemini API with dynamic model
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
     
     const geminiResponse = await makeRequest(geminiUrl, {
       method: 'POST',
@@ -328,8 +397,9 @@ Pastikan:
         }
       ],
       generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000
+        temperature: 0.4,
+        maxOutputTokens: 3000,
+        responseMimeType: 'application/json'
       }
     });
     
@@ -351,35 +421,57 @@ Pastikan:
     
   } catch (error) {
     console.error('=== Gemini Recommendation Error ===');
+    console.error('Function: gemini-recommendation');
+    console.error('Stage: API call or response processing');
     console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
     console.error('Error name:', error.name);
     console.error('Error code:', error.code);
+    console.error('Model used:', GEMINI_MODEL);
     
     // Return error response (never expose API key)
     let errorMessage = 'Failed to generate recommendation';
     let errorDetails = error.message;
+    let errorType = 'unknown';
     
-    if (error.message.includes('API key')) {
+    if (error.message.includes('API key') || error.message.includes('API_KEY')) {
       errorMessage = 'Gemini API Key not configured';
-      errorDetails = 'API Key tidak ditemukan di environment variables';
+      errorDetails = 'API Key tidak ditemukan di environment variables Netlify';
+      errorType = 'api_key_missing';
     } else if (error.message.includes('quota')) {
       errorMessage = 'Gemini API quota exceeded';
-      errorDetails = 'Kuota Gemini API telah mencapai batas';
+      errorDetails = 'Kuota Gemini API telah mencapai batas harian';
+      errorType = 'quota_exceeded';
     } else if (error.message.includes('timeout') || error.name === 'AbortError') {
       errorMessage = 'Request timeout';
       errorDetails = 'Request ke Gemini API timeout (30 detik)';
-    } else if (error.message.includes('JSON')) {
+      errorType = 'timeout';
+    } else if (error.message.includes('JSON') || error.message.includes('parse')) {
       errorMessage = 'Invalid response from Gemini';
       errorDetails = 'Response dari Gemini bukan format JSON yang valid';
+      errorType = 'invalid_json';
     } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
       errorMessage = 'Cannot connect to Gemini API';
       errorDetails = 'Tidak dapat terhubung ke Gemini API';
+      errorType = 'connection_error';
     } else if (error.message.includes('fetch')) {
       errorMessage = 'Network error';
       errorDetails = 'Gagal melakukan request ke Gemini API';
+      errorType = 'network_error';
+    } else if (error.message.includes('model') || error.message.includes('404')) {
+      errorMessage = 'Model not found';
+      errorDetails = `Model ${GEMINI_MODEL} tidak tersedia atau tidak valid`;
+      errorType = 'model_not_found';
+    } else if (error.message.includes('403') || error.message.includes('401')) {
+      errorMessage = 'Authentication failed';
+      errorDetails = 'API Key tidak valid atau tidak memiliki akses';
+      errorType = 'auth_failed';
+    } else if (error.message.includes('429')) {
+      errorMessage = 'Rate limit exceeded';
+      errorDetails = 'Terlalu banyak request dalam waktu singkat';
+      errorType = 'rate_limit';
     }
     
+    console.log('Error type:', errorType);
     console.log('Returning error to frontend:', errorMessage);
     console.log('Error details:', errorDetails);
     
@@ -388,7 +480,8 @@ Pastikan:
       body: JSON.stringify({ 
         error: errorMessage,
         details: errorDetails,
-        message: error.message
+        type: errorType,
+        model: GEMINI_MODEL
       })
     };
   }
