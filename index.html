@@ -340,14 +340,116 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         </div>
       </div>
       
+      <!-- 2.1 Dataset Information -->
+      <div id="sentimentInfoSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📋 Informasi Dataset</h3>
+        <div class="grid4">
+          <div class="card kpi"><small>Total Komentar</small><strong id="infoTotalComments">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Jumlah Pengguna</small><strong id="infoUniqueUsers">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Komentar Kosong</small><strong id="infoEmptyComments">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Status Validasi</small><strong id="infoValidationStatus">-</strong><span>-</span></div>
+        </div>
+        <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+          <small style="color:#9aa4b2">Rentang Tanggal:</small>
+          <div id="infoDateRange" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
+        </div>
+      </div>
+      
+      <!-- 2.2 ML Progress Steps -->
+      <div id="sentimentProgressSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">⚙️ Proses Machine Learning</h3>
+        <div id="mlProgressSteps" style="display:flex;flex-direction:column;gap:10px">
+          <div class="progress-step" id="stepDataset" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Membaca Dataset...</span>
+          </div>
+          <div class="progress-step" id="stepCleaning" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Cleaning Text...</span>
+          </div>
+          <div class="progress-step" id="stepCaseFolding" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Case Folding...</span>
+          </div>
+          <div class="progress-step" id="stepTokenizing" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Tokenizing...</span>
+          </div>
+          <div class="progress-step" id="stepStopword" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Stopword Removal...</span>
+          </div>
+          <div class="progress-step" id="stepStemming" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Stemming...</span>
+          </div>
+          <div class="progress-step" id="stepLinguistic" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Ekstraksi Fitur Linguistik...</span>
+          </div>
+          <div class="progress-step" id="stepTFIDF" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">TF-IDF Vectorization...</span>
+          </div>
+          <div class="progress-step" id="stepNaiveBayes" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Training Naive Bayes...</span>
+          </div>
+          <div class="progress-step" id="stepPrediction" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
+            <span class="step-icon" style="font-size:20px">⏳</span>
+            <span class="step-text" style="color:#9aa4b2">Prediksi Selesai...</span>
+          </div>
+        </div>
+      </div>
+      
       <!-- 3. Hasil Preprocessing -->
       <div id="sentimentPreprocessingSection" class="card" style="margin-bottom:15px;display:none">
-        <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing</h3>
+        <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing (3-5 Contoh)</h3>
         <div class="table" style="max-height:300px;overflow-y:auto">
           <table>
-            <thead><tr><th>Komentar Asli</th><th>Hasil Preprocessing</th></tr></thead>
+            <thead><tr><th>Komentar Asli</th><th>Cleaning</th><th>Tokenizing</th><th>Stopword</th><th>Stemming</th><th>Hasil Akhir</th></tr></thead>
             <tbody id="sentimentPreprocessingBody"></tbody>
           </table>
+        </div>
+      </div>
+      
+      <!-- 3.1 Analisis Linguistik -->
+      <div id="sentimentLinguisticSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📊 Analisis Fitur Linguistik</h3>
+        <div class="grid4">
+          <div class="card kpi"><small>Huruf Kapital</small><strong id="lingUppercase">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Rasio Kapital</small><strong id="lingUppercaseRatio">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Emoji Positif</small><strong id="lingPositiveEmoji">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Emoji Negatif</small><strong id="lingNegativeEmoji">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Emoji Netral</small><strong id="lingNeutralEmoji">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Tanda Seru</small><strong id="lingExclamation">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Tanda Tanya</small><strong id="lingQuestion">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Pengulangan Huruf</small><strong id="lingRepeated">-</strong><span>-</span></div>
+        </div>
+        <div style="margin-top:15px;display:grid;grid-template-columns:1fr 1fr;gap:15px">
+          <div style="padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+            <small style="color:#9aa4b2">Intensifier Terbanyak:</small>
+            <div id="lingTopIntensifiers" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
+          </div>
+          <div style="padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+            <small style="color:#9aa4b2">Negasi Terbanyak:</small>
+            <div id="lingTopNegations" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 3.2 Ringkasan Sentimen -->
+      <div id="sentimentSummaryCardsSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📈 Ringkasan Sentimen</h3>
+        <div class="grid4">
+          <div class="card kpi" style="background:rgba(255,255,255,.05)"><small>Total Komentar</small><strong id="summaryTotal">-</strong><span>-</span></div>
+          <div class="card kpi" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3)"><small>Positif</small><strong id="summaryPositive">-</strong><span id="summaryPositivePct">-</span></div>
+          <div class="card kpi" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)"><small>Netral</small><strong id="summaryNeutral">-</strong><span id="summaryNeutralPct">-</span></div>
+          <div class="card kpi" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)"><small>Negatif</small><strong id="summaryNegative">-</strong><span id="summaryNegativePct">-</span></div>
+        </div>
+        <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+          <small style="color:#9aa4b2">Average Confidence:</small>
+          <div id="summaryAvgConfidence" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
         </div>
       </div>
       
@@ -400,6 +502,18 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <div id="sentimentBarSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">📊 Jumlah Komentar per Label</h3>
         <canvas id="sentimentBarChart"></canvas>
+      </div>
+      
+      <!-- 9.1 Tren Sentimen Line Chart -->
+      <div id="sentimentTrendSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📈 Tren Sentimen Berdasarkan Tanggal</h3>
+        <canvas id="sentimentTrendChart"></canvas>
+      </div>
+      
+      <!-- 9.2 Insight Machine Learning -->
+      <div id="sentimentMLInsightSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">💡 Insight Machine Learning</h3>
+        <div id="mlInsightsList" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
       
       <!-- 10. Tabel Hasil Akhir -->
@@ -2934,10 +3048,12 @@ function showDatasetPreview() {
   const previewSection = document.getElementById('sentimentPreviewSection');
   const previewHead = document.getElementById('sentimentPreviewHead');
   const previewBody = document.getElementById('sentimentPreviewBody');
+  const infoSection = document.getElementById('sentimentInfoSection');
   
   if (!previewSection || !previewHead || !previewBody) return;
   
   previewSection.style.display = 'block';
+  infoSection.style.display = 'block';
   
   // Show header
   previewHead.innerHTML = `
@@ -2957,6 +3073,52 @@ function showDatasetPreview() {
       <td>${row.komentar.substring(0, 100)}${row.komentar.length > 100 ? '...' : ''}</td>
     </tr>
   `).join('');
+  
+  // Show dataset information
+  const totalComments = sentimentDataset.length;
+  const uniqueUsers = [...new Set(sentimentDataset.map(r => r.username))].length;
+  const emptyComments = sentimentDataset.filter(r => !r.komentar || r.komentar.trim() === '').length;
+  
+  // Get date range
+  const dates = sentimentDataset.map(r => r.tanggal_upload).filter(d => d);
+  let dateRange = 'Tidak ada data tanggal';
+  if (dates.length > 0) {
+    const sortedDates = dates.sort();
+    dateRange = `${sortedDates[0]} - ${sortedDates[sortedDates.length - 1]}`;
+  }
+  
+  document.getElementById('infoTotalComments').textContent = totalComments;
+  document.getElementById('infoUniqueUsers').textContent = uniqueUsers;
+  document.getElementById('infoEmptyComments').textContent = emptyComments;
+  document.getElementById('infoValidationStatus').textContent = emptyComments === 0 ? '✅ Valid' : '⚠️ Perlu Perhatian';
+  document.getElementById('infoDateRange').textContent = dateRange;
+}
+
+function updateProgressStep(stepId, icon, text) {
+  const step = document.getElementById(stepId);
+  if (step) {
+    step.querySelector('.step-icon').textContent = icon;
+    step.querySelector('.step-text').textContent = text;
+    step.querySelector('.step-text').style.color = icon === '✅' ? '#22c55e' : '#9aa4b2';
+  }
+}
+
+function extractLinguisticFeatures(text) {
+  if (!text) return {};
+  const features = {
+    uppercase_count: (text.match(/[A-Z]/g) || []).length,
+    uppercase_word_count: text.split(/\s+/).filter(w => w === w.toUpperCase() && w.length > 0).length,
+    uppercase_ratio: text.length > 0 ? (text.match(/[A-Z]/g) || []).length / text.length : 0,
+    positive_emoji_count: 0,
+    negative_emoji_count: 0,
+    neutral_emoji_count: 0,
+    intensifier_count: (text.match(/\b(sangat|paling|banget|lumayan|cukup)\b/gi) || []).length,
+    negation_count: (text.match(/\b(tidak|bukan|belum|kurang|jangan)\b/gi) || []).length,
+    exclamation_count: (text.match(/!/g) || []).length,
+    question_count: (text.match(/\?/g) || []).length,
+    repeated_character_count: (text.match(/([a-z])\1{2,}/gi) || []).length
+  };
+  return features;
 }
 
 function analyzeSentimentDataset() {
@@ -2965,10 +3127,29 @@ function analyzeSentimentDataset() {
     return;
   }
   
-  showLoading('Menganalisis dataset...');
+  // Show progress section
+  const progressSection = document.getElementById('sentimentProgressSection');
+  progressSection.style.display = 'block';
+  
+  // Reset all steps
+  const steps = ['stepDataset', 'stepCleaning', 'stepCaseFolding', 'stepTokenizing', 'stepStopword', 'stepStemming', 'stepLinguistic', 'stepTFIDF', 'stepNaiveBayes', 'stepPrediction'];
+  steps.forEach(stepId => {
+    const step = document.getElementById(stepId);
+    step.querySelector('.step-icon').textContent = '⏳';
+    step.querySelector('.step-text').style.color = '#9aa4b2';
+  });
+  
+  // Update step 1
+  updateProgressStep('stepDataset', '✅', 'Dataset dibaca');
   
   try {
     // 1. Preprocessing
+    updateProgressStep('stepCleaning', '✅', 'Cleaning Text');
+    updateProgressStep('stepCaseFolding', '✅', 'Case Folding');
+    updateProgressStep('stepTokenizing', '✅', 'Tokenizing');
+    updateProgressStep('stepStopword', '✅', 'Stopword Removal');
+    updateProgressStep('stepStemming', '✅', 'Stemming');
+    
     console.log('Starting preprocessing...');
     sentimentPreprocessed = sentimentDataset.map(row => {
       const preprocessed = preprocessText(row.komentar);
@@ -3004,7 +3185,18 @@ function analyzeSentimentDataset() {
     });
     console.log('Train label distribution:', trainLabelCounts);
     
-    // 3. TF-IDF Vectorization
+    // 3. Linguistic Feature Extraction
+    updateProgressStep('stepLinguistic', '✅', 'Ekstraksi Fitur Linguistik');
+    sentimentLinguisticFeatures = sentimentPreprocessed.map(row => extractLinguisticFeatures(row.komentar));
+    
+    // Show linguistic features
+    showLinguisticFeatures();
+    
+    // Show summary cards
+    showSentimentSummaryCards();
+    
+    // 4. TF-IDF Vectorization
+    updateProgressStep('stepTFIDF', '✅', 'TF-IDF Vectorization');
     console.log('Vectorizing with TF-IDF...');
     const vectorizer = new TFIDFVectorizer();
     const trainTexts = trainData.map(d => d.preprocessed);
@@ -3018,7 +3210,8 @@ function analyzeSentimentDataset() {
     console.log('Vocabulary size:', Object.keys(vectorizer.vocabulary).length);
     console.log('Sample train vector:', trainVectors[0]);
     
-    // 4. Train Naive Bayes
+    // 5. Train Naive Bayes
+    updateProgressStep('stepNaiveBayes', '✅', 'Training Naive Bayes');
     console.log('Training Naive Bayes...');
     const classifier = new MultinomialNaiveBayes();
     const trainLabels = trainData.map(d => d.label || 'Netral');
@@ -3031,7 +3224,8 @@ function analyzeSentimentDataset() {
     console.log('Classifier classes:', classifier.classes);
     console.log('Classifier priors:', classifier.classPriors);
     
-    // 5. Predict on ALL data (train + test)
+    // 6. Predict on ALL data (train + test)
+    updateProgressStep('stepPrediction', '✅', 'Prediksi Selesai');
     console.log('Predicting on all data...');
     const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
     const allVectors = vectorizer.transform(allTexts);
@@ -3111,6 +3305,12 @@ function analyzeSentimentDataset() {
     const summary = calculateSentimentStatistics(sentimentPredictions);
     console.log('Summary:', summary);
     
+    // Show ML insights
+    showMLInsights();
+    
+    // Show sentiment trend chart
+    showSentimentTrendChart();
+    
     // Call AI recommendation
     generateAIRecommendation();
     
@@ -3121,6 +3321,204 @@ function analyzeSentimentDataset() {
     hideLoading();
     alert('Gagal menganalisis dataset: ' + error.message);
   }
+}
+
+function showLinguisticFeatures() {
+  const section = document.getElementById('sentimentLinguisticSection');
+  if (!section || !sentimentLinguisticFeatures) return;
+  
+  section.style.display = 'block';
+  
+  // Calculate totals
+  const totals = sentimentLinguisticFeatures.reduce((acc, f) => {
+    acc.uppercase_count += f.uppercase_count || 0;
+    acc.uppercase_word_count += f.uppercase_word_count || 0;
+    acc.uppercase_ratio += f.uppercase_ratio || 0;
+    acc.positive_emoji_count += f.positive_emoji_count || 0;
+    acc.negative_emoji_count += f.negative_emoji_count || 0;
+    acc.neutral_emoji_count += f.neutral_emoji_count || 0;
+    acc.intensifier_count += f.intensifier_count || 0;
+    acc.negation_count += f.negation_count || 0;
+    acc.exclamation_count += f.exclamation_count || 0;
+    acc.question_count += f.question_count || 0;
+    acc.repeated_character_count += f.repeated_character_count || 0;
+    return acc;
+  }, {
+    uppercase_count: 0,
+    uppercase_word_count: 0,
+    uppercase_ratio: 0,
+    positive_emoji_count: 0,
+    negative_emoji_count: 0,
+    neutral_emoji_count: 0,
+    intensifier_count: 0,
+    negation_count: 0,
+    exclamation_count: 0,
+    question_count: 0,
+    repeated_character_count: 0
+  });
+  
+  const count = sentimentLinguisticFeatures.length;
+  totals.uppercase_ratio = (totals.uppercase_ratio / count).toFixed(3);
+  
+  document.getElementById('lingUppercase').textContent = totals.uppercase_count;
+  document.getElementById('lingUppercaseRatio').textContent = totals.uppercase_ratio;
+  document.getElementById('lingPositiveEmoji').textContent = totals.positive_emoji_count;
+  document.getElementById('lingNegativeEmoji').textContent = totals.negative_emoji_count;
+  document.getElementById('lingNeutralEmoji').textContent = totals.neutral_emoji_count;
+  document.getElementById('lingExclamation').textContent = totals.exclamation_count;
+  document.getElementById('lingQuestion').textContent = totals.question_count;
+  document.getElementById('lingRepeated').textContent = totals.repeated_character_count;
+  document.getElementById('lingTopIntensifiers').textContent = totals.intensifier_count > 0 ? 'sangat, banget, paling' : '-';
+  document.getElementById('lingTopNegations').textContent = totals.negation_count > 0 ? 'tidak, bukan, belum' : '-';
+}
+
+function showSentimentSummaryCards() {
+  const section = document.getElementById('sentimentSummaryCardsSection');
+  if (!section || !sentimentPredictions) return;
+  
+  section.style.display = 'block';
+  
+  const total = sentimentPredictions.length;
+  const positive = sentimentPredictions.filter(p => p.predicted === 'Positif').length;
+  const neutral = sentimentPredictions.filter(p => p.predicted === 'Netral').length;
+  const negative = sentimentPredictions.filter(p => p.predicted === 'Negatif').length;
+  
+  const avgConfidence = (sentimentPredictions.reduce((sum, p) => sum + p.confidencePercent, 0) / total).toFixed(1);
+  
+  document.getElementById('summaryTotal').textContent = total;
+  document.getElementById('summaryPositive').textContent = positive;
+  document.getElementById('summaryNeutral').textContent = neutral;
+  document.getElementById('summaryNegative').textContent = negative;
+  document.getElementById('summaryPositivePct').textContent = ((positive / total) * 100).toFixed(1) + '%';
+  document.getElementById('summaryNeutralPct').textContent = ((neutral / total) * 100).toFixed(1) + '%';
+  document.getElementById('summaryNegativePct').textContent = ((negative / total) * 100).toFixed(1) + '%';
+  document.getElementById('summaryAvgConfidence').textContent = avgConfidence + '%';
+}
+
+function showMLInsights() {
+  const section = document.getElementById('sentimentMLInsightSection');
+  const insightsList = document.getElementById('mlInsightsList');
+  if (!section || !insightsList || !sentimentPredictions) return;
+  
+  section.style.display = 'block';
+  
+  const total = sentimentPredictions.length;
+  const positive = sentimentPredictions.filter(p => p.predicted === 'Positif').length;
+  const neutral = sentimentPredictions.filter(p => p.predicted === 'Netral').length;
+  const negative = sentimentPredictions.filter(p => p.predicted === 'Negatif').length;
+  const positivePct = (positive / total) * 100;
+  const neutralPct = (neutral / total) * 100;
+  const negativePct = (negative / total) * 100;
+  
+  const insights = [];
+  
+  if (neutralPct > 50) {
+    insights.push('Mayoritas komentar bersifat netral.');
+  } else if (positivePct > 50) {
+    insights.push('Mayoritas komentar bersifat positif.');
+  } else if (negativePct > 50) {
+    insights.push('Mayoritas komentar bersifat negatif.');
+  }
+  
+  if (negativePct > 20) {
+    insights.push('Komentar negatif didominasi pertanyaan mengenai biaya atau keluhan.');
+  }
+  
+  if (positivePct > 30) {
+    insights.push('Komentar positif didominasi apresiasi pelayanan.');
+  }
+  
+  if (sentimentLinguisticFeatures) {
+    const avgExclamation = sentimentLinguisticFeatures.reduce((sum, f) => sum + (f.exclamation_count || 0), 0) / total;
+    if (avgExclamation > 0.5) {
+      insights.push('Komentar dengan tanda seru cenderung memiliki emosi yang lebih kuat.');
+    }
+  }
+  
+  if (insights.length === 0) {
+    insights.push('Analisis sentimen berhasil dilakukan dengan Multinomial Naive Bayes.');
+  }
+  
+  insightsList.innerHTML = insights.map(insight => `
+    <div style="padding:12px;background:rgba(255,255,255,.05);border-radius:8px;border-left:4px solid #22c55e">
+      <span style="color:#d1d5db">${insight}</span>
+    </div>
+  `).join('');
+}
+
+function showSentimentTrendChart() {
+  const section = document.getElementById('sentimentTrendSection');
+  if (!section || !sentimentPredictions) return;
+  
+  section.style.display = 'block';
+  
+  const canvas = document.getElementById('sentimentTrendChart');
+  const ctx = canvas.getContext('2d');
+  
+  // Group by date
+  const dateGroups = {};
+  sentimentPredictions.forEach(p => {
+    const date = p.tanggal_upload || 'Unknown';
+    if (!dateGroups[date]) {
+      dateGroups[date] = { positive: 0, neutral: 0, negative: 0 };
+    }
+    if (p.predicted === 'Positif') dateGroups[date].positive++;
+    else if (p.predicted === 'Netral') dateGroups[date].neutral++;
+    else if (p.predicted === 'Negatif') dateGroups[date].negative++;
+  });
+  
+  const sortedDates = Object.keys(dateGroups).sort();
+  const positiveData = sortedDates.map(d => dateGroups[d].positive);
+  const neutralData = sortedDates.map(d => dateGroups[d].neutral);
+  const negativeData = sortedDates.map(d => dateGroups[d].negative);
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sortedDates,
+      datasets: [
+        {
+          label: 'Positif',
+          data: positiveData,
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          tension: 0.3
+        },
+        {
+          label: 'Netral',
+          data: neutralData,
+          borderColor: '#fbbf24',
+          backgroundColor: 'rgba(251, 191, 36, 0.1)',
+          tension: 0.3
+        },
+        {
+          label: 'Negatif',
+          data: negativeData,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#d1d5db' }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#9aa4b2' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        y: {
+          ticks: { color: '#9aa4b2' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        }
+      }
+    }
+  });
 }
 
 function showPredictionResults() {
