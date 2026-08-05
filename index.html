@@ -311,21 +311,37 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <!-- 1. Upload Dataset -->
       <div class="card" style="margin-bottom:15px">
         <h3 style="margin-bottom:15px">📁 Upload Dataset</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">
-          <div>
+        
+        <!-- Upload Options -->
+        <div id="sentimentUploadOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">
+          <div id="csvUploadContainer">
             <label style="display:block;margin-bottom:8px;color:#9aa4b2;font-size:13px">Upload CSV</label>
             <input type="file" id="sentimentCsvUpload" accept=".csv" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#d1d5db;padding:10px;border-radius:8px">
           </div>
-          <div>
+          <div id="excelUploadContainer">
             <label style="display:block;margin-bottom:8px;color:#9aa4b2;font-size:13px">Upload Excel (.xlsx)</label>
             <input type="file" id="sentimentExcelUpload" accept=".xlsx" style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#d1d5db;padding:10px;border-radius:8px">
           </div>
         </div>
+        
+        <!-- Drag & Drop Zone -->
         <div id="sentimentDropzone" style="background:rgba(34,211,238,.05);border:2px dashed rgba(34,211,238,.3);border-radius:12px;padding:30px;text-align:center;margin-bottom:15px;cursor:pointer">
           <div style="font-size:48px;margin-bottom:12px">📂</div>
           <div style="color:#d1d5db;margin-bottom:8px">Drag & Drop file CSV/Excel di sini</div>
           <div style="color:#9aa4b2;font-size:13px">Kolom: tanggal upload, username, komentar (format fleksibel)</div>
         </div>
+        
+        <!-- File Info Display (shown when file is selected) -->
+        <div id="sentimentFileInfo" style="display:none;padding:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;margin-bottom:15px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <small style="color:#86efac;font-weight:700">File Terpilih:</small>
+              <div id="sentimentFileName" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
+            </div>
+            <button id="sentimentClearFile" style="padding:6px 12px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#fca5a5;font-weight:900;cursor:pointer">Ganti File</button>
+          </div>
+        </div>
+        
         <button class="btn primary" id="analyzeSentimentDataset" style="width:100%">Analisis Dataset</button>
       </div>
       
@@ -2876,13 +2892,26 @@ function setupSentimentUploadHandlers() {
   const excelUpload = document.getElementById('sentimentExcelUpload');
   const dropzone = document.getElementById('sentimentDropzone');
   const analyzeBtn = document.getElementById('analyzeSentimentDataset');
+  const clearFileBtn = document.getElementById('sentimentClearFile');
   
   if (csvUpload) {
-    csvUpload.addEventListener('change', handleCSVUpload);
+    csvUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleCSVFile(file);
+        showFileInfo(file.name);
+      }
+    });
   }
   
   if (excelUpload) {
-    excelUpload.addEventListener('change', handleExcelUpload);
+    excelUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleExcelFile(file);
+        showFileInfo(file.name);
+      }
+    });
   }
   
   if (dropzone) {
@@ -2908,8 +2937,10 @@ function setupSentimentUploadHandlers() {
         const file = files[0];
         if (file.name.endsWith('.csv')) {
           handleCSVFile(file);
+          showFileInfo(file.name);
         } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
           handleExcelFile(file);
+          showFileInfo(file.name);
         } else {
           alert('Format file tidak didukung. Gunakan CSV atau Excel (.xlsx)');
         }
@@ -2917,9 +2948,76 @@ function setupSentimentUploadHandlers() {
     });
   }
   
+  if (clearFileBtn) {
+    clearFileBtn.addEventListener('click', clearSentimentFile);
+  }
+  
   if (analyzeBtn) {
     analyzeBtn.addEventListener('click', analyzeSentimentDataset);
   }
+}
+
+function showFileInfo(fileName) {
+  const uploadOptions = document.getElementById('sentimentUploadOptions');
+  const dropzone = document.getElementById('sentimentDropzone');
+  const fileInfo = document.getElementById('sentimentFileInfo');
+  const fileNameDisplay = document.getElementById('sentimentFileName');
+  
+  // Hide upload options and dropzone
+  if (uploadOptions) uploadOptions.style.display = 'none';
+  if (dropzone) dropzone.style.display = 'none';
+  
+  // Show file info
+  if (fileInfo) {
+    fileInfo.style.display = 'block';
+    if (fileNameDisplay) fileNameDisplay.textContent = fileName;
+  }
+}
+
+function clearSentimentFile() {
+  const uploadOptions = document.getElementById('sentimentUploadOptions');
+  const dropzone = document.getElementById('sentimentDropzone');
+  const fileInfo = document.getElementById('sentimentFileInfo');
+  const csvUpload = document.getElementById('sentimentCsvUpload');
+  const excelUpload = document.getElementById('sentimentExcelUpload');
+  
+  // Reset file inputs
+  if (csvUpload) csvUpload.value = '';
+  if (excelUpload) excelUpload.value = '';
+  
+  // Show upload options and dropzone
+  if (uploadOptions) uploadOptions.style.display = 'grid';
+  if (dropzone) dropzone.style.display = 'block';
+  
+  // Hide file info
+  if (fileInfo) fileInfo.style.display = 'none';
+  
+  // Clear dataset
+  sentimentDataset = [];
+  sentimentPreprocessed = [];
+  sentimentPredictions = [];
+  sentimentLinguisticFeatures = [];
+  sentimentEvaluation = null;
+  
+  // Hide all result sections
+  document.getElementById('sentimentPreviewSection').style.display = 'none';
+  document.getElementById('sentimentInfoSection').style.display = 'none';
+  document.getElementById('sentimentProgressSection').style.display = 'none';
+  document.getElementById('sentimentPreprocessingSection').style.display = 'none';
+  document.getElementById('sentimentLinguisticSection').style.display = 'none';
+  document.getElementById('sentimentSummaryCardsSection').style.display = 'none';
+  document.getElementById('sentimentMLInfoSection').style.display = 'none';
+  document.getElementById('sentimentPredictionSection').style.display = 'none';
+  document.getElementById('sentimentEvaluationSection').style.display = 'none';
+  document.getElementById('sentimentConfusionSection').style.display = 'none';
+  document.getElementById('sentimentClassificationSection').style.display = 'none';
+  document.getElementById('sentimentPieSection').style.display = 'none';
+  document.getElementById('sentimentBarSection').style.display = 'none';
+  document.getElementById('sentimentTrendSection').style.display = 'none';
+  document.getElementById('sentimentTopWordsSection').style.display = 'none';
+  document.getElementById('sentimentMLInsightSection').style.display = 'none';
+  document.getElementById('sentimentAISection').style.display = 'none';
+  document.getElementById('sentimentExportSection').style.display = 'none';
 }
 
 function handleCSVUpload(e) {
