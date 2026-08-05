@@ -1,49 +1,58 @@
 // System instruction for Sylor AI
-const SYSTEM_INSTRUCTION = `Anda adalah Senior Digital Marketing Strategist, Social Media Analyst, Content Planner, dan Marketing Performance Consultant.
+const SYSTEM_INSTRUCTION = `Anda adalah Senior Digital Marketing Strategist.
 
-Tugas Anda bukan sekadar mengulang data analisis sentimen.
+Tugas: Berikan rekomendasi strategi media sosial yang dapat langsung diterapkan berdasarkan data analisis sentimen.
 
-Anda harus mengubah data media sosial menjadi rekomendasi yang praktis, spesifik, dapat dilaksanakan, terukur, dan relevan dengan konteks akun.
+Jangan hanya mengulang data analisis. Berikan insight dan rekomendasi yang actionable.
 
-Gunakan hanya data yang tersedia pada input.
+Gunakan Bahasa Indonesia.
 
-Bedakan dengan jelas antara:
+Output harus dalam format JSON sesuai schema berikut:
 
-1. Temuan yang didukung data.
-2. Interpretasi berdasarkan data.
-3. Rekomendasi strategis.
-4. Hal yang belum dapat disimpulkan karena data tidak tersedia.
+{
+  "executive_summary": "Ringkasan singkat maksimal 150 kata",
+  "key_insights": [
+    {
+      "insight": "Insight penting berdasarkan data",
+      "data_basis": "Data yang mendukung insight"
+    }
+  ],
+  "content_strategy": [
+    {
+      "title": "Judul strategi",
+      "reason": "Alasan strategi ini diperlukan",
+      "recommendation": "Rekomendasi spesifik",
+      "priority": "High | Medium | Low"
+    }
+  ],
+  "content_ideas": [
+    {
+      "title": "Judul ide konten",
+      "format": "Reels | Carousel | Story | Single Post",
+      "objective": "Tujuan konten",
+      "concept": "Konsep konten",
+      "caption_angle": "Sudut pandang caption",
+      "call_to_action": "Call to action",
+      "reason": "Berdasarkan data analisis"
+    }
+  ],
+  "priority_actions": [
+    {
+      "action": "Tindakan prioritas",
+      "reason": "Alasan tindakan ini prioritas",
+      "priority": "High | Medium | Low"
+    }
+  ]
+}
 
-Jangan mengarang:
-- demografi audiens;
-- jam terbaik;
-- peningkatan persentase;
-- target pertumbuhan;
-- tren historis;
-- performa platform;
-- karakter audiens;
-- data kompetitor;
+Batas:
+- executive_summary: maksimal 150 kata
+- key_insights: maksimal 3 insight
+- content_strategy: maksimal 3 strategi
+- content_ideas: tepat 3 ide
+- priority_actions: maksimal 3 tindakan
 
-apabila data tersebut tidak diberikan.
-
-Setiap strategi dan ide konten harus memiliki \`data_basis\`.
-
-Jika data terbatas, tetap berikan ide yang relevan, tetapi tuliskan bahwa ide tersebut merupakan hipotesis yang perlu diuji.
-
-Rekomendasi harus mencakup:
-- ide konten;
-- strategi engagement;
-- strategi campaign;
-- strategi pertumbuhan;
-- rekomendasi format;
-- prioritas tindakan;
-- indikator keberhasilan.
-
-Gunakan Bahasa Indonesia yang profesional, jelas, dan mudah dipahami.
-
-Jangan menulis Markdown.
-
-Kembalikan output hanya sesuai JSON Schema.`;
+Jangan menulis Markdown. Kembalikan output hanya sesuai JSON Schema.`;
 
 // JSON Schema for structured output
 const RECOMMENDATION_SCHEMA = {
@@ -51,226 +60,76 @@ const RECOMMENDATION_SCHEMA = {
   additionalProperties: false,
   required: [
     "executive_summary",
-    "sentiment_evaluation",
-    "data_insights",
+    "key_insights",
     "content_strategy",
     "content_ideas",
-    "campaign_recommendations",
-    "engagement_strategy",
-    "posting_schedule",
-    "growth_opportunities",
-    "priority_actions",
-    "limitations"
+    "priority_actions"
   ],
   properties: {
     executive_summary: {
       type: "string",
-      description: "Ringkasan eksekutif kondisi akun secara keseluruhan"
+      description: "Ringkasan singkat maksimal 150 kata"
     },
-    sentiment_evaluation: {
-      type: "object",
-      additionalProperties: false,
-      required: ["overall_condition", "positive_findings", "negative_findings", "neutral_findings", "risks"],
-      properties: {
-        overall_condition: { type: "string" },
-        positive_findings: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["finding", "data_basis"],
-            properties: {
-              finding: { type: "string" },
-              data_basis: { type: "string" }
-            }
-          }
-        },
-        negative_findings: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["finding", "data_basis"],
-            properties: {
-              finding: { type: "string" },
-              data_basis: { type: "string" }
-            }
-          }
-        },
-        neutral_findings: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["finding", "data_basis"],
-            properties: {
-              finding: { type: "string" },
-              data_basis: { type: "string" }
-            }
-          }
-        },
-        risks: {
-          type: "array",
-          items: { type: "string" }
-        }
-      }
-    },
-    data_insights: {
+    key_insights: {
       type: "array",
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["finding", "data_basis", "interpretation", "business_implication"],
+        required: ["insight", "data_basis"],
         properties: {
-          finding: { type: "string" },
-          data_basis: { type: "string" },
-          interpretation: { type: "string" },
-          business_implication: { type: "string" }
+          insight: { type: "string" },
+          data_basis: { type: "string" }
         }
       }
     },
     content_strategy: {
       type: "array",
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "objective", "target_audience", "recommendation", "data_basis", "priority", "expected_impact"],
+        required: ["title", "reason", "recommendation", "priority"],
         properties: {
           title: { type: "string" },
-          objective: { type: "string" },
-          target_audience: { type: "string" },
+          reason: { type: "string" },
           recommendation: { type: "string" },
-          data_basis: { type: "string" },
-          priority: { type: "string", enum: ["high", "medium", "low"] },
-          expected_impact: { type: "string" }
+          priority: { type: "string", enum: ["High", "Medium", "Low"] }
         }
       }
     },
     content_ideas: {
       type: "array",
-      minItems: 10,
+      minItems: 3,
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
-        required: [
-          "title",
-          "format",
-          "content_pillar",
-          "objective",
-          "target_audience",
-          "concept",
-          "hook",
-          "content_outline",
-          "caption_angle",
-          "call_to_action",
-          "data_basis",
-          "success_metric"
-        ],
+        required: ["title", "format", "objective", "concept", "caption_angle", "call_to_action", "reason"],
         properties: {
           title: { type: "string" },
-          format: { type: "string", enum: ["Reels", "Carousel", "Single Post", "Story", "Live"] },
-          content_pillar: { type: "string" },
+          format: { type: "string", enum: ["Reels", "Carousel", "Story", "Single Post"] },
           objective: { type: "string" },
-          target_audience: { type: "string" },
           concept: { type: "string" },
-          hook: { type: "string" },
-          content_outline: { type: "array", items: { type: "string" } },
           caption_angle: { type: "string" },
           call_to_action: { type: "string" },
-          data_basis: { type: "string" },
-          success_metric: { type: "string" }
-        }
-      }
-    },
-    campaign_recommendations: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "campaign_name",
-          "objective",
-          "concept",
-          "duration",
-          "target_audience",
-          "execution_steps",
-          "success_metrics",
-          "data_basis"
-        ],
-        properties: {
-          campaign_name: { type: "string" },
-          objective: { type: "string" },
-          concept: { type: "string" },
-          duration: { type: "string" },
-          target_audience: { type: "string" },
-          execution_steps: { type: "array", items: { type: "string" } },
-          success_metrics: { type: "array", items: { type: "string" } },
-          data_basis: { type: "string" }
-        }
-      }
-    },
-    engagement_strategy: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["strategy", "reason", "implementation", "success_metric"],
-        properties: {
-          strategy: { type: "string" },
-          reason: { type: "string" },
-          implementation: { type: "string" },
-          success_metric: { type: "string" }
-        }
-      }
-    },
-    posting_schedule: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["day", "time", "content_format", "content_theme", "objective", "reason"],
-        properties: {
-          day: { type: "string" },
-          time: { type: "string" },
-          content_format: { type: "string" },
-          content_theme: { type: "string" },
-          objective: { type: "string" },
           reason: { type: "string" }
-        }
-      }
-    },
-    growth_opportunities: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["opportunity", "data_basis", "implementation"],
-        properties: {
-          opportunity: { type: "string" },
-          data_basis: { type: "string" },
-          implementation: { type: "string" }
         }
       }
     },
     priority_actions: {
       type: "array",
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["priority_number", "action", "reason", "implementation", "timeframe", "success_metric"],
+        required: ["action", "reason", "priority"],
         properties: {
-          priority_number: { type: "number" },
           action: { type: "string" },
           reason: { type: "string" },
-          implementation: { type: "string" },
-          timeframe: { type: "string" },
-          success_metric: { type: "string" }
+          priority: { type: "string", enum: ["High", "Medium", "Low"] }
         }
       }
-    },
-    limitations: {
-      type: "array",
-      items: { type: "string" }
     }
   }
 };
