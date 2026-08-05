@@ -304,7 +304,14 @@ async function makeRequest(url, options, data) {
     console.log('Response body length:', body.length);
     
     if (!response.ok) {
-      console.log('Response body (first 500 chars):', body.substring(0, 500));
+      console.log('Response body (first 1000 chars):', body.substring(0, 1000));
+      
+      // Check if response is HTML
+      if (body.trim().startsWith('<') || body.includes('<html') || body.includes('<HTML')) {
+        console.error('Sylor API returned HTML instead of JSON');
+        console.error('HTML response:', body.substring(0, 500));
+        throw new Error('Sylor API returned HTML error page. Check API endpoint, base URL, and API key configuration.');
+      }
     }
     
     try {
@@ -319,7 +326,8 @@ async function makeRequest(url, options, data) {
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
-        throw new Error('Invalid JSON response');
+        console.error('JSON parse error. Response body:', body.substring(0, 500));
+        throw new Error(`Invalid JSON response from Sylor API. Response: ${body.substring(0, 200)}`);
       }
       throw e;
     }
@@ -520,39 +528,90 @@ exports.handler = async (event, context) => {
     console.log('Using model:', configuredModel);
     console.log('Base URL:', baseUrl);
     
-    // Call Sylor API using anthropic-messages format
-    const sylorUrl = `${baseUrl}/v1/messages`;
+    // Try anthropic-messages format first
+    let sylorResponse;
+    let useAnthropicFormat = true;
     
-    const requestBody = {
-      model: configuredModel,
-      max_tokens: 6000,
-      system: SYSTEM_INSTRUCTION,
-      messages: [
-        {
-          role: 'user',
-          content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
+    try {
+      const sylorUrl = `${baseUrl}/v1/messages`;
+      
+      const requestBody = {
+        model: configuredModel,
+        max_tokens: 6000,
+        system: SYSTEM_INSTRUCTION,
+        messages: [
+          {
+            role: 'user',
+            content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
+          }
+        ]
+      };
+      
+      sylorResponse = await makeRequest(sylorUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'anthropic-version': '2023-06-01'
         }
-      ]
-    };
-    
-    const sylorResponse = await makeRequest(sylorUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'anthropic-version': '2023-06-01'
+      }, requestBody);
+      
+      console.log('Sylor API response received (anthropic-messages format)');
+    } catch (e) {
+      console.log('Anthropic-messages format failed:', e.message);
+      
+      // Fallback to OpenAI-style chat/completions endpoint
+      if (e.message.includes('HTML') || e.message.includes('Invalid JSON')) {
+        console.log('Trying OpenAI-style chat/completions endpoint as fallback...');
+        useAnthropicFormat = false;
+        
+        const openaiUrl = `${baseUrl}/v1/chat/completions`;
+        
+        const requestBody = {
+          model: configuredModel,
+          max_tokens: 6000,
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_INSTRUCTION
+            },
+            {
+              role: 'user',
+              content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
+            }
+          ]
+        };
+        
+        sylorResponse = await makeRequest(openaiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          }
+        }, requestBody);
+        
+        console.log('Sylor API response received (OpenAI-style format)');
+      } else {
+        throw e;
       }
-    }, requestBody);
+    }
     
-    console.log('Sylor API response received');
     console.log('Response body:', JSON.stringify(sylorResponse).substring(0, 500));
     
-    // Parse response - Anthropic format
+    // Parse response based on format
     let outputText;
-    if (sylorResponse.content && Array.isArray(sylorResponse.content)) {
-      const textBlock = sylorResponse.content.find(block => block.type === 'text');
-      if (textBlock && textBlock.text) {
-        outputText = textBlock.text;
+    if (useAnthropicFormat) {
+      // Anthropic format
+      if (sylorResponse.content && Array.isArray(sylorResponse.content)) {
+        const textBlock = sylorResponse.content.find(block => block.type === 'text');
+        if (textBlock && textBlock.text) {
+          outputText = textBlock.text;
+        }
+      }
+    } else {
+      // OpenAI format
+      if (sylorResponse.choices && sylorResponse.choices[0] && sylorResponse.choices[0].message) {
+        outputText = sylorResponse.choices[0].message.content;
       }
     }
     
