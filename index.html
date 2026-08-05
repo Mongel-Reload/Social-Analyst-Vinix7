@@ -3483,6 +3483,9 @@ function calculateSentimentStatistics() {
     .map(row => row.preprocessed.split(' '))
     .flat()
     .filter(word => word.length > 2);
+
+  // Neutral words (from neutral comments)
+  const neutralComments = sentimentPredictions.filter(row => row.predicted === 'Netral');
   
   const negativeWordFreq = {};
   negativeWords.forEach(word => {
@@ -3501,21 +3504,21 @@ function calculateSentimentStatistics() {
   const negativeExamples = negativeComments
     .slice(0, 3)
     .map(row => ({
-      text: row.komentar.substring(0, 250)
+      text: String(row.komentar || '').substring(0, 250)
     }));
-  
+
   const positiveExamples = positiveComments
     .slice(0, 3)
     .map(row => ({
-      text: row.komentar.substring(0, 250)
+      text: String(row.komentar || '').substring(0, 250)
     }));
-  
+
   const neutralExamples = neutralComments
     .slice(0, 3)
     .map(row => ({
-      text: row.komentar.substring(0, 250)
+      text: String(row.komentar || '').substring(0, 250)
     }));
-  
+
   const model_info = {
     algorithm: 'Multinomial Naive Bayes',
     feature_extraction: 'TF-IDF',
