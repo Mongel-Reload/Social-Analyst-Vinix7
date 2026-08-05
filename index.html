@@ -3624,32 +3624,45 @@ function calculateSentimentStatistics() {
       confidence: (row.confidencePercent || 0).toFixed(2)
     }));
   
+  const model_info = {
+    algorithm: 'Multinomial Naive Bayes',
+    feature_extraction: 'TF-IDF',
+    model_version: '1.0.0'
+  };
+  
   return {
-    analysis_id: 'ANALYSIS_' + Date.now(),
-    total_comments: total,
-    sentiment_distribution: {
+    account: {
+      platform: 'Instagram',
+      account_name: 'Social Analyst Vinix7',
+      industry: 'Social Media Analytics',
+      analysis_period: 'Current Session'
+    },
+    sentiment: {
       positive: sentimentCounts.Positif,
       neutral: sentimentCounts.Netral,
-      negative: sentimentCounts.Negatif
+      negative: sentimentCounts.Negatif,
+      total_comments: total,
+      dominant_topics: topics,
+      representative_comments: [
+        ...negativeExamples.map(e => ({ text: e.text, sentiment: 'negative' })),
+        ...positiveExamples.map(e => ({ text: e.text, sentiment: 'positive' }))
+      ]
     },
-    sentiment_percentage: {
-      positive: parseFloat(sentimentPercentages.Positif),
-      neutral: parseFloat(sentimentPercentages.Netral),
-      negative: parseFloat(sentimentPercentages.Negatif)
+    performance: {
+      reach: null,
+      impressions: null,
+      likes: null,
+      comments: total,
+      shares: null,
+      saves: null,
+      engagement_rate: null,
+      follower_growth: null
     },
-    average_confidence: parseFloat(averageConfidence.toFixed(2)),
-    low_confidence_count: lowConfidenceCount,
-    top_positive_words: topPositiveWords,
-    top_negative_words: topNegativeWords,
-    top_neutral_words: [],
-    dominant_topics: topics,
-    negative_examples: negativeExamples,
-    positive_examples: positiveExamples,
-    model_info: {
-      algorithm: 'Multinomial Naive Bayes',
-      feature_extraction: 'TF-IDF',
-      model_version: '1.0.0'
-    }
+    top_content: [],
+    low_performing_content: [],
+    posting_patterns: [],
+    audience_questions: [],
+    additional_context: `Analisis menggunakan model ${model_info.algorithm} dengan ${model_info.feature_extraction}. Total komentar: ${total}. Rata-rata confidence: ${averageConfidence.toFixed(2)}.`
   };
 }
 
@@ -3725,15 +3738,18 @@ async function generateAIRecommendation() {
     const aiResponse = await response.json();
     console.log('AI Response:', aiResponse);
     
+    // Handle new response format from Sylor API
+    const recommendationData = aiResponse.success ? aiResponse.data : aiResponse;
+    
     // Store recommendation data
-    aiRecommendationData = aiResponse;
+    aiRecommendationData = recommendationData;
     
     // Hide loading, show results
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('aiResults').style.display = 'block';
     
     // Display response with sanitization
-    displayAIRecommendation(aiResponse);
+    displayAIRecommendation(recommendationData);
     
   } catch (error) {
     console.error('AI Error:', error);
@@ -3783,13 +3799,93 @@ function sanitizeText(text) {
 function displayAIRecommendation(response) {
   document.getElementById('aiResults').style.display = 'block';
   
-  // Summary
+  // Executive Summary
   const summaryEl = document.getElementById('aiSummary');
-  summaryEl.textContent = response.summary || '';
+  summaryEl.textContent = response.executive_summary || response.summary || '';
   
-  // Main Findings
+  // Sentiment Evaluation
   const findingsEl = document.getElementById('aiFindings');
   findingsEl.innerHTML = '';
+  
+  // Display overall condition
+  if (response.sentiment_evaluation && response.sentiment_evaluation.overall_condition) {
+    const overallDiv = document.createElement('div');
+    overallDiv.style.marginBottom = '16px';
+    overallDiv.style.padding = '12px';
+    overallDiv.style.background = 'rgba(59, 130, 246, 0.1)';
+    overallDiv.style.borderRadius = '8px';
+    overallDiv.style.borderLeft = '4px solid #3b82f6';
+    
+    const title = document.createElement('strong');
+    title.textContent = 'Kondisi Keseluruhan';
+    title.style.display = 'block';
+    title.style.marginBottom = '4px';
+    title.style.color = '#3b82f6';
+    
+    const condition = document.createElement('div');
+    condition.textContent = response.sentiment_evaluation.overall_condition;
+    condition.style.fontSize = '14px';
+    
+    overallDiv.appendChild(title);
+    overallDiv.appendChild(condition);
+    findingsEl.appendChild(overallDiv);
+  }
+  
+  // Display positive findings
+  if (response.sentiment_evaluation && response.sentiment_evaluation.positive_findings) {
+    response.sentiment_evaluation.positive_findings.forEach(finding => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(34, 197, 94, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #22c55e';
+      
+      const title = document.createElement('strong');
+      title.textContent = finding.finding || '';
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
+      title.style.color = '#22c55e';
+      
+      const evidence = document.createElement('div');
+      evidence.style.fontSize = '13px';
+      evidence.style.color = '#9aa4b2';
+      evidence.textContent = 'Dasar: ' + (finding.data_basis || '');
+      
+      div.appendChild(title);
+      div.appendChild(evidence);
+      findingsEl.appendChild(div);
+    });
+  }
+  
+  // Display negative findings
+  if (response.sentiment_evaluation && response.sentiment_evaluation.negative_findings) {
+    response.sentiment_evaluation.negative_findings.forEach(finding => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(239, 68, 68, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #ef4444';
+      
+      const title = document.createElement('strong');
+      title.textContent = finding.finding || '';
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
+      title.style.color = '#ef4444';
+      
+      const evidence = document.createElement('div');
+      evidence.style.fontSize = '13px';
+      evidence.style.color = '#9aa4b2';
+      evidence.textContent = 'Dasar: ' + (finding.data_basis || '');
+      
+      div.appendChild(title);
+      div.appendChild(evidence);
+      findingsEl.appendChild(div);
+    });
+  }
+  
+  // Fallback to old schema for backward compatibility
   if (response.main_findings && Array.isArray(response.main_findings)) {
     response.main_findings.forEach(finding => {
       const div = document.createElement('div');
@@ -3814,9 +3910,65 @@ function displayAIRecommendation(response) {
     });
   }
   
-  // Positive Drivers
+  // Content Ideas (new schema)
   const positiveEl = document.getElementById('aiPositive');
   positiveEl.innerHTML = '';
+  if (response.content_ideas && Array.isArray(response.content_ideas)) {
+    response.content_ideas.slice(0, 10).forEach((idea, index) => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(168, 85, 247, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #a855f7';
+      
+      const header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.justifyContent = 'space-between';
+      header.style.marginBottom = '8px';
+      
+      const title = document.createElement('strong');
+      title.textContent = `${index + 1}. ${idea.title || ''}`;
+      title.style.color = '#a855f7';
+      
+      const format = document.createElement('span');
+      format.style.fontSize = '11px';
+      format.style.background = '#a855f7';
+      format.style.color = 'white';
+      format.style.padding = '2px 8px';
+      format.style.borderRadius = '4px';
+      format.textContent = idea.format || '';
+      
+      header.appendChild(title);
+      header.appendChild(format);
+      
+      const concept = document.createElement('div');
+      concept.style.fontSize = '13px';
+      concept.style.color = '#d1d5db';
+      concept.style.marginBottom = '4px';
+      concept.textContent = idea.concept || '';
+      
+      const hook = document.createElement('div');
+      hook.style.fontSize = '12px';
+      hook.style.color = '#9aa4b2';
+      hook.style.marginBottom = '4px';
+      hook.style.fontStyle = 'italic';
+      hook.textContent = 'Hook: ' + (idea.hook || '');
+      
+      const evidence = document.createElement('div');
+      evidence.style.fontSize = '12px';
+      evidence.style.color = '#9aa4b2';
+      evidence.textContent = 'Dasar: ' + (idea.data_basis || '');
+      
+      div.appendChild(header);
+      div.appendChild(concept);
+      div.appendChild(hook);
+      div.appendChild(evidence);
+      positiveEl.appendChild(div);
+    });
+  }
+  
+  // Fallback to old positive_drivers
   if (response.positive_drivers && Array.isArray(response.positive_drivers)) {
     response.positive_drivers.forEach(driver => {
       const div = document.createElement('div');
@@ -3841,9 +3993,30 @@ function displayAIRecommendation(response) {
     });
   }
   
-  // Negative Issues
+  // Negative Issues / Risks
   const negativeEl = document.getElementById('aiNegative');
   negativeEl.innerHTML = '';
+  
+  // Display risks from new schema
+  if (response.sentiment_evaluation && response.sentiment_evaluation.risks) {
+    response.sentiment_evaluation.risks.forEach(risk => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(239, 68, 68, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #ef4444';
+      
+      const title = document.createElement('strong');
+      title.textContent = '⚠️ ' + risk;
+      title.style.color = '#ef4444';
+      
+      div.appendChild(title);
+      negativeEl.appendChild(div);
+    });
+  }
+  
+  // Fallback to old negative_issues
   if (response.negative_issues && Array.isArray(response.negative_issues)) {
     response.negative_issues.forEach(issue => {
       const div = document.createElement('div');
@@ -3876,9 +4049,59 @@ function displayAIRecommendation(response) {
     });
   }
   
-  // Recommendations
+  // Recommendations / Content Strategy
   const recommendationsEl = document.getElementById('aiRecommendations');
   recommendationsEl.innerHTML = '';
+  
+  // Display content strategy from new schema
+  if (response.content_strategy && Array.isArray(response.content_strategy)) {
+    response.content_strategy.forEach(strategy => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(59, 130, 246, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #3b82f6';
+      
+      const title = document.createElement('strong');
+      title.textContent = strategy.title || '';
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
+      title.style.color = '#3b82f6';
+      
+      const objective = document.createElement('div');
+      objective.style.fontSize = '13px';
+      objective.style.color = '#d1d5db';
+      objective.style.marginBottom = '4px';
+      objective.textContent = strategy.objective || '';
+      
+      const recommendation = document.createElement('div');
+      recommendation.style.fontSize = '13px';
+      recommendation.style.color = '#9aa4b2';
+      recommendation.style.marginBottom = '4px';
+      recommendation.textContent = strategy.recommendation || '';
+      
+      const evidence = document.createElement('div');
+      evidence.style.fontSize = '12px';
+      evidence.style.color = '#9aa4b2';
+      evidence.style.marginBottom = '4px';
+      evidence.textContent = 'Dasar: ' + (strategy.data_basis || '');
+      
+      const meta = document.createElement('div');
+      meta.style.fontSize = '12px';
+      meta.style.color = '#d8b4fe';
+      meta.textContent = `Prioritas: ${strategy.priority || ''} | Impact: ${strategy.expected_impact || ''}`;
+      
+      div.appendChild(title);
+      div.appendChild(objective);
+      div.appendChild(recommendation);
+      div.appendChild(evidence);
+      div.appendChild(meta);
+      recommendationsEl.appendChild(div);
+    });
+  }
+  
+  // Fallback to old recommendations
   if (response.recommendations && Array.isArray(response.recommendations)) {
     response.recommendations.forEach(rec => {
       const div = document.createElement('div');
@@ -3921,39 +4144,124 @@ function displayAIRecommendation(response) {
   // Priority Actions
   const priorityEl = document.getElementById('aiPriority');
   priorityEl.innerHTML = '';
-  if (response.recommendations && Array.isArray(response.recommendations)) {
+  
+  // Display priority_actions from new schema
+  if (response.priority_actions && Array.isArray(response.priority_actions)) {
+    const sortedActions = [...response.priority_actions].sort((a, b) => a.priority_number - b.priority_number);
+    sortedActions.forEach(action => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(251, 146, 60, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #fb923c';
+      
+      const header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+      header.style.marginBottom = '8px';
+      
+      const number = document.createElement('span');
+      number.style.background = '#fb923c';
+      number.style.color = 'white';
+      number.style.width = '24px';
+      number.style.height = '24px';
+      number.style.borderRadius = '50%';
+      number.style.display = 'flex';
+      number.style.alignItems = 'center';
+      number.style.justifyContent = 'center';
+      number.style.fontSize = '12px';
+      number.style.fontWeight = 'bold';
+      number.style.marginRight = '8px';
+      number.textContent = action.priority_number || '';
+      
+      const title = document.createElement('strong');
+      title.textContent = action.action || '';
+      title.style.color = '#fb923c';
+      
+      header.appendChild(number);
+      header.appendChild(title);
+      
+      const reason = document.createElement('div');
+      reason.style.fontSize = '13px';
+      reason.style.color = '#d1d5db';
+      reason.style.marginBottom = '4px';
+      reason.textContent = action.reason || '';
+      
+      const implementation = document.createElement('div');
+      implementation.style.fontSize = '12px';
+      implementation.style.color = '#9aa4b2';
+      implementation.style.marginBottom = '4px';
+      implementation.textContent = 'Implementasi: ' + (action.implementation || '');
+      
+      const timeframe = document.createElement('div');
+      timeframe.style.fontSize = '12px';
+      timeframe.style.color = '#9aa4b2';
+      timeframe.style.marginBottom = '4px';
+      timeframe.textContent = 'Waktu: ' + (action.timeframe || '');
+      
+      const metric = document.createElement('div');
+      metric.style.fontSize = '12px';
+      metric.style.color = '#9aa4b2';
+      metric.textContent = 'Metric: ' + (action.success_metric || '');
+      
+      div.appendChild(header);
+      div.appendChild(reason);
+      div.appendChild(implementation);
+      div.appendChild(timeframe);
+      div.appendChild(metric);
+      priorityEl.appendChild(div);
+    });
+  }
+  
+  // Fallback to old recommendations for priority
+  if (response.recommendations && Array.isArray(response.recommendations) && !response.priority_actions) {
     const sortedByPriority = [...response.recommendations].sort((a, b) => {
       const priorityOrder = { 'tinggi': 0, 'sedang': 1, 'rendah': 2 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
-    
-    sortedByPriority.forEach(rec => {
+    sortedByPriority.forEach((rec, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
       div.style.padding = '12px';
       div.style.background = 'rgba(255,255,255,.05)';
       div.style.borderRadius = '8px';
-      div.style.borderLeft = '4px solid ' + (rec.priority === 'tinggi' ? '#ef4444' : rec.priority === 'sedang' ? '#f59e0b' : '#22c55e');
+      div.style.borderLeft = '4px solid #fb923c';
+      
+      const header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+      header.style.marginBottom = '8px';
+      
+      const number = document.createElement('span');
+      number.style.background = '#fb923c';
+      number.style.color = 'white';
+      number.style.width = '24px';
+      number.style.height = '24px';
+      number.style.borderRadius = '50%';
+      number.style.display = 'flex';
+      number.style.alignItems = 'center';
+      number.style.justifyContent = 'center';
+      number.style.fontSize = '12px';
+      number.style.fontWeight = 'bold';
+      number.style.marginRight = '8px';
+      number.textContent = index + 1;
       
       const title = document.createElement('strong');
       title.textContent = rec.title || '';
-      title.style.display = 'block';
-      title.style.marginBottom = '4px';
+      title.style.color = '#fb923c';
       
-      const category = document.createElement('div');
-      category.style.fontSize = '13px';
-      category.style.color = '#fdba74';
-      category.textContent = 'Kategori: ' + (rec.category || '');
+      header.appendChild(number);
+      header.appendChild(title);
       
-      const evidence = document.createElement('div');
-      evidence.style.fontSize = '12px';
-      evidence.style.color = '#9aa4b2';
-      evidence.style.marginTop = '4px';
-      evidence.textContent = 'Dasar: ' + (rec.evidence || '');
+      const description = document.createElement('div');
+      description.style.fontSize = '13px';
+      description.style.color = '#d1d5db';
+      description.style.marginBottom = '4px';
+      description.textContent = rec.description || '';
       
-      div.appendChild(title);
-      div.appendChild(category);
-      div.appendChild(evidence);
+      div.appendChild(header);
+      div.appendChild(description);
       priorityEl.appendChild(div);
     });
   }
@@ -3962,17 +4270,17 @@ function displayAIRecommendation(response) {
   const limitationsEl = document.getElementById('aiLimitations');
   limitationsEl.innerHTML = '';
   if (response.limitations && Array.isArray(response.limitations)) {
-    const ul = document.createElement('ul');
-    ul.style.marginLeft = '20px';
-    ul.style.lineHeight = '1.8';
-    
-    response.limitations.forEach(limit => {
-      const li = document.createElement('li');
-      li.textContent = limit;
-      ul.appendChild(li);
+    response.limitations.forEach(limitation => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '8px';
+      div.style.padding = '8px 12px';
+      div.style.background = 'rgba(107, 114, 128, 0.2)';
+      div.style.borderRadius = '6px';
+      div.style.fontSize = '12px';
+      div.style.color = '#9ca3af';
+      div.textContent = '• ' + limitation;
+      limitationsEl.appendChild(div);
     });
-    
-    limitationsEl.appendChild(ul);
   }
 }
 

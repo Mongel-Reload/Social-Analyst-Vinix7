@@ -1,21 +1,291 @@
-// System instruction for OpenAI
-const SYSTEM_INSTRUCTION = `Anda adalah analis media sosial yang memberikan rekomendasi berdasarkan hasil klasifikasi sentimen. Gunakan hanya data JSON yang diberikan. Jangan membuat angka, fakta, topik, atau komentar yang tidak tersedia. Setiap rekomendasi harus menyebutkan dasar datanya. Jangan memberikan prediksi persentase peningkatan tanpa model forecasting. Jangan mengklaim hubungan sebab-akibat tanpa bukti. Gunakan bahasa Indonesia formal dan mudah dipahami. Hasilkan rekomendasi untuk tim digital marketing.`;
+// System instruction for Sylor AI
+const SYSTEM_INSTRUCTION = `Anda adalah Senior Digital Marketing Strategist, Social Media Analyst, Content Planner, dan Marketing Performance Consultant.
 
-// Get model name from environment variable with fallback
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.2';
+Tugas Anda bukan sekadar mengulang data analisis sentimen.
 
-// Helper function to make HTTPS request using fetch (more reliable in Netlify Functions)
+Anda harus mengubah data media sosial menjadi rekomendasi yang praktis, spesifik, dapat dilaksanakan, terukur, dan relevan dengan konteks akun.
+
+Gunakan hanya data yang tersedia pada input.
+
+Bedakan dengan jelas antara:
+
+1. Temuan yang didukung data.
+2. Interpretasi berdasarkan data.
+3. Rekomendasi strategis.
+4. Hal yang belum dapat disimpulkan karena data tidak tersedia.
+
+Jangan mengarang:
+- demografi audiens;
+- jam terbaik;
+- peningkatan persentase;
+- target pertumbuhan;
+- tren historis;
+- performa platform;
+- karakter audiens;
+- data kompetitor;
+
+apabila data tersebut tidak diberikan.
+
+Setiap strategi dan ide konten harus memiliki \`data_basis\`.
+
+Jika data terbatas, tetap berikan ide yang relevan, tetapi tuliskan bahwa ide tersebut merupakan hipotesis yang perlu diuji.
+
+Rekomendasi harus mencakup:
+- ide konten;
+- strategi engagement;
+- strategi campaign;
+- strategi pertumbuhan;
+- rekomendasi format;
+- prioritas tindakan;
+- indikator keberhasilan.
+
+Gunakan Bahasa Indonesia yang profesional, jelas, dan mudah dipahami.
+
+Jangan menulis Markdown.
+
+Kembalikan output hanya sesuai JSON Schema.`;
+
+// JSON Schema for structured output
+const RECOMMENDATION_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "executive_summary",
+    "sentiment_evaluation",
+    "data_insights",
+    "content_strategy",
+    "content_ideas",
+    "campaign_recommendations",
+    "engagement_strategy",
+    "posting_schedule",
+    "growth_opportunities",
+    "priority_actions",
+    "limitations"
+  ],
+  properties: {
+    executive_summary: {
+      type: "string",
+      description: "Ringkasan eksekutif kondisi akun secara keseluruhan"
+    },
+    sentiment_evaluation: {
+      type: "object",
+      additionalProperties: false,
+      required: ["overall_condition", "positive_findings", "negative_findings", "neutral_findings", "risks"],
+      properties: {
+        overall_condition: { type: "string" },
+        positive_findings: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["finding", "data_basis"],
+            properties: {
+              finding: { type: "string" },
+              data_basis: { type: "string" }
+            }
+          }
+        },
+        negative_findings: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["finding", "data_basis"],
+            properties: {
+              finding: { type: "string" },
+              data_basis: { type: "string" }
+            }
+          }
+        },
+        neutral_findings: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["finding", "data_basis"],
+            properties: {
+              finding: { type: "string" },
+              data_basis: { type: "string" }
+            }
+          }
+        },
+        risks: {
+          type: "array",
+          items: { type: "string" }
+        }
+      }
+    },
+    data_insights: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["finding", "data_basis", "interpretation", "business_implication"],
+        properties: {
+          finding: { type: "string" },
+          data_basis: { type: "string" },
+          interpretation: { type: "string" },
+          business_implication: { type: "string" }
+        }
+      }
+    },
+    content_strategy: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["title", "objective", "target_audience", "recommendation", "data_basis", "priority", "expected_impact"],
+        properties: {
+          title: { type: "string" },
+          objective: { type: "string" },
+          target_audience: { type: "string" },
+          recommendation: { type: "string" },
+          data_basis: { type: "string" },
+          priority: { type: "string", enum: ["high", "medium", "low"] },
+          expected_impact: { type: "string" }
+        }
+      }
+    },
+    content_ideas: {
+      type: "array",
+      minItems: 10,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "title",
+          "format",
+          "content_pillar",
+          "objective",
+          "target_audience",
+          "concept",
+          "hook",
+          "content_outline",
+          "caption_angle",
+          "call_to_action",
+          "data_basis",
+          "success_metric"
+        ],
+        properties: {
+          title: { type: "string" },
+          format: { type: "string", enum: ["Reels", "Carousel", "Single Post", "Story", "Live"] },
+          content_pillar: { type: "string" },
+          objective: { type: "string" },
+          target_audience: { type: "string" },
+          concept: { type: "string" },
+          hook: { type: "string" },
+          content_outline: { type: "array", items: { type: "string" } },
+          caption_angle: { type: "string" },
+          call_to_action: { type: "string" },
+          data_basis: { type: "string" },
+          success_metric: { type: "string" }
+        }
+      }
+    },
+    campaign_recommendations: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "campaign_name",
+          "objective",
+          "concept",
+          "duration",
+          "target_audience",
+          "execution_steps",
+          "success_metrics",
+          "data_basis"
+        ],
+        properties: {
+          campaign_name: { type: "string" },
+          objective: { type: "string" },
+          concept: { type: "string" },
+          duration: { type: "string" },
+          target_audience: { type: "string" },
+          execution_steps: { type: "array", items: { type: "string" } },
+          success_metrics: { type: "array", items: { type: "string" } },
+          data_basis: { type: "string" }
+        }
+      }
+    },
+    engagement_strategy: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["strategy", "reason", "implementation", "success_metric"],
+        properties: {
+          strategy: { type: "string" },
+          reason: { type: "string" },
+          implementation: { type: "string" },
+          success_metric: { type: "string" }
+        }
+      }
+    },
+    posting_schedule: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["day", "time", "content_format", "content_theme", "objective", "reason"],
+        properties: {
+          day: { type: "string" },
+          time: { type: "string" },
+          content_format: { type: "string" },
+          content_theme: { type: "string" },
+          objective: { type: "string" },
+          reason: { type: "string" }
+        }
+      }
+    },
+    growth_opportunities: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["opportunity", "data_basis", "implementation"],
+        properties: {
+          opportunity: { type: "string" },
+          data_basis: { type: "string" },
+          implementation: { type: "string" }
+        }
+      }
+    },
+    priority_actions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["priority_number", "action", "reason", "implementation", "timeframe", "success_metric"],
+        properties: {
+          priority_number: { type: "number" },
+          action: { type: "string" },
+          reason: { type: "string" },
+          implementation: { type: "string" },
+          timeframe: { type: "string" },
+          success_metric: { type: "string" }
+        }
+      }
+    },
+    limitations: {
+      type: "array",
+      items: { type: "string" }
+    }
+  }
+};
+
+// Helper function to make HTTPS request using fetch
 async function makeRequest(url, options, data) {
   try {
-    console.log('=== OpenAI API Request ===');
+    console.log('=== Sylor API Request ===');
     console.log('Endpoint:', url);
     console.log('Method:', options.method);
-    console.log('Headers:', JSON.stringify(options.headers));
+    console.log('Headers:', JSON.stringify(options.headers, (key, value) => key === 'Authorization' ? '***' : value));
     console.log('Body length:', data ? JSON.stringify(data).length : 0);
     
-    // Add timeout using AbortController
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
     
     const response = await fetch(url, {
       ...options,
@@ -25,7 +295,7 @@ async function makeRequest(url, options, data) {
     
     clearTimeout(timeoutId);
     
-    console.log('=== OpenAI API Response ===');
+    console.log('=== Sylor API Response ===');
     console.log('HTTP Status:', response.status);
     console.log('HTTP Status Text:', response.statusText);
     console.log('Response OK:', response.ok);
@@ -33,7 +303,6 @@ async function makeRequest(url, options, data) {
     const body = await response.text();
     console.log('Response body length:', body.length);
     
-    // Log response body if error (for debugging)
     if (!response.ok) {
       console.log('Response body (first 500 chars):', body.substring(0, 500));
     }
@@ -44,10 +313,9 @@ async function makeRequest(url, options, data) {
       if (response.ok) {
         return parsed;
       } else {
-        // Extract OpenAI's error message
-        const openaiError = parsed.error?.message || parsed.error || `HTTP ${response.status}`;
-        console.error('OpenAI API Error:', openaiError);
-        throw new Error(openaiError);
+        const sylorError = parsed.error?.message || parsed.error || `HTTP ${response.status}`;
+        console.error('Sylor API Error:', sylorError);
+        throw new Error(sylorError);
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -69,96 +337,7 @@ async function makeRequest(url, options, data) {
   }
 }
 
-// Validate request data
-function validateRequest(data) {
-  const errors = [];
-  
-  if (!data || typeof data !== 'object') {
-    errors.push('Request body must be a valid object');
-    return { valid: false, errors };
-  }
-  
-  // Validate total_comments
-  if (typeof data.total_comments !== 'number' || data.total_comments < 0) {
-    errors.push('total_comments must be a non-negative number');
-  }
-  
-  if (data.total_comments === 0) {
-    errors.push('total_comments cannot be zero');
-  }
-  
-  // Validate sentiment distribution
-  if (!data.sentiment_distribution || typeof data.sentiment_distribution !== 'object') {
-    errors.push('sentiment_distribution is required');
-  } else {
-    const { positive, neutral, negative } = data.sentiment_distribution;
-    
-    if (typeof positive !== 'number' || positive < 0) {
-      errors.push('positive count must be a non-negative number');
-    }
-    if (typeof neutral !== 'number' || neutral < 0) {
-      errors.push('neutral count must be a non-negative number');
-    }
-    if (typeof negative !== 'number' || negative < 0) {
-      errors.push('negative count must be a non-negative number');
-    }
-    
-    const totalSentiment = (positive || 0) + (neutral || 0) + (negative || 0);
-    if (totalSentiment > data.total_comments) {
-      errors.push('Total sentiment count cannot exceed total_comments');
-    }
-  }
-  
-  // Validate sentiment percentage
-  if (!data.sentiment_percentage || typeof data.sentiment_percentage !== 'object') {
-    errors.push('sentiment_percentage is required');
-  } else {
-    const { positive, neutral, negative } = data.sentiment_percentage;
-    
-    if (typeof positive !== 'number' || positive < 0 || positive > 100) {
-      errors.push('positive percentage must be between 0 and 100');
-    }
-    if (typeof neutral !== 'number' || neutral < 0 || neutral > 100) {
-      errors.push('neutral percentage must be between 0 and 100');
-    }
-    if (typeof negative !== 'number' || negative < 0 || negative > 100) {
-      errors.push('negative percentage must be between 0 and 100');
-    }
-  }
-  
-  // Validate examples
-  if (data.negative_examples && Array.isArray(data.negative_examples)) {
-    if (data.negative_examples.length > 5) {
-      errors.push('negative_examples cannot exceed 5 items');
-    }
-    data.negative_examples.forEach((ex, i) => {
-      if (typeof ex.text !== 'string' || ex.text.length > 200) {
-        errors.push(`negative_examples[${i}].text must be a string with max 200 characters`);
-      }
-    });
-  }
-  
-  if (data.positive_examples && Array.isArray(data.positive_examples)) {
-    if (data.positive_examples.length > 5) {
-      errors.push('positive_examples cannot exceed 5 items');
-    }
-    data.positive_examples.forEach((ex, i) => {
-      if (typeof ex.text !== 'string' || ex.text.length > 200) {
-        errors.push(`positive_examples[${i}].text must be a string with max 200 characters`);
-      }
-    });
-  }
-  
-  // Validate request size
-  const bodySize = JSON.stringify(data).length;
-  if (bodySize > 10000) {
-    errors.push('Request body too large (max 10KB)');
-  }
-  
-  return { valid: errors.length === 0, errors };
-}
-
-// Safe JSON parser that handles various formats
+// Safe JSON parser
 function safeParseJSON(text) {
   if (!text || typeof text !== 'string') {
     throw new Error('Invalid input: text is empty or not a string');
@@ -166,11 +345,9 @@ function safeParseJSON(text) {
   
   text = text.trim();
   
-  // Try direct JSON parse first
   try {
     return JSON.parse(text);
   } catch (e) {
-    // If that fails, try to extract JSON from markdown code blocks
     const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {
       try {
@@ -180,7 +357,6 @@ function safeParseJSON(text) {
       }
     }
     
-    // Try to find JSON between curly braces
     const braceMatch = text.match(/\{[\s\S]*\}/);
     if (braceMatch) {
       try {
@@ -194,106 +370,112 @@ function safeParseJSON(text) {
   }
 }
 
-// Validate OpenAI response
-function validateOpenAIResponse(response) {
-  console.log('Validating OpenAI response...');
-  
-  if (!response || typeof response !== 'object') {
-    throw new Error('Invalid response format');
+// Validate input payload
+function validateInputPayload(data) {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, errors: ['Request body must be a valid object'] };
   }
   
-  if (!response.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
-    throw new Error('No choices in response');
+  const errors = [];
+  
+  // Check if payload is empty
+  if (!data.account && !data.sentiment && !data.performance) {
+    return {
+      valid: false,
+      errors: ['Data analisis belum tersedia untuk menghasilkan rekomendasi.']
+    };
   }
   
-  const message = response.choices[0].message;
-  if (!message || !message.content) {
-    throw new Error('No content in response');
+  // Validate account if present
+  if (data.account && typeof data.account !== 'object') {
+    errors.push('account must be an object');
   }
   
-  const text = message.content;
-  if (!text || typeof text !== 'string') {
-    throw new Error('No text in response');
+  // Validate sentiment if present
+  if (data.sentiment && typeof data.sentiment !== 'object') {
+    errors.push('sentiment must be an object');
   }
   
-  console.log('Response text length:', text.length);
-  
-  // Try to parse as JSON using safe parser
-  let parsed;
-  try {
-    parsed = safeParseJSON(text);
-  } catch (e) {
-    console.error('JSON parsing error:', e.message);
-    throw new Error(`Response is not valid JSON: ${e.message}`);
+  // Validate performance if present
+  if (data.performance && typeof data.performance !== 'object') {
+    errors.push('performance must be an object');
   }
   
-  console.log('JSON parsed successfully');
-  
-  // Validate required fields with fallback for missing fields
-  const requiredFields = ['summary', 'main_findings', 'negative_issues', 'positive_drivers', 'recommendations', 'limitations'];
-  const missingFields = [];
-  
-  for (const field of requiredFields) {
-    if (!parsed[field]) {
-      missingFields.push(field);
+  // Limit representative comments
+  if (data.sentiment && data.sentiment.representative_comments) {
+    if (data.sentiment.representative_comments.length > 50) {
+      data.sentiment.representative_comments = data.sentiment.representative_comments.slice(0, 50);
+      console.log('Limited representative comments to 50');
     }
+    
+    // Truncate comment text
+    data.sentiment.representative_comments = data.sentiment.representative_comments.map(comment => ({
+      ...comment,
+      text: comment.text ? comment.text.substring(0, 500) : ''
+    }));
   }
   
-  if (missingFields.length > 0) {
-    console.warn('Missing fields in response:', missingFields);
-    // Add empty arrays/strings for missing fields
-    if (!parsed.summary) parsed.summary = 'Ringkasan tidak tersedia';
-    if (!parsed.main_findings) parsed.main_findings = [];
-    if (!parsed.negative_issues) parsed.negative_issues = [];
-    if (!parsed.positive_drivers) parsed.positive_drivers = [];
-    if (!parsed.recommendations) parsed.recommendations = [];
-    if (!parsed.limitations) parsed.limitations = [];
-  }
-  
-  // Ensure arrays are actually arrays
-  if (!Array.isArray(parsed.main_findings)) parsed.main_findings = [];
-  if (!Array.isArray(parsed.negative_issues)) parsed.negative_issues = [];
-  if (!Array.isArray(parsed.positive_drivers)) parsed.positive_drivers = [];
-  if (!Array.isArray(parsed.recommendations)) parsed.recommendations = [];
-  if (!Array.isArray(parsed.limitations)) parsed.limitations = [];
-  
-  console.log('Response validation completed');
-  return parsed;
+  return { valid: errors.length === 0, errors };
 }
 
 // Netlify Function handler
 exports.handler = async (event, context) => {
-  console.log('=== OpenAI Recommendation Function Started ===');
-  console.log('Function: openai-recommendation');
+  console.log('=== Sylor AI Recommendation Function Started ===');
+  console.log('Function: gemini-recommendation');
   console.log('HTTP Method:', event.httpMethod);
-  console.log('Event body length:', event.body ? event.body.length : 0);
-  
-  // Log environment variables (without sensitive values)
-  console.log('Environment Check:');
-  console.log('  OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY);
-  console.log('  OPENAI_API_KEY length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
-  console.log('  OPENAI_MODEL from env:', process.env.OPENAI_MODEL);
-  console.log('  OPENAI_MODEL final:', OPENAI_MODEL);
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
-    console.log('ERROR: Method not allowed');
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      body: JSON.stringify({ 
+        success: false,
+        code: 'METHOD_NOT_ALLOWED',
+        message: 'Method not allowed' 
+      })
     };
   }
   
-  // Check for API Key
+  // Validate environment variables
   const apiKey = process.env.OPENAI_API_KEY;
-  console.log('API Key present:', !!apiKey);
-  console.log('API Key length:', apiKey ? apiKey.length : 0);
+  const configuredModel = process.env.OPENAI_MODEL?.trim();
+  const baseUrl = process.env.OPENAI_BASE_URL?.trim() || 'https://api.sylorapi.com';
+  
+  console.log('Environment Check:');
+  console.log('  hasApiKey:', !!apiKey);
+  console.log('  keyLength:', apiKey ? apiKey.length : 0);
+  console.log('  model:', configuredModel);
+  console.log('  baseUrl:', baseUrl);
   
   if (!apiKey) {
-    console.log('ERROR: OpenAI API Key not configured');
+    console.log('ERROR: OPENAI_API_KEY is not configured');
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'OpenAI API Key not configured' })
+      body: JSON.stringify({ 
+        success: false,
+        code: 'API_KEY_MISSING',
+        message: 'OPENAI_API_KEY is not configured',
+        hasApiKey: false,
+        keyLength: 0,
+        model: configuredModel,
+        baseUrl: baseUrl
+      })
+    };
+  }
+  
+  if (!configuredModel) {
+    console.log('ERROR: OPENAI_MODEL is not configured');
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        success: false,
+        code: 'MODEL_MISSING',
+        message: 'OPENAI_MODEL is not configured',
+        hasApiKey: true,
+        keyLength: apiKey.length,
+        model: null,
+        baseUrl: baseUrl
+      })
     };
   }
   
@@ -303,138 +485,107 @@ exports.handler = async (event, context) => {
     try {
       requestData = JSON.parse(event.body);
       console.log('Request data parsed successfully');
-      console.log('Total comments:', requestData.total_comments);
     } catch (e) {
       console.log('ERROR: Invalid JSON in request body', e.message);
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid JSON in request body' })
+        body: JSON.stringify({ 
+          success: false,
+          code: 'INVALID_JSON',
+          message: 'Invalid JSON in request body' 
+        })
       };
     }
     
-    // Validate request
-    const validation = validateRequest(requestData);
+    // Validate input payload
+    const validation = validateInputPayload(requestData);
     if (!validation.valid) {
       console.log('ERROR: Validation failed', validation.errors);
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Validation failed', details: validation.errors })
+        body: JSON.stringify({ 
+          success: false,
+          code: 'INVALID_PAYLOAD',
+          message: validation.errors[0] || 'Data analisis belum tersedia untuk menghasilkan rekomendasi.' 
+        })
       };
     }
     console.log('Request validation passed');
     
-    // Create prompt for Gemini
-    const prompt = `Berdasarkan data analisis sentimen berikut, berikan rekomendasi yang spesifik dan actionable:
-
-DATA STATISTIK:
-- Total Komentar: ${requestData.total_comments}
-- Distribusi Sentimen: Positif ${requestData.sentiment_distribution.positive}, Netral ${requestData.sentiment_distribution.neutral}, Negatif ${requestData.sentiment_distribution.negative}
-- Persentase Sentimen: Positif ${requestData.sentiment_percentage.positive}%, Netral ${requestData.sentiment_percentage.neutral}%, Negatif ${requestData.sentiment_percentage.negative}%
-- Rata-rata Confidence: ${requestData.average_confidence || 'N/A'}
-- Jumlah Low Confidence: ${requestData.low_confidence_count || 0}
-
-TOP KATA POSITIF:
-${requestData.top_positive_words ? requestData.top_positive_words.map(w => `- ${w.word} (${w.count}x)`).join('\n') : 'Tidak ada data'}
-
-TOP KATA NEGATIF:
-${requestData.top_negative_words ? requestData.top_negative_words.map(w => `- ${w.word} (${w.count}x)`).join('\n') : 'Tidak ada data'}
-
-TOPIK DOMINAN:
-${requestData.dominant_topics ? requestData.dominant_topics.map(t => `- ${t.topic} (${t.count}x)`).join('\n') : 'Tidak ada data'}
-
-CONTOH KOMENTAR NEGATIF:
-${requestData.negative_examples ? requestData.negative_examples.map(e => `- "${e.text}" (confidence: ${e.confidence})`).join('\n') : 'Tidak ada data'}
-
-CONTOH KOMENTAR POSITIF:
-${requestData.positive_examples ? requestData.positive_examples.map(e => `- "${e.text}" (confidence: ${e.confidence})`).join('\n') : 'Tidak ada data'}
-
-INFORMASI MODEL:
-- Algoritma: ${requestData.model_info?.algorithm || 'N/A'}
-- Feature Extraction: ${requestData.model_info?.feature_extraction || 'N/A'}
-- Versi: ${requestData.model_info?.model_version || 'N/A'}
-
-TUGAS:
-Berdasarkan data di atas, berikan rekomendasi dalam format JSON berikut:
-{
-  "summary": "Ringkasan kondisi sentimen akun secara keseluruhan (2-3 kalimat)",
-  "dominant_sentiment": "positif/netral/negatif",
-  "main_findings": [
-    {
-      "finding": "Temuan utama",
-      "evidence": "Dasar data dari temuan tersebut"
-    }
-  ],
-  "negative_issues": [
-    {
-      "issue": "Masalah utama dari sentimen negatif",
-      "evidence": "Dasar data dari masalah tersebut",
-      "priority": "tinggi/sedang/rendah"
-    }
-  ],
-  "positive_drivers": [
-    {
-      "factor": "Faktor utama penyebab sentimen positif",
-      "evidence": "Dasar data dari faktor tersebut"
-    }
-  ],
-  "recommendations": [
-    {
-      "title": "Judul rekomendasi",
-      "description": "Deskripsi rekomendasi",
-      "evidence": "Dasar data dari rekomendasi",
-      "priority": "tinggi/sedang/rendah",
-      "category": "strategi konten/pelayanan/respon admin/informasi/evaluasi data"
-    }
-  ],
-  "limitations": [
-    "Keterbatasan analisis"
-  ]
-}
-
-Pastikan:
-- Gunakan hanya data yang diberikan
-- Setiap rekomendasi menyebutkan dasar datanya
-- Jangan membuat angka atau fakta baru
-- Jangan memberikan prediksi persentase tanpa model forecasting
-- Gunakan bahasa Indonesia formal`;
-
-    console.log('Calling OpenAI API...');
-    console.log('Using model:', OPENAI_MODEL);
+    // Build input for Sylor API
+    const inputPayload = JSON.stringify(requestData);
+    console.log('Input payload length:', inputPayload.length);
     
-    // Call OpenAI API with dynamic model
-    const openaiUrl = 'https://api.openai.com/v1/chat/completions';
+    console.log('Calling Sylor API...');
+    console.log('Using model:', configuredModel);
+    console.log('Base URL:', baseUrl);
     
-    const openaiResponse = await makeRequest(openaiUrl, {
+    // Call Sylor API using anthropic-messages format
+    const sylorUrl = `${baseUrl}/v1/messages`;
+    
+    const requestBody = {
+      model: configuredModel,
+      max_tokens: 6000,
+      system: SYSTEM_INSTRUCTION,
+      messages: [
+        {
+          role: 'user',
+          content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
+        }
+      ]
+    };
+    
+    const sylorResponse = await makeRequest(sylorUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${apiKey}`,
+        'anthropic-version': '2023-06-01'
       }
-    }, {
-      model: OPENAI_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: SYSTEM_INSTRUCTION
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.4,
-      max_tokens: 3000,
-      response_format: {
-        type: 'json_object'
+    }, requestBody);
+    
+    console.log('Sylor API response received');
+    console.log('Response body:', JSON.stringify(sylorResponse).substring(0, 500));
+    
+    // Parse response - Anthropic format
+    let outputText;
+    if (sylorResponse.content && Array.isArray(sylorResponse.content)) {
+      const textBlock = sylorResponse.content.find(block => block.type === 'text');
+      if (textBlock && textBlock.text) {
+        outputText = textBlock.text;
       }
-    });
+    }
     
-    console.log('OpenAI API response received');
-    console.log('Response body:', JSON.stringify(openaiResponse).substring(0, 500));
+    if (!outputText) {
+      console.error('No text content in response');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ 
+          success: false,
+          code: 'EMPTY_RESPONSE',
+          message: 'No text content in response' 
+        })
+      };
+    }
     
-    // Validate and parse response
-    const validatedResponse = validateOpenAIResponse(openaiResponse);
-    console.log('Response validated successfully');
+    console.log('Output text length:', outputText.length);
+    
+    // Parse JSON
+    let parsedResponse;
+    try {
+      parsedResponse = safeParseJSON(outputText);
+      console.log('JSON parsed successfully');
+    } catch (e) {
+      console.error('JSON parsing error:', e.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ 
+          success: false,
+          code: 'INVALID_JSON',
+          message: `Response is not valid JSON: ${e.message}` 
+        })
+      };
+    }
     
     // Return success response
     return {
@@ -442,68 +593,53 @@ Pastikan:
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(validatedResponse)
+      body: JSON.stringify({
+        success: true,
+        data: parsedResponse
+      })
     };
     
   } catch (error) {
-    console.error('=== OpenAI Recommendation Error ===');
-    console.error('Function: openai-recommendation');
-    console.error('Stage: API call or response processing');
+    console.error('=== Sylor AI Recommendation Error ===');
     console.error('Error message:', error.message);
     console.error('Error name:', error.name);
     console.error('Error code:', error.code);
-    console.error('Model used:', OPENAI_MODEL);
+    console.error('Model used:', configuredModel);
     
-    // Return error response (never expose API key)
+    let errorCode = 'UNKNOWN_ERROR';
     let errorMessage = 'Failed to generate recommendation';
-    let errorDetails = error.message;
-    let errorType = 'unknown';
     
-    if (error.message.includes('API key') || error.message.includes('API_KEY') || error.message.includes('API_KEY not configured')) {
-      errorMessage = 'OpenAI API Key not configured';
-      errorDetails = 'API Key tidak ditemukan di environment variables Netlify';
-      errorType = 'api_key_missing';
-    } else if (error.message.includes('quota') || error.message.includes('429') || error.message.includes('rate limit')) {
-      errorMessage = 'OpenAI API quota exceeded';
-      errorDetails = 'Kuota OpenAI API telah mencapai batas';
-      errorType = 'quota_exceeded';
+    if (error.message.includes('API key') || error.message.includes('401') || error.message.includes('403')) {
+      errorCode = 'AUTH_FAILED';
+      errorMessage = 'API key invalid atau tidak memiliki akses';
+    } else if (error.message.includes('quota') || error.message.includes('429')) {
+      errorCode = 'QUOTA_EXCEEDED';
+      errorMessage = 'Kuota API telah mencapai batas';
     } else if (error.message.includes('timeout') || error.name === 'AbortError') {
-      errorMessage = 'Request timeout';
-      errorDetails = 'Request ke OpenAI API timeout (30 detik)';
-      errorType = 'timeout';
-    } else if (error.message.includes('JSON') || error.message.includes('parse') || error.message.includes('Invalid JSON')) {
-      errorMessage = 'OpenAI returned invalid JSON';
-      errorDetails = 'Response dari OpenAI bukan format JSON yang valid';
-      errorType = 'invalid_json';
-    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED') || error.message.includes('fetch')) {
-      errorMessage = 'Network error';
-      errorDetails = 'Gagal melakukan request ke OpenAI API';
-      errorType = 'network_error';
-    } else if (error.message.includes('model') || error.message.includes('404') || error.message.includes('not found') || error.message.includes('not supported')) {
-      errorMessage = 'OpenAI model not found';
-      errorDetails = `Model ${OPENAI_MODEL} tidak tersedia atau tidak valid`;
-      errorType = 'model_not_found';
-    } else if (error.message.includes('403') || error.message.includes('401') || error.message.includes('authentication') || error.message.includes('invalid API key')) {
-      errorMessage = 'API key invalid';
-      errorDetails = 'API Key tidak valid atau tidak memiliki akses';
-      errorType = 'auth_failed';
-    } else if (error.message.includes('Validation failed')) {
-      errorMessage = 'Invalid payload';
-      errorDetails = 'Data analisis tidak valid';
-      errorType = 'invalid_payload';
+      errorCode = 'TIMEOUT';
+      errorMessage = 'Request ke API timeout';
+    } else if (error.message.includes('model') || error.message.includes('404')) {
+      errorCode = 'MODEL_NOT_FOUND';
+      errorMessage = `Model ${configuredModel} tidak tersedia`;
+    } else if (error.message.includes('parameter') || error.message.includes('unsupported')) {
+      errorCode = 'UNSUPPORTED_PARAMETER';
+      errorMessage = 'Parameter tidak didukung oleh model';
+    } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      errorCode = 'NETWORK_ERROR';
+      errorMessage = 'Gagal melakukan request ke API';
     }
     
-    console.log('Error type:', errorType);
-    console.log('Returning error to frontend:', errorMessage);
-    console.log('Error details:', errorDetails);
+    console.log('Error code:', errorCode);
     
     return {
       statusCode: 500,
       body: JSON.stringify({ 
-        error: errorMessage,
-        details: errorDetails,
-        type: errorType,
-        model: OPENAI_MODEL
+        success: false,
+        code: errorCode,
+        message: errorMessage,
+        details: error.message,
+        model: configuredModel,
+        baseUrl: baseUrl
       })
     };
   }
