@@ -324,7 +324,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <div id="sentimentDropzone" style="background:rgba(34,211,238,.05);border:2px dashed rgba(34,211,238,.3);border-radius:12px;padding:30px;text-align:center;margin-bottom:15px;cursor:pointer">
           <div style="font-size:48px;margin-bottom:12px">📂</div>
           <div style="color:#d1d5db;margin-bottom:8px">Drag & Drop file CSV/Excel di sini</div>
-          <div style="color:#9aa4b2;font-size:13px">Format: Username, Komentar, Label (opsional)</div>
+          <div style="color:#9aa4b2;font-size:13px">Format: tanggal_upload, username, komentar</div>
         </div>
         <button class="btn primary" id="analyzeSentimentDataset" style="width:100%">Analisis Dataset</button>
       </div>
@@ -1667,16 +1667,6 @@ function analyzeSentiment(){
     $('#sentimentPreview').textContent = inputType==='text' ? text : inputType==='link' ? link : 'Media ID: '+mediaId+' (komentar akan diambil langsung dari Meta Graph API)';
   }catch(e){ alert('Terjadi kesalahan: '+e.message); }
 }
-async function callAISentiment(comments){
-  const res = await fetch('/.netlify/functions/ai-sentiment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ comments: comments.map(c => ({ username: c.username, text: c.text })) })
-  });
-  const data = await res.json().catch(()=>({}));
-  if(!res.ok || data.ok === false) throw new Error(data.error || 'AI analisis gagal.');
-  return data;
-}
 
 async function processSentiment(){
  const inputType = $('#sentimentInputType').value;
@@ -1848,28 +1838,6 @@ async function processSentiment(){
    }
   }
   // inputType === 'media' sudah diisi lebih awal dari hasil Meta Graph API asli
-
-  let aiSummary = null;
-  let aiFailed = false;
-
-  if(useAI){
-   $('#sentimentLoadingText').textContent = 'Mengirim komentar ke AI (Claude/OpenAI) untuk analisis mendalam...';
-   try{
-    const aiData = await callAISentiment(comments);
-    (aiData.results || []).forEach(r => {
-      if(comments[r.index]){
-        comments[r.index].sentiment = r.sentiment || comments[r.index].sentiment;
-        comments[r.index].score = typeof r.score === 'number' ? r.score : comments[r.index].score;
-        comments[r.index].reason = r.reason || '';
-      }
-    });
-    aiSummary = aiData.summary || null;
-   }catch(aiErr){
-    console.error('AI sentiment error:', aiErr);
-    aiFailed = true;
-    alert('AI analisis gagal (' + aiErr.message + '). Menampilkan hasil klasifikasi kata kunci sebagai gantinya.');
-   }
-  }
 
   const total = comments.length || 1;
   const pos = comments.filter(c=>c.sentiment==='Positif').length;
@@ -2904,172 +2872,92 @@ function showDatasetPreview() {
   `).join('');
 }
 
-function analyzeSentimentDataset() {
+async function analyzeSentimentDataset() {
   if (!sentimentDataset || sentimentDataset.length === 0) {
     alert('Silakan upload dataset terlebih dahulu!');
     return;
   }
   
-  showLoading('Menganalisis dataset...');
+  // Validate CSV columns
+  const requiredColumns = ['tanggal_upload', 'username', 'komentar'];
+  const availableColumns = Object.keys(sentimentDataset[0] || {});
+  const missingColumns = requiredColumns.filter(col => !availableColumns.includes(col));
+  
+  if (missingColumns.length > 0) {
+    alert(`CSV harus memiliki kolom: ${requiredColumns.join(', ')}\nKolom yang hilang: ${missingColumns.join(', ')}`);
+    return;
+  }
+  
+  showLoading('Menganalisis dataset dengan backend ML...');
   
   try {
-    // 1. Preprocessing
-    console.log('Starting preprocessing...');
-    sentimentPreprocessed = sentimentDataset.map(row => {
-      const preprocessed = preprocessText(row.komentar);
-      console.log('Preprocessing:', { original: row.komentar.substring(0, 50), preprocessed });
-      return {
-        ...row,
-        preprocessed: preprocessed
-      };
+    // Call ml-predict.js with CSV data
+    const response = await fetch('/.netlify/functions/ml-predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv_data: sentimentDataset })
     });
     
-    // Check if preprocessing results are empty
-    const emptyPreprocessed = sentimentPreprocessed.filter(r => !r.preprocessed || r.preprocessed.trim() === '').length;
-    console.log('Empty preprocessed count:', emptyPreprocessed);
+    const data = await response.json();
     
-    // Show preprocessing results
-    showPreprocessingResults();
-    
-    // 2. Train/Test Split (80/20)
-    console.log('Splitting data...');
-    const shuffled = [...sentimentPreprocessed].sort(() => Math.random() - 0.5);
-    const splitIndex = Math.floor(shuffled.length * 0.8);
-    const trainData = shuffled.slice(0, splitIndex);
-    const testData = shuffled.slice(splitIndex);
-    
-    console.log('Train data:', trainData.length, 'Test data:', testData.length);
-    
-    // Log label distribution in train data
-    const trainLabelCounts = {};
-    trainData.forEach(d => {
-      if (d.label) {
-        trainLabelCounts[d.label] = (trainLabelCounts[d.label] || 0) + 1;
-      }
-    });
-    console.log('Train label distribution:', trainLabelCounts);
-    
-    // 3. TF-IDF Vectorization
-    console.log('Vectorizing with TF-IDF...');
-    const vectorizer = new TFIDFVectorizer();
-    const trainTexts = trainData.map(d => d.preprocessed);
-    const testTexts = testData.map(d => d.preprocessed);
-    
-    console.log('Sample train texts:', trainTexts.slice(0, 3));
-    
-    const trainVectors = vectorizer.fitTransform(trainTexts);
-    const testVectors = vectorizer.transform(testTexts);
-    
-    console.log('Vocabulary size:', Object.keys(vectorizer.vocabulary).length);
-    console.log('Sample train vector:', trainVectors[0]);
-    
-    // 4. Train Naive Bayes
-    console.log('Training Naive Bayes...');
-    const classifier = new MultinomialNaiveBayes();
-    const trainLabels = trainData.map(d => d.label || 'Netral');
-    
-    console.log('Train labels sample:', trainLabels.slice(0, 10));
-    console.log('Unique train labels:', [...new Set(trainLabels)]);
-    
-    classifier.fit(trainVectors, trainLabels);
-    
-    console.log('Classifier classes:', classifier.classes);
-    console.log('Classifier priors:', classifier.classPriors);
-    
-    // 5. Predict on ALL data (train + test)
-    console.log('Predicting on all data...');
-    const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
-    const allVectors = vectorizer.transform(allTexts);
-    const predictions = classifier.predict(allVectors);
-    const probabilities = classifier.predict_proba(allVectors);
-    
-    console.log('Predictions sample:', predictions.slice(0, 10));
-    console.log('Unique predictions:', [...new Set(predictions)]);
-    
-    // Check if all predictions are the same
-    const uniquePredictions = [...new Set(predictions)];
-    if (uniquePredictions.length === 1) {
-      console.warn('All predictions are the same:', uniquePredictions[0]);
-      console.warn('Using fallback keyword-based classification');
-      
-      // Fallback to keyword-based classification
-      sentimentPredictions = sentimentPreprocessed.map(row => {
-        const sentiment = classifyByKeyword(row.komentar);
-        return {
-          ...row,
-          predicted: sentiment,
-          confidence: { [sentiment]: 0.85 },
-          confidencePercent: 85
-        };
-      });
-    } else {
-      // Store predictions with confidence
-      sentimentPredictions = sentimentPreprocessed.map((row, i) => ({
-        ...row,
-        predicted: predictions[i],
-        confidence: probabilities[i],
-        confidencePercent: Math.max(...Object.values(probabilities[i])) * 100
-      }));
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Gagal menganalisis dataset');
     }
     
-    // Log prediction distribution
-    const predCounts = {};
-    sentimentPredictions.forEach(p => {
-      predCounts[p.predicted] = (predCounts[p.predicted] || 0) + 1;
-    });
-    console.log('Prediction distribution:', predCounts);
+    // Store results with linguistic features
+    sentimentPredictions = data.results.map(r => ({
+      tanggal_upload: r.tanggal_upload,
+      username: r.username,
+      komentar: r.komentar,
+      predicted: r.label.charAt(0).toUpperCase() + r.label.slice(1), // Capitalize first letter
+      confidence: r.confidence,
+      confidencePercent: (r.confidence * 100).toFixed(1),
+      linguistic_features: r.linguistic_features
+    }));
+    
+    console.log('ML Results:', sentimentPredictions.slice(0, 5));
     
     // Show prediction results
     showPredictionResults();
-    
-    // 6. Evaluate if labels exist
-    const hasLabels = sentimentDataset.some(row => row.label);
-    console.log('Has labels:', hasLabels);
-    
-    if (hasLabels) {
-      const allLabels = sentimentPreprocessed.map(d => d.label || 'Netral');
-      console.log('All labels sample:', allLabels.slice(0, 10));
-      
-      sentimentEvaluation = calculateEvaluationMetrics(allLabels, predictions, ['Positif', 'Netral', 'Negatif']);
-      
-      console.log('Evaluation metrics:', sentimentEvaluation);
-      
-      // Show evaluation results
-      showEvaluationResults();
-      
-      // Show confusion matrix
-      showConfusionMatrix();
-      
-      // Show classification report
-      showClassificationReport();
-      
-      // Show sentiment distribution charts
-      showSentimentDistribution();
-    } else {
-      // Show sentiment distribution without evaluation
-      showSentimentDistribution();
-    }
-    
-    // Show final results
-    showFinalResults();
-    
-    // Show summary
-    showEvaluationSummary();
-    
-    // Show export buttons
-    document.getElementById('sentimentExportSection').style.display = 'block';
-    
-    // Show AI section and generate recommendations
-    document.getElementById('sentimentAISection').style.display = 'block';
-    generateAIRecommendation();
-    
     hideLoading();
+    
+    // Show success message
+    alert(`Analisis selesai! ${sentimentPredictions.length} komentar diproses.`);
     
   } catch (error) {
+    console.error('Error analyzing dataset:', error);
     hideLoading();
-    alert('Error saat menganalisis dataset: ' + error.message);
-    console.error('Analysis error:', error);
+    alert('Gagal menganalisis dataset: ' + error.message);
   }
+}
+
+function showPredictionResults() {
+  const predictionSection = document.getElementById('sentimentPredictionSection');
+  const predictionBody = document.getElementById('sentimentPredictionBody');
+  
+  if (!predictionSection || !predictionBody) return;
+  
+  predictionSection.style.display = 'block';
+  
+  const displayData = sentimentPredictions.slice(0, 100); // Show first 100
+  predictionBody.innerHTML = displayData.map(r => `
+    <tr>
+      <td>${r.username}</td>
+      <td>${r.komentar.substring(0, 80)}${r.komentar.length > 80 ? '...' : ''}</td>
+      <td>-</td>
+      <td>${r.predicted}</td>
+      <td>${r.confidencePercent}%</td>
+    </tr>
+  `).join('');
+  
+  // Show sentiment distribution
+  showSentimentDistribution();
+  
+  // Show export buttons
+  document.getElementById('sentimentExportSection').style.display = 'block';
+  
+  // Show AI section
+  document.getElementById('sentimentAISection').style.display = 'block';
 }
 
 // Keyword-based classification as fallback
@@ -3761,7 +3649,7 @@ async function generateAIRecommendation() {
     window.aiPayload = stats;
     
     // Call Netlify Function
-    const response = await fetch('/.netlify/functions/gemini-recommendation', {
+    const response = await fetch('/.netlify/functions/ai-recommendation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -3923,7 +3811,7 @@ async function retryAIRecommendation() {
     console.log('Retrying AI recommendation with stored payload');
     
     // Call Netlify Function with stored payload
-    const response = await fetch('/.netlify/functions/gemini-recommendation', {
+    const response = await fetch('/.netlify/functions/ai-recommendation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

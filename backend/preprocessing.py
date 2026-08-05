@@ -5,19 +5,19 @@ from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 class LinguisticFeatureExtractor:
     """Extract linguistic features from text before preprocessing"""
     
-    # Emoji definitions
-    POSITIVE_EMOJIS = ['😊', '😁', '😍', '❤️', '👍', '🎉', '🥳', '😄', '🤗', '💖', '✨', '🌟', '👏', '🙌', '💪']
-    NEGATIVE_EMOJIS = ['😡', '😠', '😭', '😢', '👎', '💔', '😤', '😞', '😔', '😣', '😫', '😩', '💔', '👊', '🤬']
-    NEUTRAL_EMOJIS = ['😐', '🤔', '🙃', '😶', '🙂', '😏', '🤷', '😑', '🤨', '😒']
+    # Emoji definitions (using set to avoid duplicates)
+    POSITIVE_EMOJIS = set(['😊', '😁', '😍', '❤️', '👍', '🎉', '🥳', '😄', '🤗', '💖', '✨', '🌟', '👏', '🙌', '💪'])
+    NEGATIVE_EMOJIS = set(['😡', '😠', '😭', '😢', '👎', '💔', '😤', '😞', '😔', '😣', '😫', '😩', '', '🤬'])
+    NEUTRAL_EMOJIS = set(['😐', '🤔', '🙃', '😶', '🙂', '😏', '🤷', '😑', '🤨', '😒'])
     
     # Intensifiers (penguat)
-    INTENSIFIERS = ['sangat', 'paling', 'banget', 'sekali', 'amat', 'terlalu', 'benar-benar', 'super', 'sungguh', 'amat']
+    INTENSIFIERS = ['sangat', 'paling', 'banget', 'sekali', 'amat', 'terlalu', 'benar-benar', 'super', 'sungguh']
     
-    # Softeners (pelemah)
-    SOFTENERS = ['lumayan', 'cukup', 'agak', 'sedikit', 'kurang', 'hampir']
+    # Softeners (pelemah) - kurang moved to negations
+    SOFTENERS = ['lumayan', 'cukup', 'agak', 'sedikit', 'hampir']
     
     # Negation words (TIDAK dihapus dari stopwords)
-    NEGATIONS = ['tidak', 'bukan', 'belum', 'jangan', 'kurang', 'tak', 'tiada', 'bukanlah']
+    NEGATIONS = ['tidak', 'bukan', 'belum', 'jangan', 'kurang', 'tak', 'nggak', 'gak', 'tiada', 'bukanlah']
     
     def extract_features(self, text):
         """Extract all linguistic features from text"""
@@ -68,20 +68,28 @@ class LinguisticFeatureExtractor:
         return sum(1 for word in words if word.isupper() and len(word) > 1)
     
     def _calculate_uppercase_ratio(self, text):
-        """Calculate ratio of uppercase characters"""
-        if len(text) == 0:
+        """Calculate ratio of uppercase characters to alphabet characters only"""
+        # Count only alphabet characters (a-z, A-Z)
+        alphabet_chars = sum(1 for c in text if c.isalpha())
+        if alphabet_chars == 0:
             return 0.0
         uppercase = self._count_uppercase(text)
-        return uppercase / len(text)
+        return uppercase / alphabet_chars
     
     def _count_emojis(self, text, emoji_list):
-        """Count emojis from a specific category"""
+        """Count emojis from a specific category (using set for deduplication)"""
         return sum(text.count(emoji) for emoji in emoji_list)
     
     def _count_words(self, text, word_list):
-        """Count occurrences of specific words (case-insensitive)"""
+        """Count occurrences of specific words using regex word boundary (case-insensitive)"""
         text_lower = text.lower()
-        return sum(word_list.count(word) for word in word_list if word in text_lower)
+        count = 0
+        for word in word_list:
+            # Use regex word boundary to avoid substring matching
+            pattern = r'\b' + re.escape(word) + r'\b'
+            matches = re.findall(pattern, text_lower)
+            count += len(matches)
+        return count
     
     def _count_repeated_characters(self, text):
         """Count repeated characters in words (e.g., baguuuus, kereeeen)"""

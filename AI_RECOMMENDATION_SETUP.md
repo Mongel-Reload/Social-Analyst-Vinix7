@@ -2,37 +2,37 @@
 
 ## Overview
 
-Fitur AI Recommendation pada halaman Analisis Sentimen KokoroLens menggunakan Google Gemini API untuk menghasilkan rekomendasi berbasis data hasil analisis sentimen. Fitur ini bekerja sebagai Decision Support System untuk membantu tim digital marketing dalam membuat keputusan strategis.
+Fitur AI Recommendation pada halaman Analisis Sentimen KokoroLens menggunakan Sylor API (OpenAI-compatible) untuk menghasilkan rekomendasi berbasis data hasil analisis sentimen. Fitur ini bekerja sebagai Decision Support System untuk membantu tim digital marketing dalam membuat keputusan strategis.
+
+**PENTING**: AI Recommendation TIDAK melakukan klasifikasi sentimen. Klasifikasi sentimen dilakukan sepenuhnya oleh TF-IDF + Multinomial Naive Bayes. AI hanya menganalisis hasil klasifikasi dan memberikan rekomendasi strategis.
 
 ## Architecture
 
 ```
 Frontend KokoroLens
-→ Netlify Function (gemini-recommendation.js)
-→ Gemini API
-→ Netlify Function
+→ Netlify Function (ml-predict.js) - TF-IDF + Naive Bayes
+→ Backend Python (Flask)
+→ Netlify Function (analysis-summary.js) - Ringkasan ML
+→ Netlify Function (ai-recommendation.js) - Sylor API
 → Frontend KokoroLens
 ```
 
 ## Security Principles
 
-- **API Key hanya di backend**: Gemini API Key disimpan di Netlify Environment Variables, tidak pernah di frontend
+- **API Key hanya di backend**: Sylor API Key disimpan di Netlify Environment Variables, tidak pernah di frontend
 - **Tidak ada penyimpanan lokal**: API Key tidak disimpan di localStorage, sessionStorage, atau file frontend
-- **Request validation**: Backend memvalidasi semua request sebelum mengirim ke Gemini
+- **Request validation**: Backend memvalidasi semua request sebelum mengirim ke Sylor API
 - **Output sanitization**: Semua output dari AI disanitasi sebelum ditampilkan untuk mencegah XSS
 - **Rate limiting**: Request timeout 30 detik untuk mencegah abuse
 
 ## Setup Instructions
 
-### 1. Mendapatkan Gemini API Key
+### 1. Mendapatkan Sylor API Key
 
-1. Buka [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Login dengan Google account Anda
-3. Klik "Create API Key"
-4. Copy API Key yang dihasilkan
-5. **PENTING**: Jangan bagikan API Key ini atau commit ke repository
+1. Dapatkan API Key dari provider Sylor API Anda
+2. **PENTING**: Jangan bagikan API Key ini atau commit ke repository
 
-### 2. Menambahkan GEMINI_API_KEY ke Netlify
+### 2. Menambahkan Environment Variables ke Netlify
 
 #### Via Netlify Dashboard (Production):
 
@@ -41,15 +41,21 @@ Frontend KokoroLens
 3. Masuk ke **Site configuration** → **Environment variables**
 4. Klik **Add a variable**
 5. Masukkan:
-   - **Key**: `GEMINI_API_KEY`
-   - **Value**: Paste API Key Gemini Anda
+   - **Key**: `OPENAI_BASE_URL`
+   - **Value**: `https://api.sylorapi.com`
+   - **Key**: `OPENAI_API_KEY`
+   - **Value**: Paste API Key Sylor Anda
+   - **Key**: `OPENAI_MODEL`
+   - **Value**: Model yang ingin digunakan (misal: `gpt-4o-mini`, `gpt-5.6-luna`, dll)
 6. Klik **Save**
 7. Trigger redeploy (otomatis atau manual)
 
 #### Via Netlify CLI (Development):
 
 ```bash
-netlify env:set GEMINI_API_KEY "your-api-key-here"
+netlify env:set OPENAI_BASE_URL "https://api.sylorapi.com"
+netlify env:set OPENAI_API_KEY "your-api-key-here"
+netlify env:set OPENAI_MODEL "your-model-name"
 netlify deploy
 ```
 
@@ -64,13 +70,18 @@ Setelah menambahkan environment variable:
 
 ## File Structure
 
-### Files Created:
-- `netlify/functions/gemini-recommendation.js` - Netlify Function untuk memanggil Gemini API
+### Files:
+- `netlify/functions/ml-predict.js` - Netlify Function untuk ML prediction (TF-IDF + Naive Bayes)
+- `netlify/functions/analysis-summary.js` - Netlify Function untuk ringkasan ML
+- `netlify/functions/ai-recommendation.js` - Netlify Function untuk memanggil Sylor API
+- `netlify/functions/ai-health.js` - Netlify Function untuk health check AI
 - `AI_RECOMMENDATION_SETUP.md` - Dokumentasi ini
 
 ### Files Modified:
 - `index.html` - Update UI dan JavaScript untuk AI Recommendation
-- `.env.example` - Tambahkan GEMINI_API_KEY placeholder
+- `backend/preprocessing.py` - Linguistic feature extraction
+- `backend/model.py` - TF-IDF + Linguistic Features + Naive Bayes
+- `backend/app.py` - Flask API endpoints
 
 ## Request Format
 
@@ -165,11 +176,14 @@ Netlify Function mengembalikan rekomendasi dari Gemini:
 
 Backend menangani error berikut:
 
-1. **API Key not configured**: "Gemini API Key belum dikonfigurasi oleh administrator"
-2. **Quota exceeded**: "Kuota Gemini API telah mencapai batas"
-3. **Request timeout**: "Request timeout. Silakan coba lagi"
-4. **Validation failed**: "Data analisis tidak valid"
-5. **Invalid response**: "Invalid response from Gemini"
+1. **API Key not configured**: "API Key AI belum dikonfigurasi oleh administrator"
+2. **Model not configured**: "OPENAI_MODEL environment variable belum dikonfigurasi"
+3. **Quota exceeded**: "Kuota API telah mencapai batas"
+4. **Request timeout**: "Request timeout. Silakan coba lagi"
+5. **Validation failed**: "Data analisis tidak valid"
+6. **Invalid response**: "Invalid response from API"
+
+**PENTING**: Jika AI Recommendation gagal, hasil ML (sentimen dari Naive Bayes) tetap ditampilkan. AI hanya untuk rekomendasi tambahan.
 
 Frontend menampilkan pesan error yang user-friendly tanpa menampilkan error teknis mentah.
 
@@ -207,32 +221,40 @@ Frontend menampilkan pesan error yang user-friendly tanpa menampilkan error tekn
 - Rekomendasi berbasis data ringkasan, bukan seluruh dataset
 - AI tidak melakukan klasifikasi sentimen (tetap menggunakan TF-IDF + Naive Bayes)
 - Rekomendasi memerlukan validasi manusia sebelum diterapkan
-- Kuota Gemini API terbatas (gratis tier: 60 requests/day)
-- Response time tergantung koneksi internet dan load Gemini API
+- Kuota API tergantung provider
+- Response time tergantung koneksi internet dan load API provider
 
 ## Academic Integrity
 
 Untuk penelitian akademis:
 
-- **Metode utama**: TF-IDF + Multinomial Naive Bayes
-- **Gemini AI**: Decision Support System / AI-assisted Recommendation
+- **Metode utama**: TF-IDF + Multinomial Naive Bayes + Linguistic Features
+- **Sylor AI**: Decision Support System / AI-assisted Recommendation
 - **Evaluasi model**: Accuracy, Precision, Recall, F1-score berasal dari Naive Bayes
-- **Jangan menyatakan**: Gemini melakukan klasifikasi sentimen
+- **Jangan menyatakan**: AI melakukan klasifikasi sentimen
 - **Jangan menggunakan**: Rekomendasi AI untuk menghitung metrik evaluasi
+- **Dataset pengguna**: Berisi kolom `tanggal_upload`, `username`, `komentar`
+- **Dataset training**: Berisi kolom `text` dan `sentiment`
 
 ## Troubleshooting
 
-### Error: "Gemini API Key belum dikonfigurasi"
+### Error: "API Key AI belum dikonfigurasi"
 
 **Solusi**:
-- Pastikan GEMINI_API_KEY ditambahkan ke Netlify Environment Variables
+- Pastikan OPENAI_API_KEY ditambahkan ke Netlify Environment Variables
 - Trigger redeploy setelah menambahkan environment variable
-- Cek spelling: GEMINI_API_KEY (case-sensitive)
+- Cek spelling: OPENAI_API_KEY (case-sensitive)
 
-### Error: "Kuota Gemini API telah mencapai batas"
+### Error: "OPENAI_MODEL environment variable belum dikonfigurasi"
 
 **Solusi**:
-- Tunggu reset kuota (gratis tier reset harian)
+- Pastikan OPENAI_MODEL ditambahkan ke Netlify Environment Variables
+- Set ke model yang valid (misal: gpt-4o-mini, gpt-5.6-luna)
+
+### Error: "Kuota API telah mencapai batas"
+
+**Solusi**:
+- Tunggu reset kuota sesuai provider
 - Upgrade ke paid tier untuk kuota lebih tinggi
 - Kurangi penggunaan fitur AI Recommendation
 
@@ -249,21 +271,18 @@ Untuk penelitian akademis:
 - Cek console browser untuk error
 - Verifikasi Netlify Function berhasil deploy
 - Test endpoint Netlify Function secara manual
-- Cek Gemini API status di Google Cloud Console
+- Cek Sylor API status di dashboard provider
 
 ## Monitoring
 
-Untuk memantau penggunaan Gemini API:
+Untuk memantau penggunaan Sylor API:
 
-1. Buka [Google AI Studio](https://makersuite.google.com/app/apikey)
+1. Buka dashboard provider Sylor API Anda
 2. Lihat usage statistics untuk API Key Anda
 3. Monitor request count dan error rate
 
 ## Cost Considerations
 
-- **Free tier**: 60 requests/day untuk gemini-pro
-- **Paid tier**: $0.001 per 1K characters untuk gemini-pro
-- Setiap request kira-kira 2-3K characters (prompt + response)
-- Estimasi biaya: $0.002-0.003 per request (paid tier)
+Biaya tergantung pada provider Sylor API dan model yang digunakan. Silakan cek pricing dari provider Anda.
 
 ## Support Untuk masalah atau pertanyaan, hubungi developer atau buka issue di GitHub repository.

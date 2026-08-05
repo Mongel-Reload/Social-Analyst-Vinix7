@@ -70,19 +70,12 @@ exports.handler = async (event, context) => {
     let totalExclamation = 0;
     let totalQuestion = 0;
     let totalRepeatedChar = 0;
+    let uppercaseCommentCount = 0;
     
-    // Emoji frequency tracking
-    const emojiFrequency = {
-      positive: {},
-      negative: {},
-      neutral: {}
-    };
-    
-    // Negation frequency tracking
-    const negationFrequency = {};
-    
-    // Intensifier frequency tracking
+    // Word frequency tracking for linguistic analysis
     const intensifierFrequency = {};
+    const softenerFrequency = {};
+    const negationFrequency = {};
     
     results.forEach((result, index) => {
       const label = result.label || 'netral';
@@ -118,6 +111,11 @@ exports.handler = async (event, context) => {
       totalExclamation += linguistic.exclamation_count || 0;
       totalQuestion += linguistic.question_count || 0;
       totalRepeatedChar += linguistic.repeated_character_count || 0;
+      
+      // Count comments with uppercase words
+      if (linguistic.uppercase_word_count > 0) {
+        uppercaseCommentCount++;
+      }
     });
     
     // Calculate percentages
@@ -130,6 +128,9 @@ exports.handler = async (event, context) => {
     const avgUppercaseRatio = total > 0 ? (totalUppercaseWordCount / total).toFixed(2) : 0;
     const avgExclamation = total > 0 ? (totalExclamation / total).toFixed(2) : 0;
     const avgRepeatedChar = total > 0 ? (totalRepeatedChar / total).toFixed(2) : 0;
+    
+    // Calculate uppercase percentage (comments with uppercase words)
+    const uppercasePercentage = total > 0 ? ((uppercaseCommentCount / total) * 100).toFixed(1) : 0;
     
     // Determine dominant sentiment
     let dominantSentiment = 'netral';
@@ -155,12 +156,10 @@ exports.handler = async (event, context) => {
       .slice(0, 3)
       .map(r => ({ text: r.text.substring(0, 250), confidence: r.confidence }));
     
-    // Extract frequent terms (simplified - would need actual word frequency analysis)
-    const frequentTerms = {
-      positive: [],
-      neutral: [],
-      negative: []
-    };
+    // Find most common linguistic features (simplified)
+    const mostCommonIntensifier = 'N/A';
+    const mostCommonSoftener = 'N/A';
+    const mostCommonNegation = 'N/A';
     
     // Prepare AI payload (lightweight)
     const aiPayload = {
@@ -176,14 +175,20 @@ exports.handler = async (event, context) => {
         average_confidence: averageConfidence
       },
       linguistic_summary: {
-        uppercase_percentage: avgUppercaseRatio,
+        uppercase_comment_percentage: uppercasePercentage,
+        uppercase_word_ratio: avgUppercaseRatio,
         positive_emoji_count: totalPositiveEmoji,
         negative_emoji_count: totalNegativeEmoji,
         neutral_emoji_count: totalNeutralEmoji,
         intensifier_count: totalIntensifier,
+        softener_count: totalSoftener,
         negation_count: totalNegation,
         avg_exclamation: avgExclamation,
-        avg_repeated_characters: avgRepeatedChar
+        avg_question: (totalQuestion / total).toFixed(2),
+        avg_repeated_characters: avgRepeatedChar,
+        most_common_intensifier: mostCommonIntensifier,
+        most_common_softener: mostCommonSoftener,
+        most_common_negation: mostCommonNegation
       },
       representative_comments: {
         positive: positiveComments,

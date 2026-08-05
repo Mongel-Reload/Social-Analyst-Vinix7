@@ -271,19 +271,17 @@ exports.handler = async (event, context) => {
     });
   }
   
-  // Validate environment variables (hanya gpt-5.6-luna)
+  // Validate environment variables
   const apiKey = process.env.OPENAI_API_KEY?.trim();
-  const configuredModel = process.env.OPENAI_MODEL?.trim() || 'gpt-5.6-luna';
+  const configuredModel = process.env.OPENAI_MODEL?.trim();
   const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
   
-  // Hanya izinkan gpt-5.6-luna
-  if (configuredModel !== 'gpt-5.6-luna') {
-    console.log({ stage: 'model_validation_failed', elapsedMs: Date.now() - startedAt, model: configuredModel });
+  if (!configuredModel) {
+    console.log({ stage: 'model_missing', elapsedMs: Date.now() - startedAt });
     return jsonResponse(500, {
       success: false,
-      code: 'MODEL_NOT_ALLOWED',
-      message: 'Hanya model gpt-5.6-luna yang diizinkan untuk mengurangi latency.',
-      details: { configuredModel }
+      code: 'MODEL_MISSING',
+      message: 'OPENAI_MODEL environment variable belum dikonfigurasi.'
     });
   }
   

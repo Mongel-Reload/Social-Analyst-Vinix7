@@ -38,10 +38,19 @@ Masuk ke:
 Tambahkan:
 
 ```env
-META_ACCESS_TOKEN=EAABxxxxxxxxxxxxxxxx
-META_PAGE_ID=123456789012345
-META_IG_ID=17841400000000000
+# Meta Graph API
+META_ACCESS_TOKEN=<your_meta_access_token>
+META_PAGE_ID=<your_page_id>
+META_IG_ID=<your_instagram_business_id>
 META_API_VERSION=v21.0
+
+# AI Recommendation (Sylor API)
+OPENAI_BASE_URL=https://api.sylorapi.com
+OPENAI_API_KEY=<your_sylor_api_key>
+OPENAI_MODEL=<your_sylor_model>
+
+# ML Backend (jika menggunakan Python backend)
+ML_BACKEND_URL=<your_ml_backend_url>
 ```
 
 Setelah itu klik **Redeploy**.
@@ -50,14 +59,21 @@ Setelah itu klik **Redeploy**.
 
 Website akan memanggil endpoint berikut:
 
+### Meta Graph API
 - `/.netlify/functions/meta-test`
 - `/.netlify/functions/meta-dashboard`
 - `/.netlify/functions/meta-media`
 - `/.netlify/functions/meta-comments?media_id=MEDIA_ID`
 
+### Machine Learning & AI Recommendation
+- `/.netlify/functions/ml-predict` - Prediksi sentimen dengan TF-IDF + Naive Bayes
+- `/.netlify/functions/analysis-summary` - Ringkasan hasil ML
+- `/.netlify/functions/ai-recommendation` - Rekomendasi AI dari Sylor API
+- `/.netlify/functions/ai-health` - Health check AI
+
 ## Catatan Penting
 
-1. Jangan menaruh `META_ACCESS_TOKEN` langsung di HTML.
+1. Jangan menaruh `META_ACCESS_TOKEN` atau `OPENAI_API_KEY` langsung di HTML.
 2. Token harus disimpan di Netlify Environment Variables.
 3. Jika tombol Meta API gagal, cek:
    - token valid atau tidak;
@@ -66,6 +82,8 @@ Website akan memanggil endpoint berikut:
    - akun Instagram sudah Business/Creator dan terhubung ke Facebook Page.
 4. Field insight Meta bisa berbeda tergantung permission/token yang aktif.
 5. Versi ini sudah siap untuk GitHub + Netlify, tetapi masih memakai beberapa data demo untuk halaman non-Meta. Data demo dapat diganti bertahap dari response API.
+6. **Analisis Sentimen**: Menggunakan TF-IDF + Multinomial Naive Bayes + Linguistic Features. AI Recommendation hanya untuk rekomendasi strategis, bukan klasifikasi sentimen.
+7. **Dataset CSV**: Untuk analisis sentimen, upload CSV dengan kolom `tanggal_upload`, `username`, `komentar`.
 
 ## Permission Meta yang Umumnya Dibutuhkan
 

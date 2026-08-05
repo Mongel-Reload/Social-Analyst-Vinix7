@@ -7,7 +7,7 @@ def main():
     print("Loading dataset...")
     
     # Train model
-    dataset_path = 'backend/data/dataset.csv'
+    dataset_path = 'data/dataset.csv'
     metrics = classifier.train(dataset_path, test_size=0.2, random_state=42)
     
     print("\n=== Training Complete ===")
