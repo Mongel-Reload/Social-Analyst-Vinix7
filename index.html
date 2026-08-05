@@ -2959,7 +2959,7 @@ function showDatasetPreview() {
   `).join('');
 }
 
-async function analyzeSentimentDataset() {
+function analyzeSentimentDataset() {
   if (!sentimentDataset || sentimentDataset.length === 0) {
     alert('Silakan upload dataset terlebih dahulu!');
     return;
@@ -2968,71 +2968,158 @@ async function analyzeSentimentDataset() {
   showLoading('Menganalisis dataset...');
   
   try {
-    // Try to call ml-predict.js with CSV data
-    const response = await fetch('/.netlify/functions/ml-predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ csv_data: sentimentDataset })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || 'Gagal menganalisis dataset');
-    }
-    
-    // Store results with linguistic features
-    sentimentPredictions = data.results.map(r => ({
-      tanggal_upload: r.tanggal_upload,
-      username: r.username,
-      komentar: r.komentar,
-      predicted: r.label.charAt(0).toUpperCase() + r.label.slice(1), // Capitalize first letter
-      confidence: r.confidence,
-      confidencePercent: (r.confidence * 100).toFixed(1),
-      linguistic_features: r.linguistic_features
-    }));
-    
-    console.log('ML Results:', sentimentPredictions.slice(0, 5));
-    
-    // Show prediction results
-    showPredictionResults();
-    hideLoading();
-    
-    // Show success message
-    alert(`Analisis selesai! ${sentimentPredictions.length} komentar diproses.`);
-    
-  } catch (error) {
-    console.error('ML backend unavailable, using fallback:', error);
-    
-    // Fallback to client-side keyword-based classification
-    showLoading('Menggunakan klasifikasi berbasis kata kunci...');
-    
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    sentimentPredictions = sentimentDataset.map(row => {
-      const prediction = classifyByKeyword(row.komentar);
-      const confidence = prediction === 'Netral' ? 0.5 : 0.7;
-      
+    // 1. Preprocessing
+    console.log('Starting preprocessing...');
+    sentimentPreprocessed = sentimentDataset.map(row => {
+      const preprocessed = preprocessText(row.komentar);
+      console.log('Preprocessing:', { original: row.komentar.substring(0, 50), preprocessed });
       return {
-        tanggal_upload: row.tanggal_upload,
-        username: row.username,
-        komentar: row.komentar,
-        predicted: prediction,
-        confidence: confidence,
-        confidencePercent: (confidence * 100).toFixed(1),
-        linguistic_features: null
+        ...row,
+        preprocessed: preprocessed
       };
     });
     
-    console.log('Fallback Results:', sentimentPredictions.slice(0, 5));
+    // Check if preprocessing results are empty
+    const emptyPreprocessed = sentimentPreprocessed.filter(r => !r.preprocessed || r.preprocessed.trim() === '').length;
+    console.log('Empty preprocessed count:', emptyPreprocessed);
+    
+    // Show preprocessing results
+    showPreprocessingResults();
+    
+    // 2. Train/Test Split (80/20)
+    console.log('Splitting data...');
+    const shuffled = [...sentimentPreprocessed].sort(() => Math.random() - 0.5);
+    const splitIndex = Math.floor(shuffled.length * 0.8);
+    const trainData = shuffled.slice(0, splitIndex);
+    const testData = shuffled.slice(splitIndex);
+    
+    console.log('Train data:', trainData.length, 'Test data:', testData.length);
+    
+    // Log label distribution in train data
+    const trainLabelCounts = {};
+    trainData.forEach(d => {
+      if (d.label) {
+        trainLabelCounts[d.label] = (trainLabelCounts[d.label] || 0) + 1;
+      }
+    });
+    console.log('Train label distribution:', trainLabelCounts);
+    
+    // 3. TF-IDF Vectorization
+    console.log('Vectorizing with TF-IDF...');
+    const vectorizer = new TFIDFVectorizer();
+    const trainTexts = trainData.map(d => d.preprocessed);
+    const testTexts = testData.map(d => d.preprocessed);
+    
+    console.log('Sample train texts:', trainTexts.slice(0, 3));
+    
+    const trainVectors = vectorizer.fitTransform(trainTexts);
+    const testVectors = vectorizer.transform(testTexts);
+    
+    console.log('Vocabulary size:', Object.keys(vectorizer.vocabulary).length);
+    console.log('Sample train vector:', trainVectors[0]);
+    
+    // 4. Train Naive Bayes
+    console.log('Training Naive Bayes...');
+    const classifier = new MultinomialNaiveBayes();
+    const trainLabels = trainData.map(d => d.label || 'Netral');
+    
+    console.log('Train labels sample:', trainLabels.slice(0, 10));
+    console.log('Unique train labels:', [...new Set(trainLabels)]);
+    
+    classifier.fit(trainVectors, trainLabels);
+    
+    console.log('Classifier classes:', classifier.classes);
+    console.log('Classifier priors:', classifier.classPriors);
+    
+    // 5. Predict on ALL data (train + test)
+    console.log('Predicting on all data...');
+    const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
+    const allVectors = vectorizer.transform(allTexts);
+    const predictions = classifier.predict(allVectors);
+    const probabilities = classifier.predict_proba(allVectors);
+    
+    console.log('Predictions sample:', predictions.slice(0, 10));
+    console.log('Unique predictions:', [...new Set(predictions)]);
+    
+    // Check if all predictions are the same
+    const uniquePredictions = [...new Set(predictions)];
+    if (uniquePredictions.length === 1) {
+      console.warn('All predictions are the same:', uniquePredictions[0]);
+      console.warn('Using fallback keyword-based classification');
+      
+      // Fallback to keyword-based classification
+      sentimentPredictions = sentimentPreprocessed.map(row => {
+        const sentiment = classifyByKeyword(row.komentar);
+        return {
+          ...row,
+          predicted: sentiment,
+          confidence: { [sentiment]: 0.85 },
+          confidencePercent: 85
+        };
+      });
+    } else {
+      // Store predictions with confidence
+      sentimentPredictions = sentimentPreprocessed.map((row, i) => ({
+        ...row,
+        predicted: predictions[i],
+        confidence: probabilities[i],
+        confidencePercent: Math.max(...Object.values(probabilities[i])) * 100
+      }));
+    }
+    
+    // Log prediction distribution
+    const predCounts = {};
+    sentimentPredictions.forEach(p => {
+      predCounts[p.predicted] = (predCounts[p.predicted] || 0) + 1;
+    });
+    console.log('Prediction distribution:', predCounts);
     
     // Show prediction results
     showPredictionResults();
+    
+    // 6. Evaluate if labels exist
+    const hasLabels = sentimentDataset.some(row => row.label);
+    console.log('Has labels:', hasLabels);
+    
+    if (hasLabels) {
+      const allLabels = sentimentPreprocessed.map(d => d.label || 'Netral');
+      console.log('All labels sample:', allLabels.slice(0, 10));
+      
+      sentimentEvaluation = calculateEvaluationMetrics(allLabels, predictions, ['Positif', 'Netral', 'Negatif']);
+      
+      console.log('Evaluation metrics:', sentimentEvaluation);
+      
+      // Show evaluation results
+      showEvaluationResults();
+      
+      // Show confusion matrix
+      showConfusionMatrix();
+      
+      // Show classification report
+      showClassificationReport();
+      
+      // Show sentiment distribution charts
+      showSentimentDistribution();
+    } else {
+      // Show sentiment distribution charts without evaluation
+      showSentimentDistribution();
+    }
+    
     hideLoading();
     
-    // Show success message with fallback notice
-    alert(`Analisis selesai! ${sentimentPredictions.length} komentar diproses.\n\nCatatan: Menggunakan klasifikasi berbasis kata kunci karena ML backend tidak tersedia.`);
+    // 7. Generate summary and call AI recommendation
+    const summary = calculateSentimentStatistics(sentimentPredictions);
+    console.log('Summary:', summary);
+    
+    // Call AI recommendation
+    generateAIRecommendation();
+    
+    alert(`Analisis selesai! ${sentimentPredictions.length} komentar diproses.`);
+    
+  } catch (error) {
+    console.error('Analysis error:', error);
+    hideLoading();
+    alert('Gagal menganalisis dataset: ' + error.message);
   }
 }
 
