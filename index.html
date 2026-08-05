@@ -3442,9 +3442,9 @@ function calculateSentimentStatistics() {
   // Count low confidence (< 50%)
   const lowConfidenceCount = sentimentPredictions.filter(row => (row.confidencePercent || 0) < 50).length;
   
-  // Extract all words from preprocessed text
+  // Extract all words from original comments (simple tokenization)
   const allWords = sentimentPredictions
-    .map(row => row.preprocessed.split(' '))
+    .map(row => (row.komentar || '').toLowerCase().split(/\s+/))
     .flat()
     .filter(word => word.length > 2);
   
@@ -3463,7 +3463,7 @@ function calculateSentimentStatistics() {
   // Positive words (from positive comments)
   const positiveComments = sentimentPredictions.filter(row => row.predicted === 'Positif');
   const positiveWords = positiveComments
-    .map(row => row.preprocessed.split(' '))
+    .map(row => (row.komentar || '').toLowerCase().split(/\s+/))
     .flat()
     .filter(word => word.length > 2);
   
@@ -3480,7 +3480,7 @@ function calculateSentimentStatistics() {
   // Negative words (from negative comments)
   const negativeComments = sentimentPredictions.filter(row => row.predicted === 'Negatif');
   const negativeWords = negativeComments
-    .map(row => row.preprocessed.split(' '))
+    .map(row => (row.komentar || '').toLowerCase().split(/\s+/))
     .flat()
     .filter(word => word.length > 2);
 
