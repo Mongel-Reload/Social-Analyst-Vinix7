@@ -334,6 +334,7 @@ Pastikan:
     });
     
     console.log('Gemini API response received');
+    console.log('Response body:', JSON.stringify(geminiResponse).substring(0, 500));
     
     // Validate and parse response
     const validatedResponse = validateGeminiResponse(geminiResponse);
@@ -352,27 +353,43 @@ Pastikan:
     console.error('=== Gemini Recommendation Error ===');
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
+    console.error('Error code:', error.code);
     
     // Return error response (never expose API key)
     let errorMessage = 'Failed to generate recommendation';
+    let errorDetails = error.message;
     
     if (error.message.includes('API key')) {
       errorMessage = 'Gemini API Key not configured';
+      errorDetails = 'API Key tidak ditemukan di environment variables';
     } else if (error.message.includes('quota')) {
       errorMessage = 'Gemini API quota exceeded';
-    } else if (error.message.includes('timeout')) {
+      errorDetails = 'Kuota Gemini API telah mencapai batas';
+    } else if (error.message.includes('timeout') || error.name === 'AbortError') {
       errorMessage = 'Request timeout';
+      errorDetails = 'Request ke Gemini API timeout (30 detik)';
     } else if (error.message.includes('JSON')) {
       errorMessage = 'Invalid response from Gemini';
+      errorDetails = 'Response dari Gemini bukan format JSON yang valid';
     } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
       errorMessage = 'Cannot connect to Gemini API';
+      errorDetails = 'Tidak dapat terhubung ke Gemini API';
+    } else if (error.message.includes('fetch')) {
+      errorMessage = 'Network error';
+      errorDetails = 'Gagal melakukan request ke Gemini API';
     }
     
     console.log('Returning error to frontend:', errorMessage);
+    console.log('Error details:', errorDetails);
     
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: errorMessage })
+      body: JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails,
+        message: error.message
+      })
     };
   }
 };

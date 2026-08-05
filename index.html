@@ -3716,7 +3716,9 @@ async function generateAIRecommendation() {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Error response:', errorData);
-      throw new Error(errorData.error || `HTTP ${response.status}`);
+      console.error('Error details:', errorData.details);
+      console.error('Error message:', errorData.message);
+      throw new Error(errorData.error || errorData.details || `HTTP ${response.status}`);
     }
     
     const aiResponse = await response.json();
