@@ -433,7 +433,11 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <div id="sentimentAISection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">🤖 AI Insight & Recommendation</h3>
         
-        <button class="btn primary" id="generateAIInsight" style="width:100%">Generate Rekomendasi AI</button>
+        <!-- Loading State -->
+        <div id="aiLoading" style="display:none;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:15px">🤖</div>
+          <p style="color:#9aa4b2">Sedang menyusun rekomendasi berdasarkan hasil analisis...</p>
+        </div>
         
         <!-- AI Results -->
         <div id="aiResults" style="margin-top:20px;display:none">
@@ -483,6 +487,13 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px;border-left:4px solid #f59e0b">
             <small style="color:#9aa4b2">⚠️ Rekomendasi AI dihasilkan berdasarkan ringkasan hasil klasifikasi Multinomial Naive Bayes dan tetap memerlukan validasi manusia sebelum diterapkan.</small>
           </div>
+        </div>
+        
+        <!-- Error State -->
+        <div id="aiError" style="display:none;padding:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px">
+          <p style="color:#fca5a5;margin-bottom:10px">❌ Gagal menghasilkan rekomendasi</p>
+          <p id="aiErrorMessage" style="color:#d1d5db;font-size:13px"></p>
+          <button class="btn primary" onclick="retryAIRecommendation()" style="margin-top:10px">Coba Lagi</button>
         </div>
       </div>
     </section>
@@ -3048,8 +3059,9 @@ function analyzeSentimentDataset() {
     // Show export buttons
     document.getElementById('sentimentExportSection').style.display = 'block';
     
-    // Show AI Insight section
+    // Show AI section and generate recommendations
     document.getElementById('sentimentAISection').style.display = 'block';
+    generateAIRecommendation();
     
     hideLoading();
     
@@ -3507,10 +3519,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let aiRecommendationData = null;
 
 function setupAIHandlers() {
-  const generateBtn = document.getElementById('generateAIInsight');
-  if (generateBtn) {
-    generateBtn.addEventListener('click', generateAIRecommendation);
-  }
+  // No button handler needed - AI recommendation runs automatically after analysis
 }
 
 // Calculate statistics for AI analysis
@@ -3678,13 +3687,14 @@ function extractTopics(words) {
 // Generate AI Recommendation via Netlify Function
 async function generateAIRecommendation() {
   if (!sentimentPredictions) {
-    alert('Silakan analisis dataset terlebih dahulu!');
+    console.log('No sentiment predictions, skipping AI recommendation');
     return;
   }
   
-  const generateBtn = document.getElementById('generateAIInsight');
-  generateBtn.disabled = true;
-  generateBtn.textContent = 'Menyusun rekomendasi berdasarkan hasil analisis...';
+  // Show loading state
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiResults').style.display = 'none';
+  document.getElementById('aiError').style.display = 'none';
   
   try {
     // Calculate statistics
@@ -3715,6 +3725,10 @@ async function generateAIRecommendation() {
     // Store recommendation data
     aiRecommendationData = aiResponse;
     
+    // Hide loading, show results
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiResults').style.display = 'block';
+    
     // Display response with sanitization
     displayAIRecommendation(aiResponse);
     
@@ -3722,6 +3736,10 @@ async function generateAIRecommendation() {
     console.error('AI Error:', error);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
+    
+    // Hide loading, show error
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiError').style.display = 'block';
     
     // Show user-friendly error message
     let errorMessage = 'Gagal menghasilkan rekomendasi. ';
@@ -3742,12 +3760,13 @@ async function generateAIRecommendation() {
       errorMessage += `Error: ${error.message}. Silakan coba lagi nanti.`;
     }
     
-    alert(errorMessage);
-    
-  } finally {
-    generateBtn.disabled = false;
-    generateBtn.textContent = 'Generate Rekomendasi AI';
+    document.getElementById('aiErrorMessage').textContent = errorMessage;
   }
+}
+
+// Retry AI Recommendation (for error state)
+function retryAIRecommendation() {
+  generateAIRecommendation();
 }
 
 // Sanitize text to prevent XSS
