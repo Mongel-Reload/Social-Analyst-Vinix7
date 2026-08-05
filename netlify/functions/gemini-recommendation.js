@@ -2,13 +2,16 @@
 const SYSTEM_INSTRUCTION = `Anda adalah analis media sosial yang memberikan rekomendasi berdasarkan hasil klasifikasi sentimen. Gunakan hanya data JSON yang diberikan. Jangan membuat angka, fakta, topik, atau komentar yang tidak tersedia. Setiap rekomendasi harus menyebutkan dasar datanya. Jangan memberikan prediksi persentase peningkatan tanpa model forecasting. Jangan mengklaim hubungan sebab-akibat tanpa bukti. Gunakan bahasa Indonesia formal dan mudah dipahami. Hasilkan rekomendasi untuk tim digital marketing.`;
 
 // Get model name from environment variable with fallback
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 // Helper function to make HTTPS request using fetch (more reliable in Netlify Functions)
 async function makeRequest(url, options, data) {
   try {
-    console.log('Making request to:', url);
-    console.log('Request options:', options);
+    console.log('=== Gemini API Request ===');
+    console.log('Endpoint:', url);
+    console.log('Method:', options.method);
+    console.log('Headers:', JSON.stringify(options.headers));
+    console.log('Body length:', data ? JSON.stringify(data).length : 0);
     
     // Add timeout using AbortController
     const controller = new AbortController();
@@ -22,11 +25,18 @@ async function makeRequest(url, options, data) {
     
     clearTimeout(timeoutId);
     
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
+    console.log('=== Gemini API Response ===');
+    console.log('HTTP Status:', response.status);
+    console.log('HTTP Status Text:', response.statusText);
+    console.log('Response OK:', response.ok);
     
     const body = await response.text();
     console.log('Response body length:', body.length);
+    
+    // Log response body if error (for debugging)
+    if (!response.ok) {
+      console.log('Response body (first 500 chars):', body.substring(0, 500));
+    }
     
     try {
       const parsed = JSON.parse(body);
@@ -34,7 +44,10 @@ async function makeRequest(url, options, data) {
       if (response.ok) {
         return parsed;
       } else {
-        throw new Error(parsed.error?.message || `HTTP ${response.status}`);
+        // Extract Google's error message
+        const googleError = parsed.error?.message || parsed.error || `HTTP ${response.status}`;
+        console.error('Google API Error:', googleError);
+        throw new Error(googleError);
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -43,8 +56,10 @@ async function makeRequest(url, options, data) {
       throw e;
     }
   } catch (error) {
-    console.error('Request error:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('=== Request Error ===');
+    console.error('Error message:', error.message);
+    console.error('Error name:', error.name);
+    console.error('Error code:', error.code);
     
     if (error.name === 'AbortError') {
       throw new Error('Request timeout');
@@ -249,8 +264,16 @@ function validateGeminiResponse(response) {
 // Netlify Function handler
 exports.handler = async (event, context) => {
   console.log('=== Gemini Recommendation Function Started ===');
+  console.log('Function: gemini-recommendation');
   console.log('HTTP Method:', event.httpMethod);
   console.log('Event body length:', event.body ? event.body.length : 0);
+  
+  // Log environment variables (without sensitive values)
+  console.log('Environment Check:');
+  console.log('  GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
+  console.log('  GEMINI_API_KEY length:', process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0);
+  console.log('  GEMINI_MODEL from env:', process.env.GEMINI_MODEL);
+  console.log('  GEMINI_MODEL final:', GEMINI_MODEL);
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -433,11 +456,11 @@ Pastikan:
     let errorDetails = error.message;
     let errorType = 'unknown';
     
-    if (error.message.includes('API key') || error.message.includes('API_KEY')) {
+    if (error.message.includes('API key') || error.message.includes('API_KEY') || error.message.includes('API_KEY not configured')) {
       errorMessage = 'Gemini API Key not configured';
       errorDetails = 'API Key tidak ditemukan di environment variables Netlify';
       errorType = 'api_key_missing';
-    } else if (error.message.includes('quota')) {
+    } else if (error.message.includes('quota') || error.message.includes('429')) {
       errorMessage = 'Gemini API quota exceeded';
       errorDetails = 'Kuota Gemini API telah mencapai batas harian';
       errorType = 'quota_exceeded';
@@ -445,30 +468,26 @@ Pastikan:
       errorMessage = 'Request timeout';
       errorDetails = 'Request ke Gemini API timeout (30 detik)';
       errorType = 'timeout';
-    } else if (error.message.includes('JSON') || error.message.includes('parse')) {
-      errorMessage = 'Invalid response from Gemini';
+    } else if (error.message.includes('JSON') || error.message.includes('parse') || error.message.includes('Invalid JSON')) {
+      errorMessage = 'Gemini returned invalid JSON';
       errorDetails = 'Response dari Gemini bukan format JSON yang valid';
       errorType = 'invalid_json';
-    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
-      errorMessage = 'Cannot connect to Gemini API';
-      errorDetails = 'Tidak dapat terhubung ke Gemini API';
-      errorType = 'connection_error';
-    } else if (error.message.includes('fetch')) {
+    } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED') || error.message.includes('fetch')) {
       errorMessage = 'Network error';
       errorDetails = 'Gagal melakukan request ke Gemini API';
       errorType = 'network_error';
-    } else if (error.message.includes('model') || error.message.includes('404')) {
-      errorMessage = 'Model not found';
-      errorDetails = `Model ${GEMINI_MODEL} tidak tersedia atau tidak valid`;
+    } else if (error.message.includes('model') || error.message.includes('404') || error.message.includes('not found') || error.message.includes('not supported')) {
+      errorMessage = 'Gemini model not found';
+      errorDetails = `Model ${GEMINI_MODEL} tidak tersedia atau tidak valid untuk generateContent`;
       errorType = 'model_not_found';
-    } else if (error.message.includes('403') || error.message.includes('401')) {
-      errorMessage = 'Authentication failed';
+    } else if (error.message.includes('403') || error.message.includes('401') || error.message.includes('authentication') || error.message.includes('invalid API key')) {
+      errorMessage = 'API key invalid';
       errorDetails = 'API Key tidak valid atau tidak memiliki akses';
       errorType = 'auth_failed';
-    } else if (error.message.includes('429')) {
-      errorMessage = 'Rate limit exceeded';
-      errorDetails = 'Terlalu banyak request dalam waktu singkat';
-      errorType = 'rate_limit';
+    } else if (error.message.includes('Validation failed')) {
+      errorMessage = 'Invalid payload';
+      errorDetails = 'Data analisis tidak valid';
+      errorType = 'invalid_payload';
     }
     
     console.log('Error type:', errorType);
