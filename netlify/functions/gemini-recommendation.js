@@ -2,7 +2,7 @@
 const SYSTEM_INSTRUCTION = `Anda adalah analis media sosial yang memberikan rekomendasi berdasarkan hasil klasifikasi sentimen. Gunakan hanya data JSON yang diberikan. Jangan membuat angka, fakta, topik, atau komentar yang tidak tersedia. Setiap rekomendasi harus menyebutkan dasar datanya. Jangan memberikan prediksi persentase peningkatan tanpa model forecasting. Jangan mengklaim hubungan sebab-akibat tanpa bukti. Gunakan bahasa Indonesia formal dan mudah dipahami. Hasilkan rekomendasi untuk tim digital marketing.`;
 
 // Get model name from environment variable with fallback
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
 // Helper function to make HTTPS request using fetch (more reliable in Netlify Functions)
 async function makeRequest(url, options, data) {

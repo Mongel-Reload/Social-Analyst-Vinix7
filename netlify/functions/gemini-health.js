@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
   
   // Check for API Key
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   
   console.log('API Key present:', !!apiKey);
   console.log('API Key length:', apiKey ? apiKey.length : 0);
