@@ -3748,15 +3748,15 @@ async function generateAIRecommendation() {
     let errorMessage = 'Gagal menghasilkan rekomendasi. ';
     
     if (error.message.includes('API Key not configured')) {
-      errorMessage += 'Gemini API Key belum dikonfigurasi oleh administrator.';
+      errorMessage += 'OpenAI API Key belum dikonfigurasi oleh administrator.';
     } else if (error.message.includes('quota')) {
-      errorMessage += 'Kuota Gemini API telah mencapai batas.';
+      errorMessage += 'Kuota OpenAI API telah mencapai batas.';
     } else if (error.message.includes('timeout')) {
       errorMessage += 'Request timeout. Silakan coba lagi.';
     } else if (error.message.includes('Validation failed')) {
       errorMessage += 'Data analisis tidak valid.';
     } else if (error.message.includes('Cannot connect')) {
-      errorMessage += 'Tidak dapat terhubung ke Gemini API. Periksa koneksi internet.';
+      errorMessage += 'Tidak dapat terhubung ke OpenAI API. Periksa koneksi internet.';
     } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
       errorMessage += 'Gagal menghubungi server. Periksa koneksi internet.';
     } else {
