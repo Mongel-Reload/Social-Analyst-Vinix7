@@ -1,6 +1,6 @@
-// Health check endpoint for Gemini API
+// Health check endpoint for OpenAI API
 exports.handler = async (event, context) => {
-  console.log('=== Gemini Health Check Started ===');
+  console.log('=== OpenAI Health Check Started ===');
   console.log('HTTP Method:', event.httpMethod);
   
   // Only allow GET requests
@@ -12,8 +12,8 @@ exports.handler = async (event, context) => {
   }
   
   // Check for API Key
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const apiKey = process.env.OPENAI_API_KEY;
+  const model = process.env.OPENAI_MODEL || 'gpt-5.2';
   
   console.log('API Key present:', !!apiKey);
   console.log('API Key length:', apiKey ? apiKey.length : 0);
@@ -27,36 +27,33 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({
         status: 'unhealthy',
-        error: 'GEMINI_API_KEY not configured',
+        error: 'OPENAI_API_KEY not configured',
         model: model
       })
     };
   }
   
-  // Try to make a simple request to Gemini API
+  // Try to make a simple request to OpenAI API
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        contents: [
+        model: model,
+        messages: [
           {
-            parts: [
-              {
-                text: 'Test'
-              }
-            ]
+            role: 'user',
+            content: 'Test'
           }
         ],
-        generationConfig: {
-          maxOutputTokens: 10
-        }
+        max_tokens: 10
       })
     });
     
-    console.log('Gemini API response status:', response.status);
+    console.log('OpenAI API response status:', response.status);
     
     if (response.ok) {
       return {
@@ -67,12 +64,12 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           status: 'healthy',
           model: model,
-          message: 'Gemini API is accessible'
+          message: 'OpenAI API is accessible'
         })
       };
     } else {
       const errorData = await response.json();
-      console.error('Gemini API error:', errorData);
+      console.error('OpenAI API error:', errorData);
       
       return {
         statusCode: 503,
@@ -81,7 +78,7 @@ exports.handler = async (event, context) => {
         },
         body: JSON.stringify({
           status: 'unhealthy',
-          error: errorData.error?.message || 'Gemini API error',
+          error: errorData.error?.message || 'OpenAI API error',
           model: model,
           statusCode: response.status
         })

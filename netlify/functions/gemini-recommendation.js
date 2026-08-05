@@ -1,13 +1,13 @@
-// System instruction for Gemini
+// System instruction for OpenAI
 const SYSTEM_INSTRUCTION = `Anda adalah analis media sosial yang memberikan rekomendasi berdasarkan hasil klasifikasi sentimen. Gunakan hanya data JSON yang diberikan. Jangan membuat angka, fakta, topik, atau komentar yang tidak tersedia. Setiap rekomendasi harus menyebutkan dasar datanya. Jangan memberikan prediksi persentase peningkatan tanpa model forecasting. Jangan mengklaim hubungan sebab-akibat tanpa bukti. Gunakan bahasa Indonesia formal dan mudah dipahami. Hasilkan rekomendasi untuk tim digital marketing.`;
 
 // Get model name from environment variable with fallback
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.2';
 
 // Helper function to make HTTPS request using fetch (more reliable in Netlify Functions)
 async function makeRequest(url, options, data) {
   try {
-    console.log('=== Gemini API Request ===');
+    console.log('=== OpenAI API Request ===');
     console.log('Endpoint:', url);
     console.log('Method:', options.method);
     console.log('Headers:', JSON.stringify(options.headers));
@@ -25,7 +25,7 @@ async function makeRequest(url, options, data) {
     
     clearTimeout(timeoutId);
     
-    console.log('=== Gemini API Response ===');
+    console.log('=== OpenAI API Response ===');
     console.log('HTTP Status:', response.status);
     console.log('HTTP Status Text:', response.statusText);
     console.log('Response OK:', response.ok);
@@ -44,10 +44,10 @@ async function makeRequest(url, options, data) {
       if (response.ok) {
         return parsed;
       } else {
-        // Extract Google's error message
-        const googleError = parsed.error?.message || parsed.error || `HTTP ${response.status}`;
-        console.error('Google API Error:', googleError);
-        throw new Error(googleError);
+        // Extract OpenAI's error message
+        const openaiError = parsed.error?.message || parsed.error || `HTTP ${response.status}`;
+        console.error('OpenAI API Error:', openaiError);
+        throw new Error(openaiError);
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -194,24 +194,24 @@ function safeParseJSON(text) {
   }
 }
 
-// Validate Gemini response
-function validateGeminiResponse(response) {
-  console.log('Validating Gemini response...');
+// Validate OpenAI response
+function validateOpenAIResponse(response) {
+  console.log('Validating OpenAI response...');
   
   if (!response || typeof response !== 'object') {
     throw new Error('Invalid response format');
   }
   
-  if (!response.candidates || !Array.isArray(response.candidates) || response.candidates.length === 0) {
-    throw new Error('No candidates in response');
+  if (!response.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
+    throw new Error('No choices in response');
   }
   
-  const content = response.candidates[0].content;
-  if (!content || !content.parts || !Array.isArray(content.parts) || content.parts.length === 0) {
+  const message = response.choices[0].message;
+  if (!message || !message.content) {
     throw new Error('No content in response');
   }
   
-  const text = content.parts[0].text;
+  const text = message.content;
   if (!text || typeof text !== 'string') {
     throw new Error('No text in response');
   }
@@ -263,17 +263,17 @@ function validateGeminiResponse(response) {
 
 // Netlify Function handler
 exports.handler = async (event, context) => {
-  console.log('=== Gemini Recommendation Function Started ===');
-  console.log('Function: gemini-recommendation');
+  console.log('=== OpenAI Recommendation Function Started ===');
+  console.log('Function: openai-recommendation');
   console.log('HTTP Method:', event.httpMethod);
   console.log('Event body length:', event.body ? event.body.length : 0);
   
   // Log environment variables (without sensitive values)
   console.log('Environment Check:');
-  console.log('  GEMINI_API_KEY present:', !!process.env.GEMINI_API_KEY);
-  console.log('  GEMINI_API_KEY length:', process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0);
-  console.log('  GEMINI_MODEL from env:', process.env.GEMINI_MODEL);
-  console.log('  GEMINI_MODEL final:', GEMINI_MODEL);
+  console.log('  OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY);
+  console.log('  OPENAI_API_KEY length:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0);
+  console.log('  OPENAI_MODEL from env:', process.env.OPENAI_MODEL);
+  console.log('  OPENAI_MODEL final:', OPENAI_MODEL);
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -285,15 +285,15 @@ exports.handler = async (event, context) => {
   }
   
   // Check for API Key
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   console.log('API Key present:', !!apiKey);
   console.log('API Key length:', apiKey ? apiKey.length : 0);
   
   if (!apiKey) {
-    console.log('ERROR: Gemini API Key not configured');
+    console.log('ERROR: OpenAI API Key not configured');
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Gemini API Key not configured' })
+      body: JSON.stringify({ error: 'OpenAI API Key not configured' })
     };
   }
   
@@ -398,39 +398,42 @@ Pastikan:
 - Jangan memberikan prediksi persentase tanpa model forecasting
 - Gunakan bahasa Indonesia formal`;
 
-    console.log('Calling Gemini API...');
-    console.log('Using model:', GEMINI_MODEL);
+    console.log('Calling OpenAI API...');
+    console.log('Using model:', OPENAI_MODEL);
     
-    // Call Gemini API with dynamic model
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+    // Call OpenAI API with dynamic model
+    const openaiUrl = 'https://api.openai.com/v1/chat/completions';
     
-    const geminiResponse = await makeRequest(geminiUrl, {
+    const openaiResponse = await makeRequest(openaiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       }
     }, {
-      contents: [
+      model: OPENAI_MODEL,
+      messages: [
         {
-          parts: [
-            {
-              text: `${SYSTEM_INSTRUCTION}\n\n${prompt}`
-            }
-          ]
+          role: 'system',
+          content: SYSTEM_INSTRUCTION
+        },
+        {
+          role: 'user',
+          content: prompt
         }
       ],
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 3000,
-        responseMimeType: 'application/json'
+      temperature: 0.4,
+      max_tokens: 3000,
+      response_format: {
+        type: 'json_object'
       }
     });
     
-    console.log('Gemini API response received');
-    console.log('Response body:', JSON.stringify(geminiResponse).substring(0, 500));
+    console.log('OpenAI API response received');
+    console.log('Response body:', JSON.stringify(openaiResponse).substring(0, 500));
     
     // Validate and parse response
-    const validatedResponse = validateGeminiResponse(geminiResponse);
+    const validatedResponse = validateOpenAIResponse(openaiResponse);
     console.log('Response validated successfully');
     
     // Return success response
@@ -443,13 +446,13 @@ Pastikan:
     };
     
   } catch (error) {
-    console.error('=== Gemini Recommendation Error ===');
-    console.error('Function: gemini-recommendation');
+    console.error('=== OpenAI Recommendation Error ===');
+    console.error('Function: openai-recommendation');
     console.error('Stage: API call or response processing');
     console.error('Error message:', error.message);
     console.error('Error name:', error.name);
     console.error('Error code:', error.code);
-    console.error('Model used:', GEMINI_MODEL);
+    console.error('Model used:', OPENAI_MODEL);
     
     // Return error response (never expose API key)
     let errorMessage = 'Failed to generate recommendation';
@@ -457,28 +460,28 @@ Pastikan:
     let errorType = 'unknown';
     
     if (error.message.includes('API key') || error.message.includes('API_KEY') || error.message.includes('API_KEY not configured')) {
-      errorMessage = 'Gemini API Key not configured';
+      errorMessage = 'OpenAI API Key not configured';
       errorDetails = 'API Key tidak ditemukan di environment variables Netlify';
       errorType = 'api_key_missing';
-    } else if (error.message.includes('quota') || error.message.includes('429')) {
-      errorMessage = 'Gemini API quota exceeded';
-      errorDetails = 'Kuota Gemini API telah mencapai batas harian';
+    } else if (error.message.includes('quota') || error.message.includes('429') || error.message.includes('rate limit')) {
+      errorMessage = 'OpenAI API quota exceeded';
+      errorDetails = 'Kuota OpenAI API telah mencapai batas';
       errorType = 'quota_exceeded';
     } else if (error.message.includes('timeout') || error.name === 'AbortError') {
       errorMessage = 'Request timeout';
-      errorDetails = 'Request ke Gemini API timeout (30 detik)';
+      errorDetails = 'Request ke OpenAI API timeout (30 detik)';
       errorType = 'timeout';
     } else if (error.message.includes('JSON') || error.message.includes('parse') || error.message.includes('Invalid JSON')) {
-      errorMessage = 'Gemini returned invalid JSON';
-      errorDetails = 'Response dari Gemini bukan format JSON yang valid';
+      errorMessage = 'OpenAI returned invalid JSON';
+      errorDetails = 'Response dari OpenAI bukan format JSON yang valid';
       errorType = 'invalid_json';
     } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED') || error.message.includes('fetch')) {
       errorMessage = 'Network error';
-      errorDetails = 'Gagal melakukan request ke Gemini API';
+      errorDetails = 'Gagal melakukan request ke OpenAI API';
       errorType = 'network_error';
     } else if (error.message.includes('model') || error.message.includes('404') || error.message.includes('not found') || error.message.includes('not supported')) {
-      errorMessage = 'Gemini model not found';
-      errorDetails = `Model ${GEMINI_MODEL} tidak tersedia atau tidak valid untuk generateContent`;
+      errorMessage = 'OpenAI model not found';
+      errorDetails = `Model ${OPENAI_MODEL} tidak tersedia atau tidak valid`;
       errorType = 'model_not_found';
     } else if (error.message.includes('403') || error.message.includes('401') || error.message.includes('authentication') || error.message.includes('invalid API key')) {
       errorMessage = 'API key invalid';
@@ -500,7 +503,7 @@ Pastikan:
         error: errorMessage,
         details: errorDetails,
         type: errorType,
-        model: GEMINI_MODEL
+        model: OPENAI_MODEL
       })
     };
   }
