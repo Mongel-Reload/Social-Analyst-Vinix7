@@ -3818,6 +3818,9 @@ async function generateAIRecommendation() {
         case 'SERVICE_UNAVAILABLE':
           errorMessage += 'Sylor API sedang tidak tersedia (Service Unavailable). Silakan coba lagi dalam beberapa saat.';
           break;
+        case 'API_ENDPOINT_ERROR':
+          errorMessage += 'Sylor API endpoint tidak valid atau API sedang down. Periksa OPENAI_BASE_URL dan coba lagi.';
+          break;
         default:
           errorMessage += error.message || error.details || `Error: ${error.code || 'Unknown'}. Silakan coba lagi nanti.`;
       }

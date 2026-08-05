@@ -142,6 +142,7 @@ async function makeRequest(url, options, data) {
     console.log('Method:', options.method);
     console.log('Headers:', JSON.stringify(options.headers, (key, value) => key === 'Authorization' ? '***' : value));
     console.log('Body length:', data ? JSON.stringify(data).length : 0);
+    console.log('Body preview:', data ? JSON.stringify(data).substring(0, 500) : 'N/A');
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
@@ -158,6 +159,7 @@ async function makeRequest(url, options, data) {
     console.log('HTTP Status:', response.status);
     console.log('HTTP Status Text:', response.statusText);
     console.log('Response OK:', response.ok);
+    console.log('Content-Type:', response.headers.get('content-type'));
     
     const body = await response.text();
     console.log('Response body length:', body.length);
@@ -167,9 +169,10 @@ async function makeRequest(url, options, data) {
       
       // Check if response is HTML
       if (body.trim().startsWith('<') || body.includes('<html') || body.includes('<HTML')) {
-        console.error('Sylor API returned HTML instead of JSON');
-        console.error('HTML response:', body.substring(0, 500));
-        throw new Error('Sylor API returned HTML error page. Check API endpoint, base URL, and API key configuration.');
+        console.error('=== HTML RESPONSE DETECTED ===');
+        console.error('HTML response (first 1000 chars):', body.substring(0, 1000));
+        console.error('This indicates the API endpoint may be incorrect or the API is down');
+        throw new Error(`Sylor API returned HTML error page. Status: ${response.status}. This usually means the endpoint is incorrect or the API is down. Response: ${body.substring(0, 200)}`);
       }
     }
     
@@ -185,7 +188,8 @@ async function makeRequest(url, options, data) {
       }
     } catch (e) {
       if (e instanceof SyntaxError) {
-        console.error('JSON parse error. Response body:', body.substring(0, 500));
+        console.error('=== JSON PARSE ERROR ===');
+        console.error('Response body (first 500 chars):', body.substring(0, 500));
         throw new Error(`Invalid JSON response from Sylor API. Response: ${body.substring(0, 200)}`);
       }
       throw e;
@@ -572,11 +576,15 @@ exports.handler = async (event, context) => {
     console.error('Error name:', error.name);
     console.error('Error code:', error.code);
     console.error('Model used:', configuredModel);
+    console.error('Base URL:', baseUrl);
     
     let errorCode = 'UNKNOWN_ERROR';
     let errorMessage = 'Failed to generate recommendation';
     
-    if (error.message.includes('API key') || error.message.includes('401') || error.message.includes('403')) {
+    if (error.message.includes('HTML') || error.message.includes('Sylor API returned HTML')) {
+      errorCode = 'API_ENDPOINT_ERROR';
+      errorMessage = 'Sylor API endpoint tidak valid atau API sedang down. Periksa OPENAI_BASE_URL dan coba lagi.';
+    } else if (error.message.includes('API key') || error.message.includes('401') || error.message.includes('403')) {
       errorCode = 'AUTH_FAILED';
       errorMessage = 'API key invalid atau tidak memiliki akses';
     } else if (error.message.includes('quota') || error.message.includes('429')) {
@@ -606,6 +614,9 @@ exports.handler = async (event, context) => {
     
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ 
         success: false,
         code: errorCode,
