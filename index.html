@@ -2878,34 +2878,26 @@ function processDataset(data) {
   
   console.log('Column mapping:', { tanggalUploadCol, usernameCol, komentarCol });
   
-  // Validate required columns
+  // Validate required columns - only komentar is required
   if (!komentarCol) {
-    alert('Dataset harus memiliki kolom tanggal upload, username, dan komentar.\nHeader terbaca: ' + headers.join(', '));
-    return;
-  }
-  if (!usernameCol) {
-    alert('Dataset harus memiliki kolom tanggal upload, username, dan komentar.\nHeader terbaca: ' + headers.join(', '));
-    return;
-  }
-  if (!tanggalUploadCol) {
-    alert('Dataset harus memiliki kolom tanggal upload, username, dan komentar.\nHeader terbaca: ' + headers.join(', '));
+    alert('Kolom komentar tidak ditemukan pada dataset.');
     return;
   }
   
-  // Forward fill tanggal_upload for merged cells
-  let processedData = forwardFillDate(data, tanggalUploadCol);
+  // Forward fill tanggal_upload for merged cells (only if column exists)
+  let processedData = tanggalUploadCol ? forwardFillDate(data, tanggalUploadCol) : data;
   
   // Normalize dataset and trim values
   let skippedCount = 0;
   sentimentDataset = [];
   
   for (const row of processedData) {
-    const tanggalUpload = String(row[tanggalUploadCol] || '').trim();
-    const username = String(row[usernameCol] || '').trim();
+    const tanggalUpload = tanggalUploadCol ? String(row[tanggalUploadCol] || '').trim() : '';
+    const username = usernameCol ? String(row[usernameCol] || '').trim() : '';
     const komentar = String(row[komentarCol] || '').trim();
     
-    // Skip rows with empty komentar or username
-    if (!komentar || !username) {
+    // Skip rows with empty komentar only
+    if (!komentar) {
       skippedCount++;
       continue;
     }
@@ -2919,7 +2911,7 @@ function processDataset(data) {
   
   // Check if any valid rows remain
   if (sentimentDataset.length === 0) {
-    alert('Tidak ada baris valid dalam dataset. Semua baris memiliki komentar atau username kosong.');
+    alert('Tidak ada baris valid dalam dataset. Semua baris memiliki komentar kosong.');
     return;
   }
   
@@ -2931,7 +2923,7 @@ function processDataset(data) {
   // Show success message with skipped count
   let message = `Dataset berhasil dibaca. ${sentimentDataset.length} baris valid`;
   if (skippedCount > 0) {
-    message += ` dan ${skippedCount} baris dilewati karena komentar atau username kosong.`;
+    message += ` dan ${skippedCount} baris dilewati karena komentar kosong.`;
   } else {
     message += '.';
   }
