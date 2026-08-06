@@ -3363,7 +3363,9 @@ function analyzeSentimentDataset() {
       
       // Fallback to keyword-based classification with varying confidence
       sentimentPredictions = sentimentPreprocessed.map(row => {
-        const sentiment = classifyByKeyword(row.komentar);
+        // Check if there's a stored correction for this comment
+        const storedPrediction = getStoredPrediction(row.komentar);
+        const sentiment = storedPrediction || classifyByKeyword(row.komentar);
         // Generate varying confidence based on text length and keyword matches
         const baseConfidence = 0.6 + Math.random() * 0.3; // 0.6 to 0.9
         return {
@@ -3375,12 +3377,18 @@ function analyzeSentimentDataset() {
       });
     } else {
       // Store predictions with confidence from actual model probabilities
-      sentimentPredictions = sentimentPreprocessed.map((row, i) => ({
-        ...row,
-        predicted: predictions[i],
-        confidence: probabilities[i],
-        confidencePercent: (Math.max(...Object.values(probabilities[i])) * 100).toFixed(1)
-      }));
+      sentimentPredictions = sentimentPreprocessed.map((row, i) => {
+        // Check if there's a stored correction for this comment
+        const storedPrediction = getStoredPrediction(row.komentar);
+        const finalPrediction = storedPrediction || predictions[i];
+        
+        return {
+          ...row,
+          predicted: finalPrediction,
+          confidence: probabilities[i],
+          confidencePercent: (Math.max(...Object.values(probabilities[i])) * 100).toFixed(1)
+        };
+      });
     }
     
     // Log prediction distribution
@@ -3763,21 +3771,114 @@ function showComparisonTable() {
   section.style.display = 'block';
   
   const displayData = sentimentPredictions.slice(0, 100); // Show first 100
-  body.innerHTML = displayData.map(row => {
+  body.innerHTML = displayData.map((row, index) => {
     const status = row.label && row.predicted
       ? (row.label === row.predicted ? '✓ Sesuai' : '✗ Tidak Sesuai')
       : '-';
     const statusColor = status === '✓ Sesuai' ? '#22c55e' : (status === '✗ Tidak Sesuai' ? '#ef4444' : '#9aa4b2');
     
     return `
-      <tr>
+      <tr data-index="${index}">
         <td>${row.komentar.substring(0, 80)}${row.komentar.length > 80 ? '...' : ''}</td>
         <td>${row.label || '-'}</td>
-        <td>${row.predicted}</td>
+        <td>
+          <select class="prediction-select" data-index="${index}" style="padding:4px 8px;border-radius:4px;border:1px solid #4b5563;background:rgba(0,0,0,0.3);color:#d1d5db;cursor:pointer">
+            <option value="Positif" ${row.predicted === 'Positif' ? 'selected' : ''}>Positif</option>
+            <option value="Netral" ${row.predicted === 'Netral' ? 'selected' : ''}>Netral</option>
+            <option value="Negatif" ${row.predicted === 'Negatif' ? 'selected' : ''}>Negatif</option>
+          </select>
+        </td>
         <td style="color:${statusColor};font-weight:700">${status}</td>
       </tr>
     `;
   }).join('');
+  
+  // Add event listeners for prediction changes
+  body.querySelectorAll('.prediction-select').forEach(select => {
+    select.addEventListener('change', handlePredictionChange);
+  });
+}
+
+function handlePredictionChange(e) {
+  const index = parseInt(e.target.dataset.index);
+  const newPrediction = e.target.value;
+  const row = sentimentPredictions[index];
+  
+  if (!row) return;
+  
+  // Update the prediction in memory
+  row.predicted = newPrediction;
+  
+  // Store the correction in localStorage
+  storePredictionCorrection(row.komentar, newPrediction);
+  
+  // Update the status in the table
+  const tr = e.target.closest('tr');
+  const statusCell = tr.querySelector('td:last-child');
+  const status = row.label && newPrediction
+    ? (row.label === newPrediction ? '✓ Sesuai' : '✗ Tidak Sesuai')
+    : '-';
+  const statusColor = status === '✓ Sesuai' ? '#22c55e' : (status === '✗ Tidak Sesuai' ? '#ef4444' : '#9aa4b2');
+  statusCell.textContent = status;
+  statusCell.style.color = statusColor;
+  
+  // Update charts and statistics
+  updateStatisticsAfterCorrection();
+}
+
+function storePredictionCorrection(comment, sentiment) {
+  // Get existing corrections from localStorage
+  const corrections = JSON.parse(localStorage.getItem('sentimentCorrections') || '{}');
+  
+  // Use normalized comment as key to handle variations
+  const normalizedKey = normalizeCommentForStorage(comment);
+  corrections[normalizedKey] = sentiment;
+  
+  // Store back to localStorage
+  localStorage.setItem('sentimentCorrections', JSON.stringify(corrections));
+  
+  console.log('Stored correction:', { normalizedKey, sentiment });
+}
+
+function normalizeCommentForStorage(comment) {
+  // Normalize comment: lowercase, remove extra spaces, remove special chars
+  return comment
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getStoredPrediction(comment) {
+  const corrections = JSON.parse(localStorage.getItem('sentimentCorrections') || '{}');
+  const normalizedKey = normalizeCommentForStorage(comment);
+  return corrections[normalizedKey] || null;
+}
+
+function updateStatisticsAfterCorrection() {
+  // Recalculate prediction distribution
+  const predCounts = {};
+  sentimentPredictions.forEach(p => {
+    predCounts[p.predicted] = (predCounts[p.predicted] || 0) + 1;
+  });
+  
+  // Update summary cards
+  const total = sentimentPredictions.length;
+  const positive = predCounts['Positif'] || 0;
+  const neutral = predCounts['Netral'] || 0;
+  const negative = predCounts['Negatif'] || 0;
+  
+  document.getElementById('summaryTotal').textContent = total;
+  document.getElementById('summaryPositive').textContent = positive;
+  document.getElementById('summaryNeutral').textContent = neutral;
+  document.getElementById('summaryNegative').textContent = negative;
+  document.getElementById('summaryPositivePct').textContent = ((positive / total) * 100).toFixed(1) + '%';
+  document.getElementById('summaryNeutralPct').textContent = ((neutral / total) * 100).toFixed(1) + '%';
+  document.getElementById('summaryNegativePct').textContent = ((negative / total) * 100).toFixed(1) + '%';
+  
+  // Update charts
+  showSentimentDistribution();
+  showSentimentTrendChart();
 }
 
 // Keyword-based classification as fallback
