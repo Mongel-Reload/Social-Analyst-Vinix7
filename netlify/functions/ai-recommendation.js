@@ -149,6 +149,7 @@ async function makeRequest(url, options, data, startedAt) {
       const error = new Error(`Non-JSON response: ${contentType}`);
       error.httpStatus = response.status;
       error.responseBody = body;
+      error.contentType = contentType;
       throw error;
     }
     
@@ -442,7 +443,8 @@ exports.handler = async (event, context) => {
           code: 'PROVIDER_NON_JSON',
           message: 'Provider AI mengembalikan format yang tidak sesuai.',
           details: {
-            contentType: error.responseBody?.substring(0, 200) || 'Unknown'
+            contentType: error.contentType || 'Unknown',
+            responseSnippet: error.responseBody?.substring(0, 500) || 'Unknown'
           }
         });
       }
