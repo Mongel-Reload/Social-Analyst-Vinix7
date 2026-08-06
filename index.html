@@ -372,53 +372,6 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         </div>
       </div>
       
-      <!-- 2.2 ML Progress Steps -->
-      <div id="sentimentProgressSection" class="card" style="margin-bottom:15px;display:none">
-        <h3 style="margin-bottom:15px">⚙️ Proses Machine Learning</h3>
-        <div id="mlProgressSteps" style="display:flex;flex-direction:column;gap:10px">
-          <div class="progress-step" id="stepDataset" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Membaca Dataset...</span>
-          </div>
-          <div class="progress-step" id="stepCleaning" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Cleaning Text...</span>
-          </div>
-          <div class="progress-step" id="stepCaseFolding" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Case Folding...</span>
-          </div>
-          <div class="progress-step" id="stepTokenizing" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Tokenizing...</span>
-          </div>
-          <div class="progress-step" id="stepStopword" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Stopword Removal...</span>
-          </div>
-          <div class="progress-step" id="stepStemming" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Stemming...</span>
-          </div>
-          <div class="progress-step" id="stepLinguistic" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Ekstraksi Fitur Linguistik...</span>
-          </div>
-          <div class="progress-step" id="stepTFIDF" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">TF-IDF Vectorization...</span>
-          </div>
-          <div class="progress-step" id="stepNaiveBayes" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Training Naive Bayes...</span>
-          </div>
-          <div class="progress-step" id="stepPrediction" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px">
-            <span class="step-icon" style="font-size:20px">⏳</span>
-            <span class="step-text" style="color:#9aa4b2">Prediksi Selesai...</span>
-          </div>
-        </div>
-      </div>
-      
       <!-- 3. Hasil Preprocessing -->
       <div id="sentimentPreprocessingSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing (3-5 Contoh)</h3>
@@ -490,6 +443,17 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <table>
             <thead><tr><th>Tanggal Upload</th><th>Username</th><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Confidence</th></tr></thead>
             <tbody id="sentimentPredictionBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 4.1 Perbandingan Label Manual vs Prediksi -->
+      <div id="sentimentComparisonSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">📊 Perbandingan Label Manual vs Prediksi</h3>
+        <div class="table" style="max-height:300px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi</th><th>Status</th></tr></thead>
+            <tbody id="sentimentComparisonBody"></tbody>
           </table>
         </div>
       </div>
@@ -3018,6 +2982,7 @@ function clearSentimentFile() {
   document.getElementById('sentimentSummaryCardsSection').style.display = 'none';
   document.getElementById('sentimentMLInfoSection').style.display = 'none';
   document.getElementById('sentimentPredictionSection').style.display = 'none';
+  document.getElementById('sentimentComparisonSection').style.display = 'none';
   document.getElementById('sentimentEvaluationSection').style.display = 'none';
   document.getElementById('sentimentConfusionSection').style.display = 'none';
   document.getElementById('sentimentClassificationSection').style.display = 'none';
@@ -3883,6 +3848,9 @@ function showPredictionResults() {
     </tr>
   `).join('');
   
+  // Show comparison table if labels exist
+  showComparisonTable();
+  
   // Show sentiment distribution
   showSentimentDistribution();
   
@@ -3891,6 +3859,38 @@ function showPredictionResults() {
   
   // Show AI section
   document.getElementById('sentimentAISection').style.display = 'block';
+}
+
+function showComparisonTable() {
+  const section = document.getElementById('sentimentComparisonSection');
+  const body = document.getElementById('sentimentComparisonBody');
+  
+  if (!section || !body) return;
+  
+  const hasLabels = sentimentDataset.some(row => row.label);
+  if (!hasLabels) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  
+  const displayData = sentimentPredictions.slice(0, 100); // Show first 100
+  body.innerHTML = displayData.map(row => {
+    const status = row.label && row.predicted
+      ? (row.label === row.predicted ? '✓ Sesuai' : '✗ Tidak Sesuai')
+      : '-';
+    const statusColor = status === '✓ Sesuai' ? '#22c55e' : (status === '✗ Tidak Sesuai' ? '#ef4444' : '#9aa4b2');
+    
+    return `
+      <tr>
+        <td>${row.komentar.substring(0, 80)}${row.komentar.length > 80 ? '...' : ''}</td>
+        <td>${row.label || '-'}</td>
+        <td>${row.predicted}</td>
+        <td style="color:${statusColor};font-weight:700">${status}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // Keyword-based classification as fallback
