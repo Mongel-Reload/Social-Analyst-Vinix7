@@ -3171,8 +3171,9 @@ function processDataset(data) {
   const tanggalUploadCol = findColumnByAlias(headers, 'tanggal_upload');
   const usernameCol = findColumnByAlias(headers, 'username');
   const komentarCol = findColumnByAlias(headers, 'komentar');
+  const labelCol = findColumnByAlias(headers, 'label');
   
-  console.log('Column mapping:', { tanggalUploadCol, usernameCol, komentarCol });
+  console.log('Column mapping:', { tanggalUploadCol, usernameCol, komentarCol, labelCol });
   
   // Validate required columns - only komentar is required
   if (!komentarCol) {
@@ -3191,6 +3192,7 @@ function processDataset(data) {
     const tanggalUpload = tanggalUploadCol ? (normalizeDate(row[tanggalUploadCol]) || String(row[tanggalUploadCol] || '').trim()) : '';
     const username = usernameCol ? String(row[usernameCol] || '').trim() : '';
     const komentar = String(row[komentarCol] || '').trim();
+    const label = labelCol ? String(row[labelCol] || '').trim() : '';
     
     // Skip rows with empty komentar only
     if (!komentar) {
@@ -3201,7 +3203,8 @@ function processDataset(data) {
     sentimentDataset.push({
       tanggal_upload: tanggalUpload,
       username: username,
-      komentar: komentar
+      komentar: komentar,
+      label: label
     });
   }
   
