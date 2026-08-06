@@ -4330,7 +4330,7 @@ function exportSentimentToExcel() {
   // Add AI Recommendations sheet if available
   if (aiRecommendationData) {
     const aiData = {
-      'Ringkasan': aiRecommendationData.summary || '',
+      'Ringkasan': aiRecommendationData.executive_summary || aiRecommendationData.summary || '',
       'Sentimen Dominan': aiRecommendationData.dominant_sentiment || '',
       'Keterbatasan': (aiRecommendationData.limitations || []).join('; ')
     };
@@ -4340,6 +4340,7 @@ function exportSentimentToExcel() {
   }
   
   XLSX.writeFile(wb, 'sentiment_analysis.xlsx');
+  alert('Export Excel berhasil!');
 }
 
 function exportSentimentToCSV() {
@@ -4367,11 +4368,111 @@ function exportSentimentToCSV() {
   link.href = URL.createObjectURL(blob);
   link.download = 'sentiment_analysis.csv';
   link.click();
+  alert('Export CSV berhasil!');
 }
 
 function exportSentimentToPDF() {
-  alert('Export PDF akan diimplementasikan dengan html2canvas dan jsPDF');
-  // Implementation will be added
+  if (!sentimentPredictions || sentimentPredictions.length === 0) {
+    alert('Tidak ada data untuk diexport');
+    return;
+  }
+  
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(34, 211, 238);
+    doc.text('Sentiment Analysis Report', 20, 20);
+    
+    // Summary
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Total Komentar: ${sentimentPredictions.length}`, 20, 35);
+    
+    const positive = sentimentPredictions.filter(p => p.predicted === 'Positif').length;
+    const neutral = sentimentPredictions.filter(p => p.predicted === 'Netral').length;
+    const negative = sentimentPredictions.filter(p => p.predicted === 'Negatif').length;
+    
+    doc.text(`Positif: ${positive} (${((positive/sentimentPredictions.length)*100).toFixed(1)}%)`, 20, 45);
+    doc.text(`Netral: ${neutral} (${((neutral/sentimentPredictions.length)*100).toFixed(1)}%)`, 20, 55);
+    doc.text(`Negatif: ${negative} (${((negative/sentimentPredictions.length)*100).toFixed(1)}%)`, 20, 65);
+    
+    // Predictions table (first 100)
+    doc.setFontSize(14);
+    doc.setTextColor(34, 211, 238);
+    doc.text('Hasil Prediksi (100 pertama)', 20, 80);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    
+    const tableData = sentimentPredictions.slice(0, 100).map((row, i) => [
+      i + 1,
+      row.komentar?.substring(0, 50) || '-',
+      row.label || '-',
+      row.predicted || '-',
+      row.confidencePercent || '-'
+    ]);
+    
+    const tableHeaders = ['No', 'Komentar', 'Label Manual', 'Prediksi', 'Confidence'];
+    
+    let y = 95;
+    tableHeaders.forEach((header, i) => {
+      doc.setTextColor(34, 211, 238);
+      doc.text(header, 20 + (i * 35), y);
+    });
+    
+    y += 10;
+    tableData.forEach(row => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      row.forEach((cell, i) => {
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(cell).substring(0, 30), 20 + (i * 35), y);
+      });
+      y += 8;
+    });
+    
+    // AI Recommendations if available
+    if (aiRecommendationData) {
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.setTextColor(34, 211, 238);
+      doc.text('AI Recommendations', 20, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(255, 255, 255);
+      
+      y = 35;
+      if (aiRecommendationData.executive_summary) {
+        doc.text('Ringkasan:', 20, y);
+        y += 8;
+        const summaryLines = doc.splitTextToSize(aiRecommendationData.executive_summary, 170);
+        doc.text(summaryLines, 20, y);
+        y += summaryLines.length * 8 + 10;
+      }
+      
+      if (aiRecommendationData.key_insights && aiRecommendationData.key_insights.length > 0) {
+        doc.text('Temuan Utama:', 20, y);
+        y += 8;
+        aiRecommendationData.key_insights.slice(0, 5).forEach((insight, i) => {
+          const insightText = `${i + 1}. ${insight.insight || ''}`;
+          const lines = doc.splitTextToSize(insightText, 170);
+          doc.text(lines, 20, y);
+          y += lines.length * 8 + 5;
+        });
+      }
+    }
+    
+    doc.save('sentiment_analysis.pdf');
+    alert('Export PDF berhasil!');
+  } catch (error) {
+    console.error('Export PDF error:', error);
+    alert('Gagal export PDF: ' + error.message);
+  }
 }
 
 // Initialize sentiment analysis on page load
