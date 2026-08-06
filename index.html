@@ -2999,6 +2999,15 @@ function clearSentimentFile() {
   sentimentPredictions = [];
   sentimentLinguisticFeatures = [];
   sentimentEvaluation = null;
+  aiRecommendationData = null;
+  window.aiPayload = null;
+  
+  // Clear charts
+  if (charts.sentDistChart) { charts.sentDistChart.destroy(); charts.sentDistChart = null; }
+  if (charts.sentTrendChart) { charts.sentTrendChart.destroy(); charts.sentTrendChart = null; }
+  if (charts.confusionMatrixChart) { charts.confusionMatrixChart.destroy(); charts.confusionMatrixChart = null; }
+  if (charts.sentimentPieChart) { charts.sentimentPieChart.destroy(); charts.sentimentPieChart = null; }
+  if (charts.sentimentBarChart) { charts.sentimentBarChart.destroy(); charts.sentimentBarChart = null; }
   
   // Hide all result sections
   document.getElementById('sentimentPreviewSection').style.display = 'none';
