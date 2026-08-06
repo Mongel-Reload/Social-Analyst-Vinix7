@@ -308,6 +308,7 @@ exports.handler = async (event, context) => {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   const configuredModel = process.env.OPENAI_MODEL?.trim();
   const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
+  const anthropicEndpoint = (process.env.OPENAI_ANTHROPIC_ENDPOINT || '/v1/messages').replace(/^\/+/, '');
   
   if (!configuredModel) {
     console.log({ stage: 'model_missing', elapsedMs: Date.now() - startedAt });
@@ -327,7 +328,7 @@ exports.handler = async (event, context) => {
     });
   }
   
-  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model: configuredModel });
+  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model: configuredModel, baseUrl, anthropicEndpoint });
   
   try {
     // Parse request body
@@ -370,7 +371,7 @@ exports.handler = async (event, context) => {
     }
     
     // Gunakan endpoint anthropic-messages (format Sylor)
-    const sylorUrl = `${baseUrl}/v1/messages`;
+    const sylorUrl = `${baseUrl}/${anthropicEndpoint}`;
     
     const requestBody = {
       model: configuredModel,
