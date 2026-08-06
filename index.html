@@ -41,11 +41,11 @@ button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!impo
 .page{display:none!important}.page.active{display:block!important;animation:fade .22s ease}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px;position:relative;z-index:2}.head h1{font-size:32px;line-height:1;margin:0;letter-spacing:-.055em}.head p{margin:7px 0 0;color:var(--muted);line-height:1.5}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:relative;z-index:10;padding:10px;border-radius:22px;background:rgba(15,23,42,.48);border:1px solid rgba(255,255,255,.10)}
 .custom-select{position:relative;min-width:142px;z-index:99999}.custom-trigger{width:100%;height:50px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));color:white;font-weight:850;padding:0 16px 0 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 10px 28px rgba(0,0,0,.18)}.custom-options{position:absolute;top:58px;left:0;right:0;max-height:280px;overflow:auto;padding:8px;border-radius:18px;background:#0b1020;border:1px solid rgba(255,255,255,.14);box-shadow:0 28px 70px rgba(0,0,0,.55);z-index:999999;display:none}.custom-select.open .custom-options{display:block}.custom-option{height:38px;border-radius:12px;padding:0 12px;display:flex;align-items:center;color:#dbeafe;font-weight:800;cursor:pointer}.custom-option:hover,.custom-option.active{background:linear-gradient(90deg,rgba(34,211,238,.18),rgba(139,92,246,.16));color:white}
-.card{border-radius:24px;padding:18px;overflow:visible;position:relative}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.grid2{display:grid;grid-template-columns:1.12fr .88fr;gap:15px}.kpi small{color:var(--muted);font-weight:800;font-size:12px}.kpi strong{display:block;font-size:28px;letter-spacing:-.055em;margin:8px 0 4px}.kpi span{font-size:12px;color:#86efac;font-weight:900}
+.card{border-radius:24px;padding:18px;overflow:visible;position:relative}.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:15px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.grid2{display:grid;grid-template-columns:1.12fr .88fr;gap:15px}.kpi small{color:var(--muted);font-weight:800;font-size:12px}.kpi strong{display:block;font-size:28px;letter-spacing:-.055em;margin:8px 0 4px}.kpi span{font-size:12px;color:#86efac;font-weight:900}
 canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:20px;border:1px solid rgba(255,255,255,.08)}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:13px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:13px}th{color:#9aa4b2;font-size:11px;text-transform:uppercase;letter-spacing:.04em}.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900}.pos{background:rgba(34,197,94,.14);color:#86efac}.neu{background:rgba(245,158,11,.14);color:#fcd34d}.neg{background:rgba(239,68,68,.14);color:#fca5a5}
 .formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.upload{min-height:160px;border:1px dashed rgba(34,211,238,.38);background:rgba(34,211,238,.045);border-radius:24px;display:grid;place-items:center;text-align:center;padding:22px}.action{border-left:4px solid var(--cyan);background:rgba(255,255,255,.045);border-radius:18px;padding:15px;margin-bottom:12px}.action.high{border-left-color:var(--red)}.action.med{border-left-color:var(--orange)}.action.low{border-left-color:var(--green)}.report{background:linear-gradient(135deg,rgba(34,211,238,.13),rgba(139,92,246,.12));border:1px solid rgba(34,211,238,.18);border-radius:24px;padding:20px;line-height:1.7;color:#dbeafe}
 .pdf-report{position:fixed;left:-9999px;top:0;width:1600px;padding:48px 56px;background:linear-gradient(135deg,#050816,#071126 55%,#080516);color:white;font-family:Inter,system-ui,sans-serif}.pdf-report h1{font-size:34px;letter-spacing:-.05em}.pdf-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.pdf-card{border:1px solid rgba(255,255,255,.12);background:rgba(15,23,42,.72);border-radius:16px;padding:16px;margin-top:12px}.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pdf-donut{width:210px;height:210px;border-radius:50%;background:conic-gradient(#4ade80 0 82%,#fbbf24 82% 93%,#fb3b5b 93% 100%);position:relative;margin:20px auto}.pdf-donut:after{content:"82%";position:absolute;inset:48px;background:#081126;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:28px}.pdf-bars{display:flex;gap:12px;align-items:end;height:230px}.pdf-bars i{flex:1;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#20e7ff,#8b5cf6)}.pdf-table{width:100%;border-collapse:collapse}.pdf-table td,.pdf-table th{border-bottom:1px solid rgba(255,255,255,.08);padding:10px;text-align:left}
-@media(max-width:1180px){.login-shell{grid-template-columns:1fr}.grid4{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:1180px){.login-shell{grid-template-columns:1fr}.grid5{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr 1fr}}
 </style>
 
 <style id="sidebar-footer-position-fix">
@@ -359,8 +359,9 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <!-- 2.1 Dataset Information -->
       <div id="sentimentInfoSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">📋 Informasi Dataset</h3>
-        <div class="grid4">
-          <div class="card kpi"><small>Total Komentar</small><strong id="infoTotalComments">-</strong><span>-</span></div>
+        <div class="grid5">
+          <div class="card kpi"><small>Jumlah Baris</small><strong id="infoTotalRows">-</strong><span>-</span></div>
+          <div class="card kpi"><small>Jumlah Kolom</small><strong id="infoTotalColumns">-</strong><span>-</span></div>
           <div class="card kpi"><small>Jumlah Pengguna</small><strong id="infoUniqueUsers">-</strong><span>-</span></div>
           <div class="card kpi"><small>Komentar Kosong</small><strong id="infoEmptyComments">-</strong><span>-</span></div>
           <div class="card kpi"><small>Status Validasi</small><strong id="infoValidationStatus">-</strong><span>-</span></div>
@@ -3256,7 +3257,8 @@ function showDatasetPreview() {
   `).join('');
   
   // Show dataset information
-  const totalComments = sentimentDataset.length;
+  const totalRows = sentimentDataset.length;
+  const totalColumns = sentimentDataset.length > 0 ? Object.keys(sentimentDataset[0]).length : 0;
   const uniqueUsers = [...new Set(sentimentDataset.map(r => r.username))].length;
   const emptyComments = sentimentDataset.filter(r => !r.komentar || r.komentar.trim() === '').length;
   
@@ -3268,7 +3270,8 @@ function showDatasetPreview() {
     dateRange = `${sortedDates[0]} - ${sortedDates[sortedDates.length - 1]}`;
   }
   
-  document.getElementById('infoTotalComments').textContent = totalComments;
+  document.getElementById('infoTotalRows').textContent = totalRows;
+  document.getElementById('infoTotalColumns').textContent = totalColumns;
   document.getElementById('infoUniqueUsers').textContent = uniqueUsers;
   document.getElementById('infoEmptyComments').textContent = emptyComments;
   document.getElementById('infoValidationStatus').textContent = emptyComments === 0 ? '✅ Valid' : '⚠️ Perlu Perhatian';
