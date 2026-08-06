@@ -4809,6 +4809,7 @@ function sanitizeText(text) {
 
 // Display AI recommendation with sanitization (new simplified schema)
 function displayAIRecommendation(response) {
+  console.log('Displaying AI recommendation:', JSON.stringify(response, null, 2));
   document.getElementById('aiResults').style.display = 'block';
   
   // Executive Summary
@@ -4819,7 +4820,9 @@ function displayAIRecommendation(response) {
   const findingsEl = document.getElementById('aiFindings');
   findingsEl.innerHTML = '';
   if (response.key_insights && Array.isArray(response.key_insights)) {
+    console.log('Key insights data:', response.key_insights);
     response.key_insights.forEach((insight, index) => {
+      console.log(`Insight ${index}:`, insight);
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
       div.style.padding = '12px';
