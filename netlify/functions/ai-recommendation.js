@@ -100,7 +100,7 @@ function jsonResponse(statusCode, body) {
   };
 }
 
-// Helper function to make HTTPS request using fetch (ringkas, timeout 20 detik)
+// Helper function to make HTTPS request using fetch (ringkas, timeout 60 detik)
 async function makeRequest(url, options, data, startedAt) {
   try {
     console.log({
@@ -111,7 +111,7 @@ async function makeRequest(url, options, data, startedAt) {
     });
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
     
     const response = await fetch(url, {
       ...options,
