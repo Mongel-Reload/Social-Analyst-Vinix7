@@ -3754,6 +3754,12 @@ function showSentimentTrendChart() {
   const canvas = document.getElementById('sentimentTrendChart');
   const ctx = canvas.getContext('2d');
   
+  // Destroy existing chart if it exists
+  if (charts.sentimentTrendChart) {
+    charts.sentimentTrendChart.destroy();
+    charts.sentimentTrendChart = null;
+  }
+  
   // Group by date - filter out empty dates
   const dateGroups = {};
   sentimentPredictions.forEach(p => {
@@ -3779,7 +3785,7 @@ function showSentimentTrendChart() {
   const neutralData = sortedDates.map(d => dateGroups[d].neutral);
   const negativeData = sortedDates.map(d => dateGroups[d].negative);
   
-  new Chart(ctx, {
+  charts.sentimentTrendChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: sortedDates,
