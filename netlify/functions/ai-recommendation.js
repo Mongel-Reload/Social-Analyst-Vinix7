@@ -166,9 +166,32 @@ async function makeRequest(url, options, data, startedAt) {
       throw error;
     }
   } catch (error) {
+    console.log({
+      stage: 'request_error',
+      elapsedMs: Date.now() - startedAt,
+      error: error.message,
+      errorName: error.name,
+      errorType: error.constructor.name
+    });
+    
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout');
+      const timeoutError = new Error('Request timeout');
+      timeoutError.httpStatus = 504;
+      throw timeoutError;
     }
+    
+    // Network errors (DNS, connection refused, etc.)
+    if (error.message.includes('ECONNREFUSED') || 
+        error.message.includes('ENOTFOUND') || 
+        error.message.includes('ETIMEDOUT') ||
+        error.message.includes('getaddrinfo') ||
+        error.message.includes('fetch failed')) {
+      const networkError = new Error(`Network error: ${error.message}`);
+      networkError.httpStatus = 503;
+      networkError.responseBody = error.message;
+      throw networkError;
+    }
+    
     throw error;
   }
 }
@@ -380,7 +403,8 @@ exports.handler = async (event, context) => {
         elapsedMs: Date.now() - startedAt, 
         error: error.message,
         httpStatus: error.httpStatus,
-        responseBody: error.responseBody?.substring(0, 500)
+        responseBody: error.responseBody?.substring(0, 500),
+        errorName: error.name
       });
       
       if (error.message.includes('timeout') || error.name === 'AbortError') {
@@ -388,6 +412,19 @@ exports.handler = async (event, context) => {
           success: false,
           code: 'PROVIDER_TIMEOUT',
           message: 'Provider AI membutuhkan waktu terlalu lama untuk menghasilkan rekomendasi.'
+        });
+      }
+      
+      // Network errors
+      if (error.httpStatus === 503 || error.message.includes('Network error')) {
+        return jsonResponse(503, {
+          success: false,
+          code: 'NETWORK_ERROR',
+          message: 'Gagal terhubung ke provider AI. Periksa koneksi internet atau konfigurasi API.',
+          details: {
+            error: error.message,
+            baseUrl: baseUrl
+          }
         });
       }
       

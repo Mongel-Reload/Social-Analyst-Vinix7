@@ -4640,7 +4640,10 @@ async function generateAIRecommendation() {
           errorMessage += 'Parameter tidak didukung oleh model.';
           break;
         case 'NETWORK_ERROR':
-          errorMessage += 'Gagal melakukan request ke API. Periksa koneksi internet.';
+          errorMessage += 'Gagal terhubung ke provider AI. Periksa koneksi internet atau konfigurasi API.';
+          if (error.details && error.details.baseUrl) {
+            errorMessage += `\n\nBase URL: ${error.details.baseUrl}`;
+          }
           break;
         case 'EMPTY_RESPONSE':
           errorMessage += 'API mengembalikan response kosong.';
@@ -4660,11 +4663,17 @@ async function generateAIRecommendation() {
         case 'PROVIDER_ERROR':
           errorMessage += 'Provider AI gagal memproses permintaan.';
           if (error.details) {
-            if (error.details.httpStatus) {
+            if (error.details.httpStatus && error.details.httpStatus !== 'Unknown') {
               errorMessage += ` (HTTP Status: ${error.details.httpStatus})`;
             }
             if (error.details.responseSnippet && error.details.responseSnippet !== 'N/A') {
               errorMessage += `\n\nResponse: ${error.details.responseSnippet}`;
+            }
+            if (error.baseUrl) {
+              errorMessage += `\n\nBase URL: ${error.baseUrl}`;
+            }
+            if (error.model) {
+              errorMessage += `\nModel: ${error.model}`;
             }
           }
           break;
