@@ -433,7 +433,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <h3 style="margin-bottom:15px">🤖 Hasil Prediksi</h3>
         <div class="table" style="max-height:300px;overflow-y:auto">
           <table>
-            <thead><tr><th>Tanggal Upload</th><th>Username</th><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Confidence</th></tr></thead>
+            <thead><tr><th>Tanggal Upload</th><th>Username</th><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Confidence</th><th>Aksi</th></tr></thead>
             <tbody id="sentimentPredictionBody"></tbody>
           </table>
         </div>
@@ -3744,16 +3744,41 @@ function showPredictionResults() {
   section.style.display = 'block';
   
   const displayData = sentimentPredictions.slice(0, 100); // Show first 100
-  body.innerHTML = displayData.map(r => `
-    <tr>
+  body.innerHTML = displayData.map((r, index) => `
+    <tr data-index="${index}">
       <td>${r.tanggal_upload || '-'}</td>
       <td>${r.username || '-'}</td>
       <td>${r.komentar.substring(0, 60)}${r.komentar.length > 60 ? '...' : ''}</td>
       <td>${r.label || '-'}</td>
-      <td>${r.predicted}</td>
+      <td>
+        <span class="prediction-display-main" data-index="${index}">${r.predicted}</span>
+        <select class="prediction-select-main" data-index="${index}" style="display:none;padding:4px 8px;border-radius:4px;border:1px solid #4b5563;background:rgba(0,0,0,0.3);color:#d1d5db;cursor:pointer">
+          <option value="Positif" ${r.predicted === 'Positif' ? 'selected' : ''}>Positif</option>
+          <option value="Netral" ${r.predicted === 'Netral' ? 'selected' : ''}>Netral</option>
+          <option value="Negatif" ${r.predicted === 'Negatif' ? 'selected' : ''}>Negatif</option>
+        </select>
+      </td>
       <td>${r.confidencePercent}%</td>
+      <td>
+        <button class="edit-btn-main" data-index="${index}" style="padding:4px 8px;border:none;background:rgba(59,130,246,0.2);color:#60a5fa;border-radius:4px;cursor:pointer;margin-right:4px" title="Edit">
+          ✏️
+        </button>
+        <button class="save-btn-main" data-index="${index}" style="display:none;padding:4px 8px;border:none;background:rgba(34,197,94,0.2);color:#4ade80;border-radius:4px;cursor:pointer" title="Simpan">
+          💾
+        </button>
+      </td>
     </tr>
   `).join('');
+  
+  // Add event listeners for edit buttons
+  body.querySelectorAll('.edit-btn-main').forEach(btn => {
+    btn.addEventListener('click', handleEditClickMain);
+  });
+  
+  // Add event listeners for save buttons
+  body.querySelectorAll('.save-btn-main').forEach(btn => {
+    btn.addEventListener('click', handleSaveClickMain);
+  });
   
   // Show comparison table if labels exist
   showComparisonTable();
@@ -3766,6 +3791,50 @@ function showPredictionResults() {
   
   // Show AI section
   document.getElementById('sentimentAISection').style.display = 'block';
+}
+
+function handleEditClickMain(e) {
+  const index = parseInt(e.target.dataset.index);
+  const tr = e.target.closest('tr');
+  
+  // Show select, hide display
+  tr.querySelector('.prediction-display-main').style.display = 'none';
+  tr.querySelector('.prediction-select-main').style.display = 'block';
+  
+  // Show save button, hide edit button
+  tr.querySelector('.save-btn-main').style.display = 'inline-block';
+  e.target.style.display = 'none';
+}
+
+function handleSaveClickMain(e) {
+  const index = parseInt(e.target.dataset.index);
+  const tr = e.target.closest('tr');
+  const select = tr.querySelector('.prediction-select-main');
+  const newPrediction = select.value;
+  const row = sentimentPredictions[index];
+  
+  if (!row) return;
+  
+  // Update the prediction in memory
+  row.predicted = newPrediction;
+  
+  // Store the correction in localStorage
+  storePredictionCorrection(row.komentar, newPrediction);
+  
+  // Update the display
+  tr.querySelector('.prediction-display-main').textContent = newPrediction;
+  tr.querySelector('.prediction-display-main').style.display = 'block';
+  tr.querySelector('.prediction-select-main').style.display = 'none';
+  
+  // Show edit button, hide save button
+  tr.querySelector('.edit-btn-main').style.display = 'inline-block';
+  e.target.style.display = 'none';
+  
+  // Update charts and statistics
+  updateStatisticsAfterCorrection();
+  
+  // Refresh comparison table if it's visible
+  showComparisonTable();
 }
 
 function showComparisonTable() {
