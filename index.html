@@ -4936,6 +4936,107 @@ function displayAIRecommendation(response) {
       negativeEl.appendChild(div);
     });
   }
+  
+  // Strategic Recommendations (new field: recommendation, rationale, expected_impact)
+  const recommendationsEl = document.getElementById('aiRecommendations');
+  recommendationsEl.innerHTML = '';
+  if (response.strategic_recommendations && Array.isArray(response.strategic_recommendations)) {
+    response.strategic_recommendations.forEach((rec, index) => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(168, 85, 247, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #a855f7';
+      
+      const title = document.createElement('strong');
+      title.textContent = `${index + 1}. ${rec.recommendation || ''}`;
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
+      title.style.color = '#d8b4fe';
+      
+      const rationale = document.createElement('div');
+      rationale.style.fontSize = '13px';
+      rationale.style.color = '#d1d5db';
+      rationale.style.marginBottom = '4px';
+      rationale.textContent = 'Rasional: ' + (rec.rationale || '');
+      
+      const impact = document.createElement('div');
+      impact.style.fontSize = '12px';
+      impact.style.color = '#9aa4b2';
+      impact.textContent = 'Dampak yang diharapkan: ' + (rec.expected_impact || '');
+      
+      div.appendChild(title);
+      div.appendChild(rationale);
+      div.appendChild(impact);
+      recommendationsEl.appendChild(div);
+    });
+  }
+  
+  // Priority Actions for display (same as priority_actions but shown in aiPriority)
+  const priorityEl = document.getElementById('aiPriority');
+  priorityEl.innerHTML = '';
+  if (response.priority_actions && Array.isArray(response.priority_actions)) {
+    response.priority_actions.forEach((action, index) => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(249, 115, 22, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #f97316';
+      
+      const title = document.createElement('strong');
+      title.textContent = `${index + 1}. ${action.action || ''}`;
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
+      title.style.color = '#fdba74';
+      
+      const reason = document.createElement('div');
+      reason.style.fontSize = '13px';
+      reason.style.color = '#d1d5db';
+      reason.style.marginBottom = '4px';
+      reason.textContent = 'Alasan: ' + (action.reason || '');
+      
+      const metric = document.createElement('div');
+      metric.style.fontSize = '12px';
+      metric.style.color = '#9aa4b2';
+      metric.textContent = 'Metric sukses: ' + (action.success_metric || '');
+      
+      div.appendChild(title);
+      div.appendChild(reason);
+      div.appendChild(metric);
+      priorityEl.appendChild(div);
+    });
+  }
+  
+  // Limitations (new field: limitation, mitigation)
+  const limitationsEl = document.getElementById('aiLimitations');
+  limitationsEl.innerHTML = '';
+  if (response.limitations && Array.isArray(response.limitations)) {
+    response.limitations.forEach((limit, index) => {
+      const div = document.createElement('div');
+      div.style.marginBottom = '12px';
+      div.style.padding = '12px';
+      div.style.background = 'rgba(107, 114, 128, 0.1)';
+      div.style.borderRadius = '8px';
+      div.style.borderLeft = '4px solid #6b7280';
+      
+      const title = document.createElement('strong');
+      title.textContent = `${index + 1}. ${limit.limitation || ''}`;
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
+      title.style.color = '#9ca3af';
+      
+      const mitigation = document.createElement('div');
+      mitigation.style.fontSize = '13px';
+      mitigation.style.color = '#d1d5db';
+      mitigation.textContent = 'Mitigasi: ' + (limit.mitigation || '');
+      
+      div.appendChild(title);
+      div.appendChild(mitigation);
+      limitationsEl.appendChild(div);
+    });
+  }
 }
 
 </script>

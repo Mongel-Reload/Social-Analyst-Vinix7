@@ -13,7 +13,9 @@ Struktur wajib:
   "executive_summary": "",
   "key_insights": [],
   "content_ideas": [],
-  "priority_actions": []
+  "priority_actions": [],
+  "strategic_recommendations": [],
+  "limitations": []
 }
 
 Ketentuan:
@@ -21,6 +23,8 @@ Ketentuan:
 - key_insights tepat 3;
 - content_ideas tepat 3;
 - priority_actions tepat 3;
+- strategic_recommendations tepat 3;
+- limitations tepat 2;
 - setiap rekomendasi harus memiliki data_basis;
 - jangan mengarang data yang tidak tersedia.`;
 
@@ -32,7 +36,9 @@ const RECOMMENDATION_SCHEMA = {
     "executive_summary",
     "key_insights",
     "content_ideas",
-    "priority_actions"
+    "priority_actions",
+    "strategic_recommendations",
+    "limitations"
   ],
   properties: {
     executive_summary: {
@@ -82,6 +88,35 @@ const RECOMMENDATION_SCHEMA = {
           action: { type: "string" },
           reason: { type: "string" },
           success_metric: { type: "string" }
+        }
+      }
+    },
+    strategic_recommendations: {
+      type: "array",
+      minItems: 3,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["recommendation", "rationale", "expected_impact"],
+        properties: {
+          recommendation: { type: "string" },
+          rationale: { type: "string" },
+          expected_impact: { type: "string" }
+        }
+      }
+    },
+    limitations: {
+      type: "array",
+      minItems: 2,
+      maxItems: 2,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["limitation", "mitigation"],
+        properties: {
+          limitation: { type: "string" },
+          mitigation: { type: "string" }
         }
       }
     }
