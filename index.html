@@ -4833,13 +4833,16 @@ function displayAIRecommendation(response) {
       title.style.marginBottom = '4px';
       title.style.color = '#3b82f6';
       
-      const dataBasis = document.createElement('div');
-      dataBasis.style.fontSize = '13px';
-      dataBasis.style.color = '#9aa4b2';
-      dataBasis.textContent = 'Dasar data: ' + (insight.data_basis || '');
-      
       div.appendChild(title);
-      div.appendChild(dataBasis);
+      
+      if (insight.data_basis && insight.data_basis.trim()) {
+        const dataBasis = document.createElement('div');
+        dataBasis.style.fontSize = '13px';
+        dataBasis.style.color = '#9aa4b2';
+        dataBasis.textContent = 'Dasar data: ' + insight.data_basis;
+        div.appendChild(dataBasis);
+      }
+      
       findingsEl.appendChild(div);
     });
   }
@@ -4873,30 +4876,34 @@ function displayAIRecommendation(response) {
       format.style.borderRadius = '4px';
       format.textContent = idea.format || '';
       
-      header.appendChild(title);
-      header.appendChild(format);
-      
-      const concept = document.createElement('div');
-      concept.style.fontSize = '13px';
-      concept.style.color = '#d1d5db';
-      concept.style.marginBottom = '4px';
-      concept.textContent = 'Konsep: ' + (idea.concept || '');
-      
-      const cta = document.createElement('div');
-      cta.style.fontSize = '13px';
-      cta.style.color = '#9aa4b2';
-      cta.style.marginBottom = '4px';
-      cta.textContent = 'CTA: ' + (idea.call_to_action || '');
-      
-      const dataBasis = document.createElement('div');
-      dataBasis.style.fontSize = '12px';
-      dataBasis.style.color = '#9aa4b2';
-      dataBasis.textContent = 'Dasar data: ' + (idea.data_basis || '');
-      
       div.appendChild(header);
-      div.appendChild(concept);
-      div.appendChild(cta);
-      div.appendChild(dataBasis);
+      
+      if (idea.concept && idea.concept.trim()) {
+        const concept = document.createElement('div');
+        concept.style.fontSize = '13px';
+        concept.style.color = '#d1d5db';
+        concept.style.marginBottom = '4px';
+        concept.textContent = 'Konsep: ' + idea.concept;
+        div.appendChild(concept);
+      }
+      
+      if (idea.call_to_action && idea.call_to_action.trim()) {
+        const cta = document.createElement('div');
+        cta.style.fontSize = '13px';
+        cta.style.color = '#9aa4b2';
+        cta.style.marginBottom = '4px';
+        cta.textContent = 'CTA: ' + idea.call_to_action;
+        div.appendChild(cta);
+      }
+      
+      if (idea.data_basis && idea.data_basis.trim()) {
+        const dataBasis = document.createElement('div');
+        dataBasis.style.fontSize = '12px';
+        dataBasis.style.color = '#9aa4b2';
+        dataBasis.textContent = 'Dasar data: ' + idea.data_basis;
+        div.appendChild(dataBasis);
+      }
+      
       positiveEl.appendChild(div);
     });
   }
@@ -4919,20 +4926,25 @@ function displayAIRecommendation(response) {
       title.style.marginBottom = '4px';
       title.style.color = '#a855f7';
       
-      const reason = document.createElement('div');
-      reason.style.fontSize = '13px';
-      reason.style.color = '#d1d5db';
-      reason.style.marginBottom = '4px';
-      reason.textContent = 'Alasan: ' + (action.reason || '');
-      
-      const metric = document.createElement('div');
-      metric.style.fontSize = '12px';
-      metric.style.color = '#9aa4b2';
-      metric.textContent = 'Metric sukses: ' + (action.success_metric || '');
-      
       div.appendChild(title);
-      div.appendChild(reason);
-      div.appendChild(metric);
+      
+      if (action.reason && action.reason.trim()) {
+        const reason = document.createElement('div');
+        reason.style.fontSize = '13px';
+        reason.style.color = '#d1d5db';
+        reason.style.marginBottom = '4px';
+        reason.textContent = 'Alasan: ' + action.reason;
+        div.appendChild(reason);
+      }
+      
+      if (action.success_metric && action.success_metric.trim()) {
+        const metric = document.createElement('div');
+        metric.style.fontSize = '12px';
+        metric.style.color = '#9aa4b2';
+        metric.textContent = 'Metric sukses: ' + action.success_metric;
+        div.appendChild(metric);
+      }
+      
       negativeEl.appendChild(div);
     });
   }
@@ -4955,20 +4967,25 @@ function displayAIRecommendation(response) {
       title.style.marginBottom = '4px';
       title.style.color = '#d8b4fe';
       
-      const rationale = document.createElement('div');
-      rationale.style.fontSize = '13px';
-      rationale.style.color = '#d1d5db';
-      rationale.style.marginBottom = '4px';
-      rationale.textContent = 'Rasional: ' + (rec.rationale || '');
-      
-      const impact = document.createElement('div');
-      impact.style.fontSize = '12px';
-      impact.style.color = '#9aa4b2';
-      impact.textContent = 'Dampak yang diharapkan: ' + (rec.expected_impact || '');
-      
       div.appendChild(title);
-      div.appendChild(rationale);
-      div.appendChild(impact);
+      
+      if (rec.rationale && rec.rationale.trim()) {
+        const rationale = document.createElement('div');
+        rationale.style.fontSize = '13px';
+        rationale.style.color = '#d1d5db';
+        rationale.style.marginBottom = '4px';
+        rationale.textContent = 'Rasional: ' + rec.rationale;
+        div.appendChild(rationale);
+      }
+      
+      if (rec.expected_impact && rec.expected_impact.trim()) {
+        const impact = document.createElement('div');
+        impact.style.fontSize = '12px';
+        impact.style.color = '#9aa4b2';
+        impact.textContent = 'Dampak yang diharapkan: ' + rec.expected_impact;
+        div.appendChild(impact);
+      }
+      
       recommendationsEl.appendChild(div);
     });
   }
@@ -4991,20 +5008,25 @@ function displayAIRecommendation(response) {
       title.style.marginBottom = '4px';
       title.style.color = '#fdba74';
       
-      const reason = document.createElement('div');
-      reason.style.fontSize = '13px';
-      reason.style.color = '#d1d5db';
-      reason.style.marginBottom = '4px';
-      reason.textContent = 'Alasan: ' + (action.reason || '');
-      
-      const metric = document.createElement('div');
-      metric.style.fontSize = '12px';
-      metric.style.color = '#9aa4b2';
-      metric.textContent = 'Metric sukses: ' + (action.success_metric || '');
-      
       div.appendChild(title);
-      div.appendChild(reason);
-      div.appendChild(metric);
+      
+      if (action.reason && action.reason.trim()) {
+        const reason = document.createElement('div');
+        reason.style.fontSize = '13px';
+        reason.style.color = '#d1d5db';
+        reason.style.marginBottom = '4px';
+        reason.textContent = 'Alasan: ' + action.reason;
+        div.appendChild(reason);
+      }
+      
+      if (action.success_metric && action.success_metric.trim()) {
+        const metric = document.createElement('div');
+        metric.style.fontSize = '12px';
+        metric.style.color = '#9aa4b2';
+        metric.textContent = 'Metric sukses: ' + action.success_metric;
+        div.appendChild(metric);
+      }
+      
       priorityEl.appendChild(div);
     });
   }
@@ -5027,13 +5049,16 @@ function displayAIRecommendation(response) {
       title.style.marginBottom = '4px';
       title.style.color = '#9ca3af';
       
-      const mitigation = document.createElement('div');
-      mitigation.style.fontSize = '13px';
-      mitigation.style.color = '#d1d5db';
-      mitigation.textContent = 'Mitigasi: ' + (limit.mitigation || '');
-      
       div.appendChild(title);
-      div.appendChild(mitigation);
+      
+      if (limit.mitigation && limit.mitigation.trim()) {
+        const mitigation = document.createElement('div');
+        mitigation.style.fontSize = '13px';
+        mitigation.style.color = '#d1d5db';
+        mitigation.textContent = 'Mitigasi: ' + limit.mitigation;
+        div.appendChild(mitigation);
+      }
+      
       limitationsEl.appendChild(div);
     });
   }
