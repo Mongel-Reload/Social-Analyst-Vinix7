@@ -410,7 +410,12 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       
       <!-- 3.2 Ringkasan Sentimen -->
       <div id="sentimentSummaryCardsSection" class="card" style="margin-bottom:15px;display:none">
-        <h3 style="margin-bottom:15px">📈 Ringkasan Sentimen</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+          <h3 style="margin:0">📈 Ringkasan Sentimen</h3>
+          <button class="btn secondary" onclick="refreshSummaryStats()" style="padding:6px 12px;font-size:13px">
+            🔄 Refresh
+          </button>
+        </div>
         <div class="grid4">
           <div class="card kpi" style="background:rgba(255,255,255,.05)"><small>Total Komentar</small><strong id="summaryTotal">-</strong><span>-</span></div>
           <div class="card kpi" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3)"><small>Positif</small><strong id="summaryPositive">-</strong><span id="summaryPositivePct">-</span></div>
@@ -536,6 +541,13 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         
         <!-- AI Results -->
         <div id="aiResults" style="margin-top:20px;display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+            <h3 style="margin:0">🤖 AI Insights & Recommendations</h3>
+            <button class="btn secondary" onclick="regenerateAIRecommendation()" style="padding:6px 12px;font-size:13px">
+              🔄 Refresh AI
+            </button>
+          </div>
+          
           <!-- AI Summary -->
           <div class="card" style="margin-bottom:15px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3)">
             <h4 style="margin-bottom:12px;color:#c4b5fd">📋 Ringkasan AI</h4>
@@ -3918,6 +3930,30 @@ function updateStatisticsAfterCorrection() {
   showSentimentTrendChart();
 }
 
+function refreshSummaryStats() {
+  if (!sentimentPredictions) {
+    alert('Tidak ada data prediksi untuk direfresh');
+    return;
+  }
+  
+  // Recalculate and update all statistics
+  updateStatisticsAfterCorrection();
+  
+  // Recalculate average confidence
+  const avgConfidence = sentimentPredictions.reduce((sum, p) => {
+    const maxConf = Math.max(...Object.values(p.confidence || {}));
+    return sum + maxConf;
+  }, 0) / sentimentPredictions.length;
+  
+  document.getElementById('summaryAvgConfidence').textContent = (avgConfidence * 100).toFixed(1) + '%';
+  
+  // Update charts
+  showSentimentDistribution();
+  showSentimentTrendChart();
+  
+  alert('Statistik dan chart berhasil di-refresh!');
+}
+
 // Keyword-based classification as fallback
 function classifyByKeyword(text) {
   if (!text) return 'Netral';
@@ -4775,32 +4811,20 @@ async function retryAIRecommendation() {
     return;
   }
   
-  // Show loading state
-  document.getElementById('aiLoading').style.display = 'block';
-  document.getElementById('aiResults').style.display = 'none';
   document.getElementById('aiError').style.display = 'none';
+  document.getElementById('aiLoading').style.display = 'block';
   
   try {
-    console.log('Retrying AI recommendation with stored payload');
-    
-    // Call Netlify Function with stored payload
     const response = await fetch('/.netlify/functions/ai-recommendation', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(window.aiPayload)
     });
-    
-    console.log('Response status:', response.status);
     
     const data = await parseApiResponse(response);
     
     if (!response.ok || !data.success) {
-      const error = new Error(data.message || 'Gagal menghasilkan rekomendasi.');
-      error.code = data.code;
-      error.details = data.details;
-      throw error;
+      throw new Error(data.message || 'Gagal menghasilkan rekomendasi');
     }
     
     console.log('AI Response:', data);
@@ -4815,25 +4839,59 @@ async function retryAIRecommendation() {
     
   } catch (error) {
     console.error('AI Retry Error:', error);
-    
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('aiError').style.display = 'block';
+    document.getElementById('aiErrorMessage').textContent = error.message;
+  }
+}
+
+// Regenerate AI Recommendation with updated statistics
+async function regenerateAIRecommendation() {
+  if (!sentimentPredictions) {
+    alert('Tidak ada data prediksi untuk diregenerasi');
+    return;
+  }
+  
+  // Show loading state
+  document.getElementById('aiResults').style.display = 'none';
+  document.getElementById('aiLoading').style.display = 'block';
+  
+  try {
+    // Recalculate statistics with updated predictions
+    const stats = calculateSentimentStatistics();
+    console.log('Updated statistics for AI:', stats);
     
-    let errorMessage = 'Gagal menghasilkan rekomendasi. ';
+    // Store new payload
+    window.aiPayload = stats;
     
-    if (error.code) {
-      switch (error.code) {
-        case 'PROVIDER_TIMEOUT':
-          errorMessage += 'Provider AI membutuhkan waktu terlalu lama. Silakan coba kembali.';
-          break;
-        default:
-          errorMessage += error.message || 'Silakan coba lagi nanti.';
-      }
-    } else {
-      errorMessage += error.message || 'Silakan coba lagi nanti.';
+    // Call AI recommendation with updated statistics
+    const response = await fetch('/.netlify/functions/ai-recommendation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(stats)
+    });
+    
+    const data = await parseApiResponse(response);
+    
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal menghasilkan rekomendasi');
     }
     
-    document.getElementById('aiErrorMessage').textContent = errorMessage;
+    console.log('AI Response:', data);
+    
+    const recommendationData = data.data || data;
+    aiRecommendationData = recommendationData;
+    
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiResults').style.display = 'block';
+    
+    displayAIRecommendation(recommendationData);
+    
+  } catch (error) {
+    console.error('AI Regenerate Error:', error);
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiError').style.display = 'block';
+    document.getElementById('aiErrorMessage').textContent = error.message;
   }
 }
 
