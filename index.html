@@ -3306,29 +3306,8 @@ function analyzeSentimentDataset() {
     return;
   }
   
-  // Show progress section
-  const progressSection = document.getElementById('sentimentProgressSection');
-  progressSection.style.display = 'block';
-  
-  // Reset all steps
-  const steps = ['stepDataset', 'stepCleaning', 'stepCaseFolding', 'stepTokenizing', 'stepStopword', 'stepStemming', 'stepLinguistic', 'stepTFIDF', 'stepNaiveBayes', 'stepPrediction'];
-  steps.forEach(stepId => {
-    const step = document.getElementById(stepId);
-    step.querySelector('.step-icon').textContent = '⏳';
-    step.querySelector('.step-text').style.color = '#9aa4b2';
-  });
-  
-  // Update step 1
-  updateProgressStep('stepDataset', '✅', 'Dataset dibaca');
-  
   try {
     // 1. Preprocessing
-    updateProgressStep('stepCleaning', '✅', 'Cleaning Text');
-    updateProgressStep('stepCaseFolding', '✅', 'Case Folding');
-    updateProgressStep('stepTokenizing', '✅', 'Tokenizing');
-    updateProgressStep('stepStopword', '✅', 'Stopword Removal');
-    updateProgressStep('stepStemming', '✅', 'Stemming');
-    
     console.log('Starting preprocessing...');
     sentimentPreprocessed = sentimentDataset.map(row => {
       const preprocessed = preprocessText(row.komentar);
@@ -3365,7 +3344,6 @@ function analyzeSentimentDataset() {
     console.log('Train label distribution:', trainLabelCounts);
     
     // 3. Linguistic Feature Extraction
-    updateProgressStep('stepLinguistic', '✅', 'Ekstraksi Fitur Linguistik');
     sentimentLinguisticFeatures = sentimentPreprocessed.map(row => extractLinguisticFeatures(row.komentar));
     
     // Show linguistic features
@@ -3375,7 +3353,6 @@ function analyzeSentimentDataset() {
     showSentimentSummaryCards();
     
     // 4. TF-IDF Vectorization
-    updateProgressStep('stepTFIDF', '✅', 'TF-IDF Vectorization');
     console.log('Vectorizing with TF-IDF...');
     const vectorizer = new TFIDFVectorizer();
     const trainTexts = trainData.map(d => d.preprocessed);
@@ -3393,7 +3370,6 @@ function analyzeSentimentDataset() {
     showMLInfo(vectorizer, trainData.length);
     
     // 5. Train Naive Bayes
-    updateProgressStep('stepNaiveBayes', '✅', 'Training Naive Bayes');
     console.log('Training Naive Bayes...');
     const classifier = new MultinomialNaiveBayes();
     const trainLabels = trainData.map(d => d.label || 'Netral');
@@ -3407,7 +3383,6 @@ function analyzeSentimentDataset() {
     console.log('Classifier priors:', classifier.classPriors);
     
     // 6. Predict on ALL data (train + test)
-    updateProgressStep('stepPrediction', '✅', 'Prediksi Selesai');
     console.log('Predicting on all data...');
     const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
     const allVectors = vectorizer.transform(allTexts);
