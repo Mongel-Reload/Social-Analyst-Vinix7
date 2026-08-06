@@ -4374,70 +4374,99 @@ function setupExportHandlers() {
 }
 
 function exportSentimentToExcel() {
-  if (!sentimentPreprocessed) {
+  if (!sentimentPredictions || sentimentPredictions.length === 0) {
     alert('Tidak ada data untuk diexport!');
     return;
   }
   
-  // Export all preprocessed data with predictions
-  const data = sentimentPreprocessed.map(row => {
-    const prediction = sentimentPredictions ? sentimentPredictions.find(p => p.komentar === row.komentar) : null;
-    return {
-      Username: row.username,
-      Komentar: row.komentar,
-      Label: row.label || '-',
-      Prediksi: prediction ? prediction.predicted : '-',
-      Confidence: prediction ? prediction.confidencePercent.toFixed(2) + '%' : '-',
-      Preprocessed: row.preprocessed
-    };
-  });
-  
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Sentiment Analysis');
-  
-  // Add AI Recommendations sheet if available
-  if (aiRecommendationData) {
-    const aiData = {
-      'Ringkasan': aiRecommendationData.executive_summary || aiRecommendationData.summary || '',
-      'Sentimen Dominan': aiRecommendationData.dominant_sentiment || '',
-      'Keterbatasan': (aiRecommendationData.limitations || []).join('; ')
-    };
+  try {
+    const wb = XLSX.utils.book_new();
     
-    const aiWs = XLSX.utils.json_to_sheet([aiData]);
-    XLSX.utils.book_append_sheet(wb, aiWs, 'AI Recommendations');
+    // Check if dataset has manual labels
+    const hasLabels = sentimentDataset && sentimentDataset.some(row => row.label);
+    
+    // Create worksheet with predictions
+    let wsData;
+    if (hasLabels) {
+      // Include manual labels and comparison
+      wsData = sentimentPredictions.map(row => {
+        const status = row.label && row.predicted
+          ? (row.label === row.predicted ? 'Sesuai' : 'Tidak Sesuai')
+          : '-';
+        return {
+          'Komentar': row.komentar || '-',
+          'Label Manual': row.label || '-',
+          'Prediksi': row.predicted || '-',
+          'Status': status,
+          'Confidence': row.confidencePercent || '-'
+        };
+      });
+    } else {
+      // Only predictions
+      wsData = sentimentPredictions.map(row => ({
+        'Komentar': row.komentar || '-',
+        'Prediksi': row.predicted || '-',
+        'Confidence': row.confidencePercent || '-'
+      }));
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, 'Sentiment Analysis');
+    
+    // Download file
+    XLSX.writeFile(wb, 'sentiment_analysis.xlsx');
+    alert('Export Excel berhasil!');
+  } catch (error) {
+    console.error('Export Excel error:', error);
+    alert('Gagal export Excel: ' + error.message);
   }
-  
-  XLSX.writeFile(wb, 'sentiment_analysis.xlsx');
-  alert('Export Excel berhasil!');
 }
 
 function exportSentimentToCSV() {
-  if (!sentimentPreprocessed) {
+  if (!sentimentPredictions || sentimentPredictions.length === 0) {
     alert('Tidak ada data untuk diexport!');
     return;
   }
   
-  // Export all preprocessed data with predictions
-  const data = sentimentPreprocessed.map(row => {
-    const prediction = sentimentPredictions ? sentimentPredictions.find(p => p.komentar === row.komentar) : null;
-    return {
-      Username: row.username,
-      Komentar: row.komentar,
-      Label: row.label || '-',
-      Prediksi: prediction ? prediction.predicted : '-',
-      Confidence: prediction ? prediction.confidencePercent.toFixed(2) + '%' : '-',
-      Preprocessed: row.preprocessed
-    };
-  });
-  
-  const csv = Papa.unparse(data);
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'sentiment_analysis.csv';
-  link.click();
-  alert('Export CSV berhasil!');
+  try {
+    const hasLabels = sentimentDataset && sentimentDataset.some(row => row.label);
+    
+    let headers, rows;
+    if (hasLabels) {
+      headers = ['Komentar', 'Label Manual', 'Prediksi', 'Status', 'Confidence'];
+      rows = sentimentPredictions.map(row => {
+        const status = row.label && row.predicted
+          ? (row.label === row.predicted ? 'Sesuai' : 'Tidak Sesuai')
+          : '-';
+        return [
+          `"${(row.komentar || '').replace(/"/g, '""')}"`,
+          row.label || '-',
+          row.predicted || '-',
+          status,
+          row.confidencePercent || '-'
+        ];
+      });
+    } else {
+      headers = ['Komentar', 'Prediksi', 'Confidence'];
+      rows = sentimentPredictions.map(row => [
+        `"${(row.komentar || '').replace(/"/g, '""')}"`,
+        row.predicted || '-',
+        row.confidencePercent || '-'
+      ]);
+    }
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'sentiment_analysis.csv';
+    link.click();
+    
+    alert('Export CSV berhasil!');
+  } catch (error) {
+    console.error('Export CSV error:', error);
+    alert('Gagal export CSV: ' + error.message);
+  }
 }
 
 function exportSentimentToPDF() {
@@ -4468,23 +4497,41 @@ function exportSentimentToPDF() {
     doc.text(`Netral: ${neutral} (${((neutral/sentimentPredictions.length)*100).toFixed(1)}%)`, 20, 55);
     doc.text(`Negatif: ${negative} (${((negative/sentimentPredictions.length)*100).toFixed(1)}%)`, 20, 65);
     
-    // Predictions table (first 100)
+    // Check if has manual labels
+    const hasLabels = sentimentDataset && sentimentDataset.some(row => row.label);
+    
+    // Predictions table
     doc.setFontSize(14);
     doc.setTextColor(34, 211, 238);
-    doc.text('Hasil Prediksi (100 pertama)', 20, 80);
+    doc.text('Hasil Prediksi', 20, 80);
     
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
     
-    const tableData = sentimentPredictions.slice(0, 100).map((row, i) => [
-      i + 1,
-      row.komentar?.substring(0, 50) || '-',
-      row.label || '-',
-      row.predicted || '-',
-      row.confidencePercent || '-'
-    ]);
-    
-    const tableHeaders = ['No', 'Komentar', 'Label Manual', 'Prediksi', 'Confidence'];
+    let tableHeaders, tableData;
+    if (hasLabels) {
+      tableHeaders = ['No', 'Komentar', 'Label', 'Prediksi', 'Status'];
+      tableData = sentimentPredictions.slice(0, 100).map((row, i) => {
+        const status = row.label && row.predicted
+          ? (row.label === row.predicted ? 'Sesuai' : 'Tidak Sesuai')
+          : '-';
+        return [
+          i + 1,
+          row.komentar?.substring(0, 40) || '-',
+          row.label || '-',
+          row.predicted || '-',
+          status
+        ];
+      });
+    } else {
+      tableHeaders = ['No', 'Komentar', 'Prediksi', 'Confidence'];
+      tableData = sentimentPredictions.slice(0, 100).map((row, i) => [
+        i + 1,
+        row.komentar?.substring(0, 50) || '-',
+        row.predicted || '-',
+        row.confidencePercent || '-'
+      ]);
+    }
     
     let y = 95;
     tableHeaders.forEach((header, i) => {
@@ -4504,37 +4551,6 @@ function exportSentimentToPDF() {
       });
       y += 8;
     });
-    
-    // AI Recommendations if available
-    if (aiRecommendationData) {
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.setTextColor(34, 211, 238);
-      doc.text('AI Recommendations', 20, 20);
-      
-      doc.setFontSize(10);
-      doc.setTextColor(255, 255, 255);
-      
-      y = 35;
-      if (aiRecommendationData.executive_summary) {
-        doc.text('Ringkasan:', 20, y);
-        y += 8;
-        const summaryLines = doc.splitTextToSize(aiRecommendationData.executive_summary, 170);
-        doc.text(summaryLines, 20, y);
-        y += summaryLines.length * 8 + 10;
-      }
-      
-      if (aiRecommendationData.key_insights && aiRecommendationData.key_insights.length > 0) {
-        doc.text('Temuan Utama:', 20, y);
-        y += 8;
-        aiRecommendationData.key_insights.slice(0, 5).forEach((insight, i) => {
-          const insightText = `${i + 1}. ${insight.insight || ''}`;
-          const lines = doc.splitTextToSize(insightText, 170);
-          doc.text(lines, 20, y);
-          y += lines.length * 8 + 5;
-        });
-      }
-    }
     
     doc.save('sentiment_analysis.pdf');
     alert('Export PDF berhasil!');
