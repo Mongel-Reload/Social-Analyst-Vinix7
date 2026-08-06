@@ -383,7 +383,30 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         </div>
       </div>
       
-      <!-- 3.1 Analisis Linguistik -->
+      <!-- 3.1 TF-IDF Feature Extraction -->
+      <div id="sentimentTFIDFSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">🔢 TF-IDF Feature Extraction (Top 10 Kata)</h3>
+        <div class="grid3">
+          <div style="padding:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px">
+            <small style="color:#9aa4b2">Top 10 Kata Positif</small>
+            <div id="tfidfPositive" style="color:#d1d5db;font-weight:700;margin-top:4px;font-size:13px">-</div>
+          </div>
+          <div style="padding:12px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px">
+            <small style="color:#9aa4b2">Top 10 Kata Netral</small>
+            <div id="tfidfNeutral" style="color:#d1d5db;font-weight:700;margin-top:4px;font-size:13px">-</div>
+          </div>
+          <div style="padding:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px">
+            <small style="color:#9aa4b2">Top 10 Kata Negatif</small>
+            <div id="tfidfNegative" style="color:#d1d5db;font-weight:700;margin-top:4px;font-size:13px">-</div>
+          </div>
+        </div>
+        <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+          <small style="color:#9aa4b2">Total Fitur (Vocabulary Size):</small>
+          <div id="tfidfTotalFeatures" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
+        </div>
+      </div>
+      
+      <!-- 3.2 Analisis Linguistik -->
       <div id="sentimentLinguisticSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">📊 Analisis Fitur Linguistik</h3>
         <div class="grid4">
@@ -2958,6 +2981,7 @@ function clearSentimentFile() {
   document.getElementById('sentimentInfoSection').style.display = 'none';
   document.getElementById('sentimentProgressSection').style.display = 'none';
   document.getElementById('sentimentPreprocessingSection').style.display = 'none';
+  document.getElementById('sentimentTFIDFSection').style.display = 'none';
   document.getElementById('sentimentLinguisticSection').style.display = 'none';
   document.getElementById('sentimentSummaryCardsSection').style.display = 'none';
   document.getElementById('sentimentPredictionSection').style.display = 'none';
@@ -4116,6 +4140,94 @@ function showPreprocessingResults() {
       <td>${steps.final.substring(0, 40)}${steps.final.length > 40 ? '...' : ''}</td>
     </tr>
   `).join('');
+  
+  // Calculate and show TF-IDF
+  calculateAndShowTFIDF();
+}
+
+function calculateAndShowTFIDF() {
+  if (!sentimentPreprocessed || sentimentPreprocessed.length === 0) return;
+  
+  // Group words by sentiment
+  const wordsBySentiment = {
+    Positif: {},
+    Netral: {},
+    Negatif: {}
+  };
+  
+  const totalDocs = sentimentPreprocessed.length;
+  const docFrequency = {}; // Document frequency for each word
+  
+  // Calculate term frequency per sentiment and document frequency
+  sentimentPreprocessed.forEach(row => {
+    const words = row.preprocessed.split(' ').filter(w => w.length > 2);
+    const sentiment = row.predicted || row.label || 'Netral';
+    
+    if (!wordsBySentiment[sentiment]) wordsBySentiment[sentiment] = {};
+    
+    words.forEach(word => {
+      // Term frequency in this sentiment
+      wordsBySentiment[sentiment][word] = (wordsBySentiment[sentiment][word] || 0) + 1;
+      
+      // Document frequency
+      docFrequency[word] = (docFrequency[word] || 0) + 1;
+    });
+  });
+  
+  // Calculate TF-IDF for each word in each sentiment
+  const tfidfBySentiment = {
+    Positif: [],
+    Netral: [],
+    Negatif: []
+  };
+  
+  Object.keys(wordsBySentiment).forEach(sentiment => {
+    const sentimentWords = wordsBySentiment[sentiment];
+    const totalWordsInSentiment = Object.values(sentimentWords).reduce((a, b) => a + b, 0);
+    
+    Object.keys(sentimentWords).forEach(word => {
+      const tf = sentimentWords[word] / totalWordsInSentiment;
+      const idf = Math.log(totalDocs / (docFrequency[word] || 1));
+      const tfidf = tf * idf;
+      
+      tfidfBySentiment[sentiment].push({ word, tfidf, count: sentimentWords[word] });
+    });
+    
+    // Sort by TF-IDF and get top 10
+    tfidfBySentiment[sentiment].sort((a, b) => b.tfidf - a.tfidf);
+    tfidfBySentiment[sentiment] = tfidfBySentiment[sentiment].slice(0, 10);
+  });
+  
+  // Display results
+  const positiveDiv = document.getElementById('tfidfPositive');
+  const neutralDiv = document.getElementById('tfidfNeutral');
+  const negativeDiv = document.getElementById('tfidfNegative');
+  const totalFeaturesDiv = document.getElementById('tfidfTotalFeatures');
+  
+  if (positiveDiv) {
+    positiveDiv.innerHTML = tfidfBySentiment.Positif.map(item => 
+      `<div style="margin-bottom:4px">${item.word} (${item.count})</div>`
+    ).join('') || '-';
+  }
+  
+  if (neutralDiv) {
+    neutralDiv.innerHTML = tfidfBySentiment.Netral.map(item => 
+      `<div style="margin-bottom:4px">${item.word} (${item.count})</div>`
+    ).join('') || '-';
+  }
+  
+  if (negativeDiv) {
+    negativeDiv.innerHTML = tfidfBySentiment.Negatif.map(item => 
+      `<div style="margin-bottom:4px">${item.word} (${item.count})</div>`
+    ).join('') || '-';
+  }
+  
+  if (totalFeaturesDiv) {
+    totalFeaturesDiv.textContent = Object.keys(docFrequency).length;
+  }
+  
+  // Show TF-IDF section
+  document.getElementById('sentimentTFIDFSection').style.display = 'block';
 }
 
 function showEvaluationResults() {
