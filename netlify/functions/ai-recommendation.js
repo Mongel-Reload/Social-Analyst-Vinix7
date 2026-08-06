@@ -308,7 +308,7 @@ exports.handler = async (event, context) => {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   const configuredModel = process.env.OPENAI_MODEL?.trim();
   let baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
-  const anthropicEndpoint = (process.env.OPENAI_ANTHROPIC_ENDPOINT || '/v1/messages').replace(/^\/+/, '');
+  const chatEndpoint = (process.env.OPENAI_CHAT_ENDPOINT || '/v1/chat/completions').replace(/^\/+/, '');
   
   // Handle base URL that already includes /v1
   if (baseUrl.endsWith('/v1')) {
@@ -333,7 +333,7 @@ exports.handler = async (event, context) => {
     });
   }
   
-  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model: configuredModel, baseUrl, anthropicEndpoint });
+  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model: configuredModel, baseUrl, chatEndpoint });
   
   try {
     // Parse request body
@@ -375,14 +375,17 @@ exports.handler = async (event, context) => {
       });
     }
     
-    // Gunakan endpoint anthropic-messages (format Sylor)
-    const sylorUrl = `${baseUrl}/${anthropicEndpoint}`;
+    // Gunakan endpoint chat/completions (format OpenAI-style Sylor)
+    const sylorUrl = `${baseUrl}/${chatEndpoint}`;
     
     const requestBody = {
       model: configuredModel,
-      max_tokens: 900, // Dikurangi dari 6000
-      system: SYSTEM_INSTRUCTION,
+      max_tokens: 900,
       messages: [
+        {
+          role: 'system',
+          content: SYSTEM_INSTRUCTION
+        },
         {
           role: 'user',
           content: `Berdasarkan data analisis media sosial berikut, berikan rekomendasi yang spesifik dan actionable dalam format JSON sesuai schema:\n\n${inputPayload}`
@@ -399,8 +402,7 @@ exports.handler = async (event, context) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'anthropic-version': '2023-06-01'
+          'Authorization': `Bearer ${apiKey}`
         }
       }, requestBody, startedAt);
     } catch (error) {
@@ -459,12 +461,12 @@ exports.handler = async (event, context) => {
       });
     }
     
-    // Parse Anthropic format response
+    // Parse OpenAI-style format response
     let outputText;
-    if (sylorResponse.content && Array.isArray(sylorResponse.content)) {
-      const textBlock = sylorResponse.content.find(block => block.type === 'text');
-      if (textBlock && textBlock.text) {
-        outputText = textBlock.text;
+    if (sylorResponse.choices && Array.isArray(sylorResponse.choices) && sylorResponse.choices.length > 0) {
+      const choice = sylorResponse.choices[0];
+      if (choice.message && choice.message.content) {
+        outputText = choice.message.content;
       }
     }
     
