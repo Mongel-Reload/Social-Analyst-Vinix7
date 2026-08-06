@@ -308,13 +308,8 @@ exports.handler = async (event, context) => {
   // Validate environment variables
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   const configuredModel = process.env.OPENAI_MODEL?.trim();
-  let baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com').replace(/\/+$/, '');
-  const chatEndpoint = (process.env.OPENAI_CHAT_ENDPOINT || '/v1/chat/completions').replace(/^\/+/, '');
-  
-  // Handle base URL that already includes /v1
-  if (baseUrl.endsWith('/v1')) {
-    baseUrl = baseUrl.replace(/\/v1$/, '');
-  }
+  const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.sylorapi.com/v1').replace(/\/+$/, '');
+  const chatEndpoint = (process.env.OPENAI_CHAT_ENDPOINT || '/chat/completions').replace(/^\/+/, '');
   
   if (!configuredModel) {
     console.log({ stage: 'model_missing', elapsedMs: Date.now() - startedAt });
