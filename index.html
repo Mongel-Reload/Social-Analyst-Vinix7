@@ -423,19 +423,6 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         </div>
       </div>
       
-      <!-- 3.3 Machine Learning Information -->
-      <div id="sentimentMLInfoSection" class="card" style="margin-bottom:15px;display:none">
-        <h3 style="margin-bottom:15px">🤖 Machine Learning Information</h3>
-        <div class="grid4">
-          <div class="card kpi" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3)"><small>Algoritma</small><strong>Multinomial Naive Bayes</strong><span>Classifier</span></div>
-          <div class="card kpi" style="background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3)"><small>Feature Extraction</small><strong>TF-IDF</strong><span>Vectorization</span></div>
-          <div class="card kpi"><small>Vocabulary Size</small><strong id="mlVocabularySize">-</strong><span>-</span></div>
-          <div class="card kpi"><small>Feature Count</small><strong id="mlFeatureCount">-</strong><span>-</span></div>
-          <div class="card kpi"><small>Total Komentar</small><strong id="mlTotalComments">-</strong><span>-</span></div>
-          <div class="card kpi"><small>Data Training</small><strong id="mlTrainingData">-</strong><span>-</span></div>
-        </div>
-      </div>
-      
       <!-- 4. Hasil Prediksi -->
       <div id="sentimentPredictionSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">🤖 Hasil Prediksi</h3>
@@ -2980,7 +2967,6 @@ function clearSentimentFile() {
   document.getElementById('sentimentPreprocessingSection').style.display = 'none';
   document.getElementById('sentimentLinguisticSection').style.display = 'none';
   document.getElementById('sentimentSummaryCardsSection').style.display = 'none';
-  document.getElementById('sentimentMLInfoSection').style.display = 'none';
   document.getElementById('sentimentPredictionSection').style.display = 'none';
   document.getElementById('sentimentComparisonSection').style.display = 'none';
   document.getElementById('sentimentEvaluationSection').style.display = 'none';
@@ -3366,9 +3352,6 @@ function analyzeSentimentDataset() {
     console.log('Vocabulary size:', Object.keys(vectorizer.vocabulary).length);
     console.log('Sample train vector:', trainVectors[0]);
     
-    // Show ML information
-    showMLInfo(vectorizer, trainData.length);
-    
     // 5. Train Naive Bayes
     console.log('Training Naive Bayes...');
     const classifier = new MultinomialNaiveBayes();
@@ -3575,22 +3558,6 @@ function showSentimentSummaryCards() {
   document.getElementById('summaryNeutralPct').textContent = ((neutral / total) * 100).toFixed(1) + '%';
   document.getElementById('summaryNegativePct').textContent = ((negative / total) * 100).toFixed(1) + '%';
   document.getElementById('summaryAvgConfidence').textContent = avgConfidence + '%';
-}
-
-function showMLInfo(vectorizer, trainingDataSize) {
-  const section = document.getElementById('sentimentMLInfoSection');
-  if (!section || !vectorizer) return;
-  
-  section.style.display = 'block';
-  
-  const vocabularySize = Object.keys(vectorizer.vocabulary).length;
-  const featureCount = vocabularySize;
-  const totalComments = sentimentDataset.length;
-  
-  document.getElementById('mlVocabularySize').textContent = vocabularySize;
-  document.getElementById('mlFeatureCount').textContent = featureCount;
-  document.getElementById('mlTotalComments').textContent = totalComments;
-  document.getElementById('mlTrainingData').textContent = trainingDataSize + ' (' + ((trainingDataSize / totalComments) * 100).toFixed(1) + '%)';
 }
 
 function showMLInsights() {
