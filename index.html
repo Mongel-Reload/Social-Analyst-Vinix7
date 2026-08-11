@@ -563,7 +563,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <!-- Loading State -->
         <div id="aiLoading" style="display:none;text-align:center;padding:40px">
           <div style="font-size:48px;margin-bottom:15px">🤖</div>
-          <p style="color:#9aa4b2">Sedang menyusun rekomendasi berdasarkan hasil analisis...</p>
+          <p id="aiLoadingText" style="color:#9aa4b2">Sedang menyusun rekomendasi berdasarkan hasil analisis...</p>
         </div>
         
         <!-- AI Results -->
@@ -4988,7 +4988,7 @@ async function parseApiResponse(response) {
   }
 }
 
-// Generate AI Recommendation via Netlify Function
+// Generate AI Recommendation via Netlify Function (async)
 async function generateAIRecommendation() {
   if (!sentimentPredictions) {
     console.log('No sentiment predictions, skipping AI recommendation');
@@ -5009,8 +5009,9 @@ async function generateAIRecommendation() {
     // Store payload for retry (so we don't re-run ML)
     window.aiPayload = stats;
     
-    // Call Netlify Function
-    const response = await fetch('/.netlify/functions/ai-recommendation', {
+    // Start async job
+    updateAILoadingText('AI sedang menganalisis hasil sentimen...');
+    const startResponse = await fetch('/.netlify/functions/start-ai-recommendation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -5018,34 +5019,59 @@ async function generateAIRecommendation() {
       body: JSON.stringify(stats)
     });
     
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
+    const startData = await startResponse.json();
     
-    const data = await parseApiResponse(response);
-    
-    if (!response.ok || !data.success) {
-      const error = new Error(data.message || 'Gagal menghasilkan rekomendasi.');
-      error.code = data.code;
-      error.details = data.details;
-      error.model = data.model;
-      error.baseUrl = data.baseUrl;
-      throw error;
+    if (!startResponse.ok || !startData.success) {
+      throw new Error(startData.error?.message || 'Gagal memulai job rekomendasi AI');
     }
     
-    console.log('AI Response:', data);
+    const jobId = startData.jobId;
+    console.log('AI Recommendation job started:', jobId);
     
-    // Handle new response format from Sylor API
-    const recommendationData = data.data || data;
+    // Poll job status
+    updateAILoadingText('AI sedang menyusun rekomendasi strategi...');
+    const maxPollingTime = 300000; // 5 minutes max
+    const pollingInterval = 3000; // 3 seconds
+    const startTime = Date.now();
     
-    // Store recommendation data
-    aiRecommendationData = recommendationData;
+    while (Date.now() - startTime < maxPollingTime) {
+      await new Promise(resolve => setTimeout(resolve, pollingInterval));
+      
+      const statusResponse = await fetch(`/.netlify/functions/ai-recommendation-status?id=${jobId}`);
+      const statusData = await statusResponse.json();
+      
+      console.log('AI Recommendation status:', statusData.status);
+      
+      if (statusData.status === 'completed' && statusData.result) {
+        // Store recommendation data
+        aiRecommendationData = statusData.result;
+        
+        console.log('[AI NORMALIZED RESULT]', {
+          hasExecutiveSummary: !!aiRecommendationData.executive_summary,
+          keyInsightsCount: aiRecommendationData.key_insights?.length || 0,
+          contentIdeasCount: aiRecommendationData.content_ideas?.length || 0,
+          priorityActionsCount: aiRecommendationData.priority_actions?.length || 0,
+          strategicRecommendationsCount: aiRecommendationData.strategic_recommendations?.length || 0,
+          limitationsCount: aiRecommendationData.limitations?.length || 0
+        });
+        
+        // Hide loading, show results
+        document.getElementById('aiLoading').style.display = 'none';
+        document.getElementById('aiResults').style.display = 'block';
+        
+        // Display response with sanitization
+        displayAIRecommendation(aiRecommendationData);
+        
+        return;
+      }
+      
+      if (statusData.status === 'failed') {
+        const err = statusData.error || {};
+        throw new Error(err.message || 'AI recommendation job failed');
+      }
+    }
     
-    // Hide loading, show results
-    document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiResults').style.display = 'block';
-    
-    // Display response with sanitization
-    displayAIRecommendation(recommendationData);
+    throw new Error('AI recommendation timed out after 5 minutes');
     
   } catch (error) {
     console.error('AI Error:', error);
@@ -5059,8 +5085,12 @@ async function generateAIRecommendation() {
     // Show user-friendly error message
     let errorMessage = 'Gagal menghasilkan rekomendasi. ';
     
+    // Handle ReferenceError (undefined variable)
+    if (error instanceof ReferenceError) {
+      errorMessage = 'Terjadi kendala saat menyiapkan data konten. Silakan refresh halaman dan coba lagi.';
+    }
     // Handle HTTP 504 gateway timeout (HTML response from Netlify)
-    if (error.message === 'GATEWAY_TIMEOUT') {
+    else if (error.message === 'GATEWAY_TIMEOUT') {
       errorMessage = 'Permintaan AI melewati batas waktu server. Data analisis berhasil, tetapi rekomendasi AI belum selesai. Silakan coba kembali.';
     }
     // Handle JSON PROVIDER_TIMEOUT from function
@@ -5294,7 +5324,7 @@ function displayAIRecommendation(response) {
   // Key Insights (new simplified schema: insight, data_basis)
   const findingsEl = document.getElementById('aiFindings');
   findingsEl.innerHTML = '';
-  if (response.key_insights && Array.isArray(response.key_insights)) {
+  if (response.key_insights && Array.isArray(response.key_insights) && response.key_insights.length > 0) {
     console.log('Key insights data:', response.key_insights);
     response.key_insights.forEach((insight, index) => {
       console.log(`Insight ${index}:`, insight);
@@ -5323,6 +5353,8 @@ function displayAIRecommendation(response) {
       
       findingsEl.appendChild(div);
     });
+  } else {
+    findingsEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat temuan utama yang dapat dipetakan dari hasil analisis.</p>';
   }
   
   // Content Ideas (new simplified schema: title, format, concept, call_to_action, data_basis)
@@ -5389,7 +5421,7 @@ function displayAIRecommendation(response) {
   // Priority Actions (new simplified schema: action, reason, success_metric)
   const negativeEl = document.getElementById('aiNegative');
   negativeEl.innerHTML = '';
-  if (response.priority_actions && Array.isArray(response.priority_actions)) {
+  if (response.priority_actions && Array.isArray(response.priority_actions) && response.priority_actions.length > 0) {
     response.priority_actions.forEach((action, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
@@ -5425,12 +5457,14 @@ function displayAIRecommendation(response) {
       
       negativeEl.appendChild(div);
     });
+  } else {
+    negativeEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat prioritas tindakan yang dapat dipetakan dari hasil analisis.</p>';
   }
   
   // Strategic Recommendations (new field: recommendation, rationale, expected_impact)
   const recommendationsEl = document.getElementById('aiRecommendations');
   recommendationsEl.innerHTML = '';
-  if (response.strategic_recommendations && Array.isArray(response.strategic_recommendations)) {
+  if (response.strategic_recommendations && Array.isArray(response.strategic_recommendations) && response.strategic_recommendations.length > 0) {
     response.strategic_recommendations.forEach((rec, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
@@ -5466,12 +5500,14 @@ function displayAIRecommendation(response) {
       
       recommendationsEl.appendChild(div);
     });
+  } else {
+    recommendationsEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat rekomendasi strategi yang dapat dipetakan dari hasil analisis.</p>';
   }
   
   // Priority Actions for display (same as priority_actions but shown in aiPriority)
   const priorityEl = document.getElementById('aiPriority');
   priorityEl.innerHTML = '';
-  if (response.priority_actions && Array.isArray(response.priority_actions)) {
+  if (response.priority_actions && Array.isArray(response.priority_actions) && response.priority_actions.length > 0) {
     response.priority_actions.forEach((action, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
@@ -5507,12 +5543,14 @@ function displayAIRecommendation(response) {
       
       priorityEl.appendChild(div);
     });
+  } else {
+    priorityEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat prioritas tindagan yang dapat dipetakan dari hasil analisis.</p>';
   }
   
   // Limitations (new field: limitation, mitigation)
   const limitationsEl = document.getElementById('aiLimitations');
   limitationsEl.innerHTML = '';
-  if (response.limitations && Array.isArray(response.limitations)) {
+  if (response.limitations && Array.isArray(response.limitations) && response.limitations.length > 0) {
     response.limitations.forEach((limit, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
@@ -5539,6 +5577,8 @@ function displayAIRecommendation(response) {
       
       limitationsEl.appendChild(div);
     });
+  } else {
+    limitationsEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat keterbatasan analisis yang dapat dipetakan dari hasil analisis.</p>';
   }
   
   // Show content generator section (isolated error handling)
@@ -5639,9 +5679,8 @@ function renderRecommendationSelection() {
     card.className = 'card';
     card.style.cssText = 'padding:16px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px';
     card.innerHTML = `
-      <h4 style="margin:0 0 8px 0;color:#d8b4fe">Rekomendasi ${index + 1}</h4>
-      <p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(normalized.title)}</p>
-      ${normalized.concept ? `<p style="margin:8px 0 0 0;color:#9aa4b2;font-size:13px;line-height:1.4">${sanitizeText(normalized.concept)}</p>` : ''}
+      <h4 style="margin:0 0 8px 0;color:#d8b4fe">${sanitizeText(normalized.title)}</h4>
+      ${normalized.concept ? `<p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(normalized.concept)}</p>` : ''}
       ${statusBadge}
       ${status !== 'completed' && status !== 'generating' ? `
         <button class="btn primary" onclick="generateContentFromRecommendation(${index})" style="margin-top:12px;padding:8px 16px;font-size:14px">
@@ -5785,6 +5824,13 @@ function updateLoadingText(text) {
   }
 }
 
+function updateAILoadingText(text) {
+  const loadingText = document.getElementById('aiLoadingText');
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
+
 function showContentGeneratorError(message) {
   const container = document.getElementById('recommendationSelection');
   if (!container) return;
@@ -5898,7 +5944,7 @@ async function generateImage(recommendation) {
     },
     body: JSON.stringify({ 
       recommendation,
-      sentimentContext: aiSentimentData || null
+      sentimentContext: aiRecommendationData || null
     })
   });
   
