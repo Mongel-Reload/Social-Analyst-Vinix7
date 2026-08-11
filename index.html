@@ -823,8 +823,10 @@ function showLoading(message){
     style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
     document.head.appendChild(style);
   }
-  $('#loadingText').textContent = message;
-  $('#globalLoading').style.display = 'flex';
+  const loadingText = $('#loadingText');
+  if(loadingText) loadingText.textContent = message;
+  const globalLoading = $('#globalLoading');
+  if(globalLoading) globalLoading.style.display = 'flex';
 }
 
 function hideLoading(){
@@ -3286,12 +3288,18 @@ function showDatasetPreview() {
     dateRange = `${sortedDates[0]} - ${sortedDates[sortedDates.length - 1]}`;
   }
   
-  document.getElementById('infoTotalRows').textContent = totalRows;
-  document.getElementById('infoTotalColumns').textContent = totalColumns;
-  document.getElementById('infoUniqueUsers').textContent = uniqueUsers;
-  document.getElementById('infoEmptyComments').textContent = emptyComments;
-  document.getElementById('infoValidationStatus').textContent = emptyComments === 0 ? '✅ Valid' : '⚠️ Perlu Perhatian';
-  document.getElementById('infoDateRange').textContent = dateRange;
+  const elTotalRows = document.getElementById('infoTotalRows');
+  if(elTotalRows) elTotalRows.textContent = totalRows;
+  const elTotalColumns = document.getElementById('infoTotalColumns');
+  if(elTotalColumns) elTotalColumns.textContent = totalColumns;
+  const elUniqueUsers = document.getElementById('infoUniqueUsers');
+  if(elUniqueUsers) elUniqueUsers.textContent = uniqueUsers;
+  const elEmptyComments = document.getElementById('infoEmptyComments');
+  if(elEmptyComments) elEmptyComments.textContent = emptyComments;
+  const elValidationStatus = document.getElementById('infoValidationStatus');
+  if(elValidationStatus) elValidationStatus.textContent = emptyComments === 0 ? '✅ Valid' : '⚠️ Perlu Perhatian';
+  const elDateRange = document.getElementById('infoDateRange');
+  if(elDateRange) elDateRange.textContent = dateRange;
 }
 
 function updateProgressStep(stepId, icon, text) {
@@ -3570,23 +3578,34 @@ function showLinguisticFeatures() {
   const count = sentimentLinguisticFeatures.length;
   totals.uppercase_ratio = ((totals.uppercase_ratio / count) * 100).toFixed(2) + '%';
   
-  document.getElementById('lingUppercase').textContent = totals.uppercase_count;
-  document.getElementById('lingUppercaseRatio').textContent = totals.uppercase_ratio;
-  document.getElementById('lingPositiveEmoji').textContent = totals.positive_emoji_count;
-  document.getElementById('lingNegativeEmoji').textContent = totals.negative_emoji_count;
-  document.getElementById('lingNeutralEmoji').textContent = totals.neutral_emoji_count;
-  document.getElementById('lingExclamation').textContent = totals.exclamation_count;
-  document.getElementById('lingQuestion').textContent = totals.question_count;
-  document.getElementById('lingRepeated').textContent = totals.repeated_character_count;
+  const elUppercase = document.getElementById('lingUppercase');
+  if(elUppercase) elUppercase.textContent = totals.uppercase_count;
+  const elUppercaseRatio = document.getElementById('lingUppercaseRatio');
+  if(elUppercaseRatio) elUppercaseRatio.textContent = totals.uppercase_ratio;
+  const elPositiveEmoji = document.getElementById('lingPositiveEmoji');
+  if(elPositiveEmoji) elPositiveEmoji.textContent = totals.positive_emoji_count;
+  const elNegativeEmoji = document.getElementById('lingNegativeEmoji');
+  if(elNegativeEmoji) elNegativeEmoji.textContent = totals.negative_emoji_count;
+  const elNeutralEmoji = document.getElementById('lingNeutralEmoji');
+  if(elNeutralEmoji) elNeutralEmoji.textContent = totals.neutral_emoji_count;
+  const elExclamation = document.getElementById('lingExclamation');
+  if(elExclamation) elExclamation.textContent = totals.exclamation_count;
+  const elQuestion = document.getElementById('lingQuestion');
+  if(elQuestion) elQuestion.textContent = totals.question_count;
+  const elRepeated = document.getElementById('lingRepeated');
+  if(elRepeated) elRepeated.textContent = totals.repeated_character_count;
   
   // Top features
   const intensifiers = sentimentLinguisticFeatures.map(f => f.intensifier_count || 0).reduce((a, b) => a + b, 0);
   const softeners = sentimentLinguisticFeatures.map(f => f.softener_count || 0).reduce((a, b) => a + b, 0);
   const negations = sentimentLinguisticFeatures.map(f => f.negation_count || 0).reduce((a, b) => a + b, 0);
   
-  document.getElementById('lingTopIntensifiers').textContent = intensifiers > 0 ? `sangat (${intensifiers})` : '-';
-  document.getElementById('lingTopSofteners').textContent = softeners > 0 ? `cukup (${softeners})` : '-';
-  document.getElementById('lingTopNegations').textContent = negations > 0 ? `tidak (${negations})` : '-';
+  const elTopIntensifiers = document.getElementById('lingTopIntensifiers');
+  if(elTopIntensifiers) elTopIntensifiers.textContent = intensifiers > 0 ? `sangat (${intensifiers})` : '-';
+  const elTopSofteners = document.getElementById('lingTopSofteners');
+  if(elTopSofteners) elTopSofteners.textContent = softeners > 0 ? `cukup (${softeners})` : '-';
+  const elTopNegations = document.getElementById('lingTopNegations');
+  if(elTopNegations) elTopNegations.textContent = negations > 0 ? `tidak (${negations})` : '-';
   
   // Store for insights
   window.linguisticTotals = totals;
@@ -3605,14 +3624,22 @@ function showSentimentSummaryCards() {
   
   const avgConfidence = (sentimentPredictions.reduce((sum, p) => sum + parseFloat(p.confidencePercent), 0) / total).toFixed(1);
   
-  document.getElementById('summaryTotal').textContent = total;
-  document.getElementById('summaryPositive').textContent = positive;
-  document.getElementById('summaryNeutral').textContent = neutral;
-  document.getElementById('summaryNegative').textContent = negative;
-  document.getElementById('summaryPositivePct').textContent = ((positive / total) * 100).toFixed(1) + '%';
-  document.getElementById('summaryNeutralPct').textContent = ((neutral / total) * 100).toFixed(1) + '%';
-  document.getElementById('summaryNegativePct').textContent = ((negative / total) * 100).toFixed(1) + '%';
-  document.getElementById('summaryAvgConfidence').textContent = avgConfidence + '%';
+  const elSummaryTotal = document.getElementById('summaryTotal');
+  if(elSummaryTotal) elSummaryTotal.textContent = total;
+  const elSummaryPositive = document.getElementById('summaryPositive');
+  if(elSummaryPositive) elSummaryPositive.textContent = positive;
+  const elSummaryNeutral = document.getElementById('summaryNeutral');
+  if(elSummaryNeutral) elSummaryNeutral.textContent = neutral;
+  const elSummaryNegative = document.getElementById('summaryNegative');
+  if(elSummaryNegative) elSummaryNegative.textContent = negative;
+  const elSummaryPositivePct = document.getElementById('summaryPositivePct');
+  if(elSummaryPositivePct) elSummaryPositivePct.textContent = ((positive / total) * 100).toFixed(1) + '%';
+  const elSummaryNeutralPct = document.getElementById('summaryNeutralPct');
+  if(elSummaryNeutralPct) elSummaryNeutralPct.textContent = ((neutral / total) * 100).toFixed(1) + '%';
+  const elSummaryNegativePct = document.getElementById('summaryNegativePct');
+  if(elSummaryNegativePct) elSummaryNegativePct.textContent = ((negative / total) * 100).toFixed(1) + '%';
+  const elSummaryAvgConfidence = document.getElementById('summaryAvgConfidence');
+  if(elSummaryAvgConfidence) elSummaryAvgConfidence.textContent = avgConfidence + '%';
 }
 
 function showMLInsights() {
@@ -4044,13 +4071,20 @@ function updateStatisticsAfterCorrection() {
   const neutral = predCounts['Netral'] || 0;
   const negative = predCounts['Negatif'] || 0;
   
-  document.getElementById('summaryTotal').textContent = total;
-  document.getElementById('summaryPositive').textContent = positive;
-  document.getElementById('summaryNeutral').textContent = neutral;
-  document.getElementById('summaryNegative').textContent = negative;
-  document.getElementById('summaryPositivePct').textContent = ((positive / total) * 100).toFixed(1) + '%';
-  document.getElementById('summaryNeutralPct').textContent = ((neutral / total) * 100).toFixed(1) + '%';
-  document.getElementById('summaryNegativePct').textContent = ((negative / total) * 100).toFixed(1) + '%';
+  const elSummaryTotal = document.getElementById('summaryTotal');
+  if(elSummaryTotal) elSummaryTotal.textContent = total;
+  const elSummaryPositive = document.getElementById('summaryPositive');
+  if(elSummaryPositive) elSummaryPositive.textContent = positive;
+  const elSummaryNeutral = document.getElementById('summaryNeutral');
+  if(elSummaryNeutral) elSummaryNeutral.textContent = neutral;
+  const elSummaryNegative = document.getElementById('summaryNegative');
+  if(elSummaryNegative) elSummaryNegative.textContent = negative;
+  const elSummaryPositivePct = document.getElementById('summaryPositivePct');
+  if(elSummaryPositivePct) elSummaryPositivePct.textContent = ((positive / total) * 100).toFixed(1) + '%';
+  const elSummaryNeutralPct = document.getElementById('summaryNeutralPct');
+  if(elSummaryNeutralPct) elSummaryNeutralPct.textContent = ((neutral / total) * 100).toFixed(1) + '%';
+  const elSummaryNegativePct = document.getElementById('summaryNegativePct');
+  if(elSummaryNegativePct) elSummaryNegativePct.textContent = ((negative / total) * 100).toFixed(1) + '%';
   
   // Update charts
   showSentimentDistribution();
@@ -4072,7 +4106,8 @@ function refreshSummaryStats() {
     return sum + maxConf;
   }, 0) / sentimentPredictions.length;
   
-  document.getElementById('summaryAvgConfidence').textContent = (avgConfidence * 100).toFixed(1) + '%';
+  const elSummaryAvgConfidence = document.getElementById('summaryAvgConfidence');
+  if(elSummaryAvgConfidence) elSummaryAvgConfidence.textContent = (avgConfidence * 100).toFixed(1) + '%';
   
   // Update charts
   showSentimentDistribution();
@@ -4271,10 +4306,14 @@ function showEvaluationResults() {
   
   section.style.display = 'block';
   
-  document.getElementById('sentimentAccuracy').textContent = (sentimentEvaluation.accuracy * 100).toFixed(2) + '%';
-  document.getElementById('sentimentPrecision').textContent = (sentimentEvaluation.weightedPrecision * 100).toFixed(2) + '%';
-  document.getElementById('sentimentRecall').textContent = (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%';
-  document.getElementById('sentimentF1').textContent = (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%';
+  const elAccuracy = document.getElementById('sentimentAccuracy');
+  if(elAccuracy) elAccuracy.textContent = (sentimentEvaluation.accuracy * 100).toFixed(2) + '%';
+  const elPrecision = document.getElementById('sentimentPrecision');
+  if(elPrecision) elPrecision.textContent = (sentimentEvaluation.weightedPrecision * 100).toFixed(2) + '%';
+  const elRecall = document.getElementById('sentimentRecall');
+  if(elRecall) elRecall.textContent = (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%';
+  const elF1 = document.getElementById('sentimentF1');
+  if(elF1) elF1.textContent = (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%';
 }
 
 function showConfusionMatrix() {
@@ -5138,7 +5177,8 @@ async function generateAIRecommendation() {
       errorMessage += ` (Code: ${error.code})`;
     }
     
-    document.getElementById('aiErrorMessage').textContent = errorMessage;
+    const elAiErrorMessage = document.getElementById('aiErrorMessage');
+    if(elAiErrorMessage) elAiErrorMessage.textContent = errorMessage;
   }
 }
 
@@ -5179,7 +5219,8 @@ async function retryAIRecommendation() {
     console.error('AI Retry Error:', error);
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('aiError').style.display = 'block';
-    document.getElementById('aiErrorMessage').textContent = error.message;
+    const elAiErrorMessage = document.getElementById('aiErrorMessage');
+    if(elAiErrorMessage) elAiErrorMessage.textContent = error.message;
   }
 }
 
@@ -5229,7 +5270,8 @@ async function regenerateAIRecommendation() {
     console.error('AI Regenerate Error:', error);
     document.getElementById('aiLoading').style.display = 'none';
     document.getElementById('aiError').style.display = 'block';
-    document.getElementById('aiErrorMessage').textContent = error.message;
+    const elAiErrorMessage = document.getElementById('aiErrorMessage');
+    if(elAiErrorMessage) elAiErrorMessage.textContent = error.message;
   }
 }
 
@@ -5499,8 +5541,13 @@ function displayAIRecommendation(response) {
     });
   }
   
-  // Show content generator section
-  showContentGeneratorSection();
+  // Show content generator section (isolated error handling)
+  try {
+    showContentGeneratorSection();
+  } catch (error) {
+    console.error('Content Generator initialization failed:', error);
+    // Don't block the main AI recommendation display if Content Generator fails
+  }
 }
 
 // ============================================
@@ -5512,28 +5559,36 @@ function setupContentGeneratorHandlers() {
 }
 
 function showContentGeneratorSection() {
-  if (!aiRecommendationData || !aiRecommendationData.content_ideas) {
-    console.log('No content ideas available');
-    return;
-  }
-  
-  const section = document.getElementById('contentGeneratorSection');
-  if (section) {
+  try {
+    if (!aiRecommendationData || !aiRecommendationData.content_ideas) {
+      console.log('No content ideas available');
+      return;
+    }
+    
+    const section = document.getElementById('contentGeneratorSection');
+    if (!section) {
+      console.log('Content generator section not found in DOM');
+      return;
+    }
+    
     section.style.display = 'block';
+    
+    // Reset state
+    generatedContents = [];
+    recommendationStatus = {};
+    currentGeneratingRecommendation = null;
+    
+    // Initialize recommendation status
+    aiRecommendationData.content_ideas.forEach((idea, index) => {
+      recommendationStatus[index] = 'pending';
+    });
+    
+    // Show recommendation selection
+    renderRecommendationSelection();
+  } catch (error) {
+    console.error('Error in showContentGeneratorSection:', error);
+    // Don't throw - let main AI recommendation display continue
   }
-  
-  // Reset state
-  generatedContents = [];
-  recommendationStatus = {};
-  currentGeneratingRecommendation = null;
-  
-  // Initialize recommendation status
-  aiRecommendationData.content_ideas.forEach((idea, index) => {
-    recommendationStatus[index] = 'pending';
-  });
-  
-  // Show recommendation selection
-  renderRecommendationSelection();
 }
 
 function renderRecommendationSelection() {
