@@ -5878,15 +5878,26 @@ Requirements:
     const data = await response.json();
     
     if (!data.success) {
-      // Display actual provider error with HTTP status for debugging
+      // Display detailed error information for debugging
+      const errorType = data.error || 'UNKNOWN';
       const providerStatus = data.providerStatus || 'UNKNOWN';
-      const providerMessage = data.providerMessage || data.message || 'Unknown error';
-      const errorMessage = `HTTP ${providerStatus} — ${providerMessage}`;
+      const errorMessage = data.message || data.providerMessage || 'Unknown error';
+      const causeCode = data.causeCode || null;
+      const causeMessage = data.causeMessage || null;
+      
       console.error('[IMAGE GENERATION ERROR]', {
+        errorType,
         providerStatus,
-        providerMessage
+        errorMessage,
+        causeCode,
+        causeMessage
       });
-      throw new Error(errorMessage);
+      
+      let fullError = `Type: ${errorType}\nMessage: ${errorMessage}`;
+      if (causeCode) fullError += `\nCause Code: ${causeCode}`;
+      if (causeMessage) fullError += `\nCause: ${causeMessage}`;
+      
+      throw new Error(fullError);
     }
     
     // Convert response to usable format

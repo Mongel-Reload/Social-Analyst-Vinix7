@@ -20,44 +20,34 @@ exports.handler = async (event, context) => {
   }
   
   // Validate environment variables
+  const requiredEnv = ['IMAGE_API_BASE_URL', 'IMAGE_API_ENDPOINT', 'IMAGE_MODEL', 'IMAGE_API_KEY'];
+  const missingEnv = requiredEnv.filter(key => !process.env[key]);
+  
+  if (missingEnv.length > 0) {
+    console.log('[IMAGE CONFIG ERROR] Missing ENV:', missingEnv);
+    return {
+      statusCode: 503,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: false,
+        error: 'IMAGE_PROVIDER_NOT_CONFIGURED',
+        missingEnv
+      })
+    };
+  }
+  
   const apiKey = process.env.IMAGE_API_KEY?.trim();
-  const baseUrl = (process.env.IMAGE_API_BASE_URL || 'https://lite.koboillm.com').replace(/\/$/, '');
-  const endpoint = (process.env.IMAGE_API_ENDPOINT || '/v1/images/generations').replace(/^\/+/, '');
+  const baseUrl = (process.env.IMAGE_API_BASE_URL || '').replace(/\/+$/, '');
+  const endpoint = '/' + (process.env.IMAGE_API_ENDPOINT || '').replace(/^\/+/, '');
   const model = process.env.IMAGE_MODEL?.trim();
   
   const finalUrl = `${baseUrl}${endpoint}`;
   
-  console.log('[IMAGE CONFIG]', {
+  console.log('[IMAGE API CONFIG]', {
     finalUrl,
-    model: model || 'NOT_CONFIGURED',
+    model,
     hasApiKey: Boolean(apiKey)
   });
-  
-  if (!apiKey) {
-    console.log('[IMAGE CONFIG ERROR] API key missing');
-    return {
-      statusCode: 503,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: false,
-        code: 'IMAGE_PROVIDER_NOT_CONFIGURED',
-        message: 'IMAGE_API_KEY environment variable belum dikonfigurasi.'
-      })
-    };
-  }
-  
-  if (!model) {
-    console.log('[IMAGE CONFIG ERROR] Model missing');
-    return {
-      statusCode: 503,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: false,
-        code: 'IMAGE_PROVIDER_NOT_CONFIGURED',
-        message: 'IMAGE_MODEL environment variable belum dikonfigurasi.'
-      })
-    };
-  }
   
   try {
     // Parse request body
@@ -90,40 +80,29 @@ exports.handler = async (event, context) => {
       };
     }
     
-    // Construct URL safely
-    console.log('[FINAL URL]', finalUrl);
-    
     // Prepare minimal request to KoboiLLM
     const payload = {
       model: model,
       prompt: requestData.prompt,
       size: '1024x1536',
-      quality: 'medium',
       n: 1
     };
     
     console.log('[REQUEST PAYLOAD]', {
       model: payload.model,
       size: payload.size,
-      quality: payload.quality,
       n: payload.n
     });
     
-    // Make request to KoboiLLM
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for image generation
-    
+    // Make request to KoboiLLM (no timeout for debugging)
     const response = await fetch(finalUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(payload),
-      signal: controller.signal
+      body: JSON.stringify(payload)
     });
-    
-    clearTimeout(timeoutId);
     
     const duration = Date.now() - startedAt;
     console.log('[IMAGE DURATION]', `${duration}ms`);
@@ -226,10 +205,13 @@ exports.handler = async (event, context) => {
     };
     
   } catch (error) {
-    console.error('[CATCH ERROR]', {
-      errorName: error.name,
-      errorMessage: error.message,
-      errorStack: error.stack?.split('\n')?.slice(0, 3)
+    console.error('[IMAGE FETCH FAILED]', {
+      name: error?.name,
+      message: error?.message,
+      causeCode: error?.cause?.code,
+      causeMessage: error?.cause?.message,
+      causeName: error?.cause?.name,
+      stack: error?.stack?.split('\n')?.slice(0, 3)
     });
     
     if (error.name === 'AbortError') {
@@ -238,20 +220,22 @@ exports.handler = async (event, context) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: false,
-          providerStatus: 504,
-          providerMessage: 'Request timeout - image generation took too long'
+          error: 'IMAGE_FETCH_FAILED',
+          message: 'Request timeout - image generation took too long',
+          causeCode: 'TIMEOUT'
         })
       };
     }
     
-    // Forward actual error message for debugging
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: false,
-        providerStatus: 500,
-        providerMessage: error.message || 'Unknown error'
+        error: 'IMAGE_FETCH_FAILED',
+        message: error?.message || 'fetch failed',
+        causeCode: error?.cause?.code || null,
+        causeMessage: error?.cause?.message || null
       })
     };
   }
