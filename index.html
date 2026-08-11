@@ -5878,12 +5878,13 @@ Requirements:
     const data = await response.json();
     
     if (!data.success) {
-      // Display actual provider error for debugging
-      const errorMessage = data.providerMessage || data.message || 'Image generation failed';
+      // Display actual provider error with HTTP status for debugging
+      const providerStatus = data.providerStatus || 'UNKNOWN';
+      const providerMessage = data.providerMessage || data.message || 'Unknown error';
+      const errorMessage = `HTTP ${providerStatus} — ${providerMessage}`;
       console.error('[IMAGE GENERATION ERROR]', {
-        error: data.error,
-        providerStatus: data.providerStatus,
-        providerMessage: data.providerMessage
+        providerStatus,
+        providerMessage
       });
       throw new Error(errorMessage);
     }

@@ -21,12 +21,20 @@ exports.handler = async (event, context) => {
   
   // Validate environment variables
   const apiKey = process.env.IMAGE_API_KEY?.trim();
-  const baseUrl = (process.env.IMAGE_API_BASE_URL || 'https://api.koboillm.com').replace(/\/$/, '');
+  const baseUrl = (process.env.IMAGE_API_BASE_URL || 'https://lite.koboillm.com').replace(/\/$/, '');
   const endpoint = (process.env.IMAGE_API_ENDPOINT || '/v1/images/generations').replace(/^\/+/, '');
   const model = process.env.IMAGE_MODEL?.trim();
   
+  const finalUrl = `${baseUrl}${endpoint}`;
+  
+  console.log('[IMAGE CONFIG]', {
+    finalUrl,
+    model: model || 'NOT_CONFIGURED',
+    hasApiKey: Boolean(apiKey)
+  });
+  
   if (!apiKey) {
-    console.log({ stage: 'api_key_missing', elapsedMs: Date.now() - startedAt });
+    console.log('[IMAGE CONFIG ERROR] API key missing');
     return {
       statusCode: 503,
       headers: { 'Content-Type': 'application/json' },
@@ -39,7 +47,7 @@ exports.handler = async (event, context) => {
   }
   
   if (!model) {
-    console.log({ stage: 'model_missing', elapsedMs: Date.now() - startedAt });
+    console.log('[IMAGE CONFIG ERROR] Model missing');
     return {
       statusCode: 503,
       headers: { 'Content-Type': 'application/json' },
@@ -50,15 +58,6 @@ exports.handler = async (event, context) => {
       })
     };
   }
-  
-  console.log('[IMAGE ENV CHECK]', {
-    baseUrl: process.env.IMAGE_API_BASE_URL,
-    endpoint: process.env.IMAGE_API_ENDPOINT,
-    model: process.env.IMAGE_MODEL,
-    hasApiKey: Boolean(process.env.IMAGE_API_KEY)
-  });
-  
-  console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model, baseUrl, endpoint });
   
   try {
     // Parse request body
@@ -92,12 +91,10 @@ exports.handler = async (event, context) => {
     }
     
     // Construct URL safely
-    const url = `${baseUrl}${endpoint}`;
-    console.log('[FINAL URL]', url);
-    console.log({ stage: 'url_constructed', elapsedMs: Date.now() - startedAt, url });
+    console.log('[FINAL URL]', finalUrl);
     
     // Prepare minimal request to KoboiLLM
-    const requestBody = {
+    const payload = {
       model: model,
       prompt: requestData.prompt,
       size: '1024x1536',
@@ -106,39 +103,38 @@ exports.handler = async (event, context) => {
     };
     
     console.log('[REQUEST PAYLOAD]', {
-      model: requestBody.model,
-      size: requestBody.size,
-      quality: requestBody.quality,
-      n: requestBody.n
+      model: payload.model,
+      size: payload.size,
+      quality: payload.quality,
+      n: payload.n
     });
-    console.log({ stage: 'calling_provider', elapsedMs: Date.now() - startedAt });
     
     // Make request to KoboiLLM
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for image generation
     
-    const response = await fetch(url, {
+    const response = await fetch(finalUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(payload),
       signal: controller.signal
     });
     
     clearTimeout(timeoutId);
     
     const duration = Date.now() - startedAt;
-    console.log('[KOBOI IMAGE RESPONSE]', {
+    console.log('[IMAGE DURATION]', `${duration}ms`);
+    console.log('[KOBOI RESPONSE]', {
       status: response.status,
-      statusText: response.statusText,
-      duration: `${duration}ms`
+      statusText: response.statusText
     });
     
     // Read raw response as text first for debugging
     const rawBody = await response.text();
-    console.log('[KOBOI RAW BODY PREVIEW]', rawBody.slice(0, 1000));
+    console.log('[KOBOI RAW BODY PREVIEW]', rawBody.slice(0, 1500));
     
     // Try to parse as JSON
     let data;
@@ -153,20 +149,19 @@ exports.handler = async (event, context) => {
     }
     
     if (!response.ok) {
-      const providerMessage = data?.error?.message || data?.message || rawBody || `HTTP ${response.status}`;
-      console.error('[KOBOI IMAGE ERROR]', {
+      console.error('[KOBOI ERROR]', {
         status: response.status,
-        providerMessage
+        statusText: response.statusText,
+        rawBody: rawBody.slice(0, 500)
       });
       
       return {
-        statusCode: response.status,
+        statusCode: response.status || 500,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: false,
-          error: 'IMAGE_PROVIDER_ERROR',
           providerStatus: response.status,
-          providerMessage: providerMessage
+          providerMessage: rawBody
         })
       };
     }
