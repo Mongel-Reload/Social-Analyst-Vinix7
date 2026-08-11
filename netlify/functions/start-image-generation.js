@@ -69,11 +69,12 @@ exports.handler = async (event, context) => {
     // This is a simple approach - in production you might use event triggers or queues
     try {
       const backgroundUrl = `${process.env.URL}/.netlify/functions/generate-content-image-background`;
-      await fetch(backgroundUrl, {
+      console.log('[START IMAGE JOB] Background invocation URL:', backgroundUrl);
+      
+      const response = await fetch(backgroundUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NETLIFY_BUILD_TOKEN || ''}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           jobId,
@@ -81,6 +82,19 @@ exports.handler = async (event, context) => {
           sentimentContext: requestData.sentimentContext
         })
       });
+      
+      console.log('[START IMAGE JOB] Background function response:', {
+        status: response.status,
+        statusText: response.statusText
+      });
+      
+      // Background functions return 202, don't parse JSON body
+      if (response.status !== 202 && !response.ok) {
+        const raw = await response.text();
+        console.error('[START IMAGE JOB] Background function failed', raw.slice(0, 300));
+        // Job is saved, continue anyway
+      }
+      
       console.log('[START IMAGE JOB] Background function triggered');
     } catch (invokeError) {
       console.error('[START IMAGE JOB] Failed to trigger background function', invokeError.message);
@@ -117,13 +131,11 @@ exports.handler = async (event, context) => {
 // Helper: Save job to Netlify Blobs
 async function saveJob(jobId, jobData) {
   try {
-    const { NetlifyBlob } = require('@netlify/blobs');
-    const blobs = new NetlifyBlob({ 
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_BLOBS_TOKEN 
-    });
+    const { getStore } = require('@netlify/blobs');
+    const store = getStore('kokorolens-image-jobs');
     
-    await blobs.set(`image-jobs/${jobId}.json`, JSON.stringify(jobData));
+    await store.setJSON(jobId, jobData);
+    console.log('[START IMAGE JOB] Job saved to Blobs');
   } catch (e) {
     console.error('[START IMAGE JOB] Failed to save job', e.message);
     throw e;

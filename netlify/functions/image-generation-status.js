@@ -93,13 +93,10 @@ exports.handler = async (event, context) => {
 // Helper: Get job from Netlify Blobs
 async function getJob(jobId) {
   try {
-    const { NetlifyBlob } = require('@netlify/blobs');
-    const blobs = new NetlifyBlob({ 
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_BLOBS_TOKEN 
-    });
+    const { getStore } = require('@netlify/blobs');
+    const store = getStore('kokorolens-image-jobs');
     
-    const jobData = await blobs.get(`image-jobs/${jobId}.json`, { type: 'json' });
+    const jobData = await store.get(jobId, { type: 'json' });
     return jobData;
   } catch (e) {
     if (e.message?.includes('not found') || e.status === 404) {

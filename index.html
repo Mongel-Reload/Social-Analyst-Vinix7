@@ -5851,8 +5851,41 @@ function renderGeneratedContent(content) {
 }
 
 async function generateImage(recommendation) {
+  // Helper: Read function response with diagnostics
+  async function readFunctionResponse(response, label) {
+    const contentType = response.headers.get('content-type') || '';
+    const raw = await response.text();
+
+    console.log(`[${label}]`, {
+      url: response.url,
+      status: response.status,
+      contentType,
+      preview: raw.slice(0, 500)
+    });
+
+    let data = null;
+
+    if (contentType.includes('application/json')) {
+      try {
+        data = JSON.parse(raw);
+      } catch (error) {
+        throw new Error(
+          `${label} mengembalikan JSON invalid. HTTP ${response.status}`
+        );
+      }
+    } else {
+      throw new Error(
+        `${label} mengembalikan non-JSON. HTTP ${response.status}. ` +
+        `Content-Type: ${contentType}. ` +
+        `Response: ${raw.slice(0, 300)}`
+      );
+    }
+
+    return data;
+  }
+
   // Start image generation job
-  const response = await fetch('/.netlify/functions/start-image-generation', {
+  const startResponse = await fetch('/.netlify/functions/start-image-generation', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -5863,16 +5896,9 @@ async function generateImage(recommendation) {
     })
   });
   
-  const rawText = await response.text();
-  let data;
+  const data = await readFunctionResponse(startResponse, 'START IMAGE JOB');
   
-  try {
-    data = JSON.parse(rawText);
-  } catch (e) {
-    throw new Error(`Image function returned non-JSON response: ${rawText.slice(0, 300)}`);
-  }
-  
-  if (!response.ok || data?.success === false) {
+  if (!startResponse.ok || data?.success === false) {
     const err = data?.error || {};
     const details = [
       `Type: ${err.type || 'UNKNOWN'}`,
@@ -5899,7 +5925,7 @@ async function generateImage(recommendation) {
     await new Promise(resolve => setTimeout(resolve, pollingInterval));
     
     const statusResponse = await fetch(`/.netlify/functions/image-generation-status?id=${jobId}`);
-    const statusData = await statusResponse.json();
+    const statusData = await readFunctionResponse(statusResponse, 'IMAGE STATUS');
     
     console.log('[IMAGE JOB] Status:', statusData.status);
     

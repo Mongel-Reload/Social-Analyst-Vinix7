@@ -52,6 +52,24 @@ exports.handler = async (event, context) => {
     await updateJobStatus(jobId, 'processing', null);
     console.log('[IMAGE JOB] status: processing');
     
+    // TEMPORARY: Test architecture without KoboiLLM
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Simulate completion with test data
+    console.log('[IMAGE JOB] TEST MODE - Simulating completion');
+    
+    await updateJobStatus(jobId, 'completed', null, {
+      type: 'url',
+      value: 'https://via.placeholder.com/1024x1536/22d3ee/ffffff?text=Test+Image+Generation',
+      test: true
+    });
+    
+    console.log('[IMAGE JOB] TEST MODE - completed');
+    return { statusCode: 200, body: 'Job completed (test mode)' };
+    
+    // REAL KOBOILLM CODE (commented out for testing)
+    /*
     // Build prompt from recommendation
     const prompt = buildPrompt(recommendation, sentimentContext);
     console.log('[IMAGE JOB] Koboi request started');
@@ -134,6 +152,7 @@ exports.handler = async (event, context) => {
     });
     
     return { statusCode: 200, body: 'Job completed' };
+    */
     
   } catch (error) {
     console.error('[IMAGE JOB] Error', {
@@ -196,11 +215,8 @@ Requirements:
 // Helper: Update job status in Netlify Blobs
 async function updateJobStatus(jobId, status, error = null, image = null) {
   try {
-    const { NetlifyBlob } = require('@netlify/blobs');
-    const blobs = new NetlifyBlob({ 
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_BLOBS_TOKEN 
-    });
+    const { getStore } = require('@netlify/blobs');
+    const store = getStore('kokorolens-image-jobs');
     
     const jobData = {
       id: jobId,
@@ -210,7 +226,7 @@ async function updateJobStatus(jobId, status, error = null, image = null) {
       ...(image && { image })
     };
     
-    await blobs.set(`image-jobs/${jobId}.json`, JSON.stringify(jobData));
+    await store.setJSON(jobId, jobData);
     console.log('[IMAGE JOB] Status updated', { jobId, status });
   } catch (e) {
     console.error('[IMAGE JOB] Failed to update status', e.message);
