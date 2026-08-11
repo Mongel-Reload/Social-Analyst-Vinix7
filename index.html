@@ -5716,16 +5716,22 @@ async function generateContentFromRecommendation(recommendationIndex) {
     updateLoadingText('Mempersiapkan konsep konten...');
     
     // Stage 2: Creating visual (async job with KoboiLLM)
-    updateLoadingText('AI sedang membuat visual Instagram... (ini dapat membutuhkan 30-90 detik)');
+    updateLoadingText('AI sedang membuat visual Instagram...');
     const rawImageData = await generateImage(normalized);
     
-    // Stage 3: Adding brand identity
-    updateLoadingText('Menambahkan identitas brand...');
+    // Stage 3: Adjusting to 4:5 format
+    updateLoadingText('Menyesuaikan ke format 4:5...');
     const finalImage = await addLogoToImage(rawImageData);
     
-    // Stage 4: Composing caption and hashtags
-    updateLoadingText('Menyusun caption dan hashtag...');
+    // Stage 4: Adding logo
+    updateLoadingText('Menambahkan logo...');
+    
+    // Stage 5: Composing caption
+    updateLoadingText('Menyusun caption...');
     const copyData = await generateCaptionAndHashtags(normalized);
+    
+    // Stage 6: Composing hashtags
+    updateLoadingText('Menyusun hashtag...');
     
     // Store generated content
     const generatedContent = {
@@ -6099,21 +6105,21 @@ async function generateCaptionAndHashtags(recommendation) {
 function downloadGeneratedImage(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
   if (!content || !content.finalImage) {
-    alert('Gambar tidak tersedia');
+    console.error('Gambar tidak tersedia untuk konten:', contentId);
     return;
   }
   
   const link = document.createElement('a');
   link.href = content.finalImage;
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  link.download = `kokorolens-rekomendasi-${content.recommendationId}-${timestamp}.png`;
+  link.download = `kokorolens-content-${timestamp}.png`;
   link.click();
 }
 
 function copyCaption(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
   if (!content || !content.caption) {
-    alert('Caption tidak tersedia');
+    console.error('Caption tidak tersedia untuk konten:', contentId);
     return;
   }
   
@@ -6127,14 +6133,13 @@ function copyCaption(contentId) {
     }
   }).catch(err => {
     console.error('Failed to copy caption:', err);
-    alert('Gagal menyalin caption');
   });
 }
 
 function copyHashtags(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
   if (!content || !content.hashtags) {
-    alert('Hashtag tidak tersedia');
+    console.error('Hashtag tidak tersedia untuk konten:', contentId);
     return;
   }
   
@@ -6148,15 +6153,10 @@ function copyHashtags(contentId) {
     }
   }).catch(err => {
     console.error('Failed to copy hashtags:', err);
-    alert('Gagal menyalin hashtag');
   });
 }
 
 async function regenerateContent(recommendationId, contentId) {
-  if (!confirm('Apakah Anda ingin membuat ulang konten ini? Konten lama akan digantikan.')) {
-    return;
-  }
-  
   // Remove old content from display
   const oldCard = document.getElementById(`content-${contentId}`);
   if (oldCard) {
