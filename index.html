@@ -5715,15 +5715,15 @@ async function generateContentFromRecommendation(recommendationIndex) {
     // Stage 1: Preparing concept
     updateLoadingText('Mempersiapkan konsep konten...');
     
-    // Stage 2: Creating visual (RAW AI IMAGE - no canvas processing for debugging)
-    updateLoadingText('Membuat visual Instagram...');
+    // Stage 2: Creating visual (async job with KoboiLLM)
+    updateLoadingText('AI sedang membuat visual Instagram... (ini dapat membutuhkan 30-90 detik)');
     const rawImageData = await generateImage(normalized);
     
-    // TEMPORARY: Skip canvas processing for debugging
-    // const finalImage = await addLogoToImage(rawImageData);
-    const finalImage = rawImageData;
+    // Stage 3: Adding brand identity
+    updateLoadingText('Menambahkan identitas brand...');
+    const finalImage = await addLogoToImage(rawImageData);
     
-    // Stage 3: Composing caption and hashtags
+    // Stage 4: Composing caption and hashtags
     updateLoadingText('Menyusun caption dan hashtag...');
     const copyData = await generateCaptionAndHashtags(normalized);
     
@@ -5764,7 +5764,8 @@ async function generateContentFromRecommendation(recommendationIndex) {
     document.getElementById('contentGeneratorLoading').style.display = 'none';
     document.getElementById('recommendationSelection').style.display = 'block';
     
-    alert('Gagal membuat konten: ' + error.message);
+    // Show error UI instead of alert
+    showContentGeneratorError(error.message);
     renderRecommendationSelection();
   }
   
@@ -5776,6 +5777,23 @@ function updateLoadingText(text) {
   if (loadingText) {
     loadingText.textContent = text;
   }
+}
+
+function showContentGeneratorError(message) {
+  const container = document.getElementById('recommendationSelection');
+  if (!container) return;
+  
+  const errorCard = document.createElement('div');
+  errorCard.className = 'card';
+  errorCard.style.cssText = 'margin-bottom:20px;padding:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px';
+  errorCard.innerHTML = `
+    <h3 style="color:#ef4444;margin:0 0 10px 0">⚠ Pembuatan konten gagal</h3>
+    <p style="color:#e5e7eb;margin:0 0 15px 0">${message}</p>
+    <p style="color:#9ca3af;margin:0;font-size:14px">Proses pembuatan gambar membutuhkan waktu lebih lama dari biasanya atau terjadi kendala pada layanan AI.</p>
+    <button class="btn primary" onclick="this.parentElement.remove()" style="margin-top:15px">Tutup</button>
+  `;
+  
+  container.insertBefore(errorCard, container.firstChild);
 }
 
 function renderGeneratedContent(content) {
@@ -5833,90 +5851,88 @@ function renderGeneratedContent(content) {
 }
 
 async function generateImage(recommendation) {
+  // Start image generation job
+  const response = await fetch('/.netlify/functions/start-image-generation', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ 
+      recommendation,
+      sentimentContext: aiSentimentData || null
+    })
+  });
+  
+  const rawText = await response.text();
+  let data;
+  
   try {
-    // Build prompt from recommendation
-    const prompt = `Create a polished professional Instagram feed marketing visual based on the following recommendation derived from social media sentiment analysis.
-
-Recommendation:
-${recommendation.title}
-
-Concept:
-${recommendation.concept}
-
-Call to Action:
-${recommendation.call_to_action}
-
-Data Basis:
-${recommendation.data_basis}
-
-Audience:
-Indonesian social media audience.
-
-Requirements:
-- modern professional digital marketing visual
-- visually engaging
-- clean composition
-- strong focal point
-- premium but approachable
-- suitable for Instagram feed
-- portrait orientation
-- leave safe space around edges
-- avoid fake logos
-- avoid random unreadable text
-- do not invent statistics or claims
-- image should visually communicate the recommendation`;
-
-    const response = await fetch('/.netlify/functions/generate-content-image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ prompt })
+    data = JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Image function returned non-JSON response: ${rawText.slice(0, 300)}`);
+  }
+  
+  if (!response.ok || data?.success === false) {
+    const err = data?.error || {};
+    const details = [
+      `Type: ${err.type || 'UNKNOWN'}`,
+      `Message: ${err.message || 'Unknown error'}`
+    ].filter(Boolean).join(' — ');
+    
+    console.error('[IMAGE JOB START ERROR]', {
+      type: err.type,
+      message: err.message
     });
     
-    const rawText = await response.text();
-    let data;
+    throw new Error(details);
+  }
+  
+  // Poll job status until completed
+  const jobId = data.jobId;
+  console.log('[IMAGE JOB] Started, jobId:', jobId);
+  
+  const maxPollingTime = 180000; // 3 minutes max
+  const pollingInterval = 3000; // 3 seconds
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < maxPollingTime) {
+    await new Promise(resolve => setTimeout(resolve, pollingInterval));
     
-    try {
-      data = JSON.parse(rawText);
-    } catch (e) {
-      throw new Error(`Image function returned non-JSON response: ${rawText.slice(0, 300)}`);
+    const statusResponse = await fetch(`/.netlify/functions/image-generation-status?id=${jobId}`);
+    const statusData = await statusResponse.json();
+    
+    console.log('[IMAGE JOB] Status:', statusData.status);
+    
+    if (statusData.status === 'completed' && statusData.image) {
+      // Convert response to usable format
+      if (statusData.image.type === 'base64') {
+        return `data:image/png;base64,${statusData.image.value}`;
+      } else if (statusData.image.type === 'url') {
+        return statusData.image.value;
+      } else {
+        throw new Error('Invalid image response format');
+      }
     }
     
-    if (!response.ok || data?.success === false) {
-      const err = data?.error || {};
-      
+    if (statusData.status === 'failed') {
+      const err = statusData.error || {};
       const details = [
         `Type: ${err.type || 'UNKNOWN'}`,
-        `Message: ${err.message || 'Unknown error'}`,
-        err.providerStatus ? `HTTP: ${err.providerStatus}` : null,
-        err.causeCode ? `Code: ${err.causeCode}` : null,
-        err.causeMessage ? `Cause: ${err.causeMessage}` : null
+        `Message: ${err.message || 'Unknown error'}`
       ].filter(Boolean).join(' — ');
       
-      console.error('[IMAGE GENERATION ERROR]', {
+      console.error('[IMAGE JOB FAILED]', {
         type: err.type,
-        message: err.message,
-        providerStatus: err.providerStatus,
-        causeCode: err.causeCode,
-        causeMessage: err.causeMessage
+        message: err.message
       });
       
       throw new Error(details);
     }
     
-    // Convert response to usable format
-    if (data.image.type === 'base64') {
-      return `data:image/png;base64,${data.image.value}`;
-    } else if (data.image.type === 'url') {
-      return data.image.value;
-    } else {
-      throw new Error('Invalid image response format');
-    }
-  } catch (error) {
-    console.error('Image generation error:', error);
-    throw new Error('Gagal membuat gambar: ' + error.message);
+    // Continue polling if still processing or pending
   }
+  
+  throw new Error('Image generation timed out after 3 minutes');
 }
 
 async function addLogoToImage(imageData) {
