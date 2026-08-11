@@ -2,11 +2,16 @@
 // This function runs asynchronously and can take up to 15 minutes
 // Provider: KoboiLLM (OpenAI-compatible Images API)
 
-export const config = {
+// Legacy Netlify Functions background configuration
+exports.config = {
   background: true
 };
 
 exports.handler = async (event, context) => {
+  console.log('[BACKGROUND HANDLER ENTERED]', {
+    timestamp: new Date().toISOString()
+  });
+  
   const startedAt = Date.now();
   console.log('[IMAGE JOB] started');
   
@@ -14,7 +19,9 @@ exports.handler = async (event, context) => {
   let jobData;
   try {
     jobData = JSON.parse(event.body || '{}');
-    console.log('[IMAGE JOB] jobId:', jobData.jobId);
+    console.log('[BACKGROUND JOB START]', {
+      jobId: jobData.jobId
+    });
   } catch (e) {
     console.error('[IMAGE JOB] Invalid job data');
     return { statusCode: 400, body: 'Invalid job data' };
@@ -240,6 +247,15 @@ async function updateJobStatus(jobId, status, error = null, image = null) {
     
     await store.setJSON(jobId, jobData);
     console.log('[IMAGE JOB] Status updated', { jobId, status });
+    
+    // Verify update
+    const verification = await store.get(jobId, { type: 'json' });
+    console.log('[JOB UPDATE VERIFY]', {
+      jobId,
+      found: Boolean(verification),
+      status: verification?.status || null,
+      updatedAt: verification?.updatedAt || null
+    });
   } catch (e) {
     console.error('[IMAGE JOB] Failed to update status', e.message);
   }
