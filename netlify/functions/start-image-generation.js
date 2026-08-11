@@ -73,18 +73,51 @@ exports.handler = async (event, context) => {
         envURL: process.env.URL,
         backgroundUrl
       });
-      
+
+      // Build minimal payload for background function
+      const backgroundPayload = {
+        jobId,
+        recommendation: {
+          title: requestData.recommendation?.title || '',
+          concept: requestData.recommendation?.concept || '',
+          call_to_action: requestData.recommendation?.call_to_action || '',
+          data_basis: requestData.recommendation?.data_basis || ''
+        },
+        sentimentContext: requestData.sentimentContext ? {
+          executive_summary: requestData.sentimentContext.executive_summary || '',
+          key_insights_count: requestData.sentimentContext.key_insights_count || 0
+        } : null,
+        brandProfile: requestData.brandProfile ? {
+          name: requestData.brandProfile.name || '',
+          industry: requestData.brandProfile.industry || '',
+          audience: requestData.brandProfile.audience || '',
+          primaryColor: requestData.brandProfile.primaryColor || '',
+          secondaryColor: requestData.brandProfile.secondaryColor || '',
+          accentColor: requestData.brandProfile.accentColor || ''
+          // Do NOT include logo/base64
+        } : null
+      };
+
+      // Log payload size before background invocation
+      const payloadString = JSON.stringify(backgroundPayload);
+      const payloadSize = Buffer.byteLength(payloadString);
+      console.log('[BACKGROUND PAYLOAD SIZE]', payloadSize, 'bytes');
+
+      if (payloadSize > 100000) {
+        console.warn('[BACKGROUND PAYLOAD TOO LARGE]', payloadSize, 'bytes');
+        // Log field sizes to identify which field is largest
+        Object.keys(backgroundPayload).forEach(key => {
+          const fieldSize = Buffer.byteLength(JSON.stringify(backgroundPayload[key]));
+          console.log(`[PAYLOAD FIELD] ${key}:`, fieldSize, 'bytes');
+        });
+      }
+
       const bgResponse = await fetch(backgroundUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          jobId,
-          recommendation: requestData.recommendation,
-          sentimentContext: requestData.sentimentContext,
-          brandProfile: requestData.brandProfile
-        })
+        body: payloadString
       });
       
       const bgText = await bgResponse.text();

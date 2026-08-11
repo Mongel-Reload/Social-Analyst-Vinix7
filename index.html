@@ -6168,17 +6168,55 @@ async function generateImage(recommendation) {
     return data;
   }
 
+  // Build minimal payload for background function
+  const minimalBrandProfile = brandProfile ? {
+    name: brandProfile.name || '',
+    industry: brandProfile.industry || '',
+    audience: brandProfile.audience || '',
+    primaryColor: brandProfile.primaryColor || '',
+    secondaryColor: brandProfile.secondaryColor || '',
+    accentColor: brandProfile.accentColor || ''
+    // Do NOT include logo/base64 to avoid large payload
+  } : null;
+
+  // Build minimal sentiment context (only summary, not full data)
+  const minimalSentimentContext = aiRecommendationData ? {
+    executive_summary: aiRecommendationData.executive_summary || '',
+    key_insights_count: (aiRecommendationData.key_insights || []).length
+    // Do NOT include full arrays/objects to avoid large payload
+  } : null;
+
+  const payload = {
+    recommendation: {
+      title: recommendation.title || '',
+      concept: recommendation.concept || '',
+      call_to_action: recommendation.call_to_action || '',
+      data_basis: recommendation.data_basis || ''
+    },
+    sentimentContext: minimalSentimentContext,
+    brandProfile: minimalBrandProfile
+  };
+
+  // Log payload size for debugging
+  const payloadSize = JSON.stringify(payload).length;
+  console.log('[IMAGE GENERATION PAYLOAD SIZE]', payloadSize, 'bytes');
+
+  if (payloadSize > 100000) {
+    console.warn('[IMAGE GENERATION PAYLOAD TOO LARGE]', payloadSize, 'bytes');
+    // Log field sizes
+    Object.keys(payload).forEach(key => {
+      const fieldSize = JSON.stringify(payload[key]).length;
+      console.log(`[PAYLOAD FIELD] ${key}:`, fieldSize, 'bytes');
+    });
+  }
+
   // Start image generation job
   const startResponse = await fetch('/.netlify/functions/start-image-generation', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ 
-      recommendation,
-      sentimentContext: aiRecommendationData || null,
-      brandProfile: brandProfile || null
-    })
+    body: JSON.stringify(payload)
   });
   
   const data = await readFunctionResponse(startResponse, 'START IMAGE JOB');
