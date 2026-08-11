@@ -44,10 +44,34 @@ exports.handler = async (event, context) => {
   const finalUrl = `${baseUrl}${endpoint}`;
   
   console.log('[IMAGE API CONFIG]', {
+    baseUrl: process.env.IMAGE_API_BASE_URL,
+    endpoint: process.env.IMAGE_API_ENDPOINT,
     finalUrl,
     model,
     hasApiKey: Boolean(apiKey)
   });
+  
+  // Test connectivity to KoboiLLM before image request
+  const connectivityStarted = Date.now();
+  try {
+    const testResponse = await fetch('https://lite.koboillm.com/v1/models', {
+      headers: {
+        Authorization: `Bearer ${apiKey}`
+      }
+    });
+    const testBody = await testResponse.text();
+    console.log('[KOBOI CONNECTIVITY]', {
+      status: testResponse.status,
+      duration: Date.now() - connectivityStarted,
+      preview: testBody.slice(0, 500)
+    });
+  } catch (error) {
+    console.error('[KOBOI CONNECTIVITY FAILED]', {
+      message: error?.message,
+      causeCode: error?.cause?.code,
+      causeMessage: error?.cause?.message
+    });
+  }
   
   try {
     // Parse request body
@@ -124,11 +148,23 @@ exports.handler = async (event, context) => {
         error: e.message,
         rawBodyPreview: rawBody.slice(0, 500)
       });
-      throw new Error(`KoboiLLM returned non-JSON response. HTTP ${response.status}`);
+      
+      return {
+        statusCode: response.status || 502,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: false,
+          error: {
+            type: 'IMAGE_PROVIDER_NON_JSON',
+            message: `Provider returned non-JSON response: ${rawBody.slice(0, 500)}`,
+            providerStatus: response.status
+          }
+        })
+      };
     }
     
     if (!response.ok) {
-      console.error('[KOBOI ERROR]', {
+      console.error('[KOBOI PROVIDER ERROR]', {
         status: response.status,
         statusText: response.statusText,
         rawBody: rawBody.slice(0, 500)
@@ -139,8 +175,11 @@ exports.handler = async (event, context) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: false,
-          providerStatus: response.status,
-          providerMessage: rawBody
+          error: {
+            type: 'IMAGE_PROVIDER_ERROR',
+            message: data?.error?.message || data?.message || rawBody || `HTTP ${response.status}`,
+            providerStatus: response.status
+          }
         })
       };
     }
@@ -205,13 +244,14 @@ exports.handler = async (event, context) => {
     };
     
   } catch (error) {
-    console.error('[IMAGE FETCH FAILED]', {
+    console.error('[IMAGE FETCH ERROR]', {
       name: error?.name,
       message: error?.message,
+      cause: error?.cause,
+      causeName: error?.cause?.name,
       causeCode: error?.cause?.code,
       causeMessage: error?.cause?.message,
-      causeName: error?.cause?.name,
-      stack: error?.stack?.split('\n')?.slice(0, 3)
+      stack: error?.stack
     });
     
     if (error.name === 'AbortError') {
@@ -220,9 +260,11 @@ exports.handler = async (event, context) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: false,
-          error: 'IMAGE_FETCH_FAILED',
-          message: 'Request timeout - image generation took too long',
-          causeCode: 'TIMEOUT'
+          error: {
+            type: 'IMAGE_FETCH_FAILED',
+            message: 'Request timeout - image generation took too long',
+            causeCode: 'TIMEOUT'
+          }
         })
       };
     }
@@ -232,10 +274,12 @@ exports.handler = async (event, context) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: false,
-        error: 'IMAGE_FETCH_FAILED',
-        message: error?.message || 'fetch failed',
-        causeCode: error?.cause?.code || null,
-        causeMessage: error?.cause?.message || null
+        error: {
+          type: 'IMAGE_FETCH_FAILED',
+          message: error?.message || 'fetch failed',
+          causeCode: error?.cause?.code || null,
+          causeMessage: error?.cause?.message || null
+        }
       })
     };
   }

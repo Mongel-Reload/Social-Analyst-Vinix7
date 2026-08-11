@@ -5866,7 +5866,6 @@ Requirements:
 - do not invent statistics or claims
 - image should visually communicate the recommendation`;
 
-    // Call Netlify function for image generation
     const response = await fetch('/.netlify/functions/generate-content-image', {
       method: 'POST',
       headers: {
@@ -5875,29 +5874,35 @@ Requirements:
       body: JSON.stringify({ prompt })
     });
     
-    const data = await response.json();
+    const rawText = await response.text();
+    let data;
     
-    if (!data.success) {
-      // Display detailed error information for debugging
-      const errorType = data.error || 'UNKNOWN';
-      const providerStatus = data.providerStatus || 'UNKNOWN';
-      const errorMessage = data.message || data.providerMessage || 'Unknown error';
-      const causeCode = data.causeCode || null;
-      const causeMessage = data.causeMessage || null;
+    try {
+      data = JSON.parse(rawText);
+    } catch (e) {
+      throw new Error(`Image function returned non-JSON response: ${rawText.slice(0, 300)}`);
+    }
+    
+    if (!response.ok || data?.success === false) {
+      const err = data?.error || {};
+      
+      const details = [
+        `Type: ${err.type || 'UNKNOWN'}`,
+        `Message: ${err.message || 'Unknown error'}`,
+        err.providerStatus ? `HTTP: ${err.providerStatus}` : null,
+        err.causeCode ? `Code: ${err.causeCode}` : null,
+        err.causeMessage ? `Cause: ${err.causeMessage}` : null
+      ].filter(Boolean).join(' — ');
       
       console.error('[IMAGE GENERATION ERROR]', {
-        errorType,
-        providerStatus,
-        errorMessage,
-        causeCode,
-        causeMessage
+        type: err.type,
+        message: err.message,
+        providerStatus: err.providerStatus,
+        causeCode: err.causeCode,
+        causeMessage: err.causeMessage
       });
       
-      let fullError = `Type: ${errorType}\nMessage: ${errorMessage}`;
-      if (causeCode) fullError += `\nCause Code: ${causeCode}`;
-      if (causeMessage) fullError += `\nCause: ${causeMessage}`;
-      
-      throw new Error(fullError);
+      throw new Error(details);
     }
     
     // Convert response to usable format
