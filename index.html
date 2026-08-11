@@ -6101,7 +6101,6 @@ function renderGeneratedContent(content) {
           <button class="btn secondary" onclick="copyCaption('${content.id}')" style="padding:6px 12px;font-size:13px">
             📋 Salin Caption
           </button>
-          <span id="caption-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Caption berhasil disalin</span>
         </div>
         
         <!-- Hashtags -->
@@ -6111,7 +6110,6 @@ function renderGeneratedContent(content) {
           <button class="btn secondary" onclick="copyHashtags('${content.id}')" style="padding:6px 12px;font-size:13px">
             📋 Salin Hashtag
           </button>
-          <span id="hashtag-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Hashtag berhasil disalin</span>
         </div>
         
         <!-- Regenerate Button -->
@@ -6346,8 +6344,8 @@ async function addLogoToImage(imageData) {
     });
     
     if (logo.complete && logo.naturalWidth > 0) {
-      // Calculate logo size (10-15% of canvas width, max 150px)
-      const logoWidth = Math.min(targetWidth * 0.12, 150);
+      // Calculate logo size (16-18% of canvas width, max 190px)
+      const logoWidth = Math.min(targetWidth * 0.17, 190);
       const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
       
       // Position logo at top-right corner with padding
@@ -6427,80 +6425,123 @@ function downloadGeneratedImage(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
   if (!content || !content.finalImage) {
     console.error('Gambar tidak tersedia untuk konten:', contentId);
+    showToast('Gagal: Gambar belum tersedia', 'error');
     return;
   }
   
-  // Convert data URL to blob for proper download
-  const dataUrl = content.finalImage;
-  const link = document.createElement('a');
+  // Use anchor element for download
+  const a = document.createElement('a');
+  a.href = content.finalImage;
+  a.download = `kokorolens-content-${Date.now()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
   
-  if (dataUrl.startsWith('data:')) {
-    // Handle data URL by converting to blob
-    fetch(dataUrl)
-      .then(res => res.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        link.download = `kokorolens-content-${timestamp}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch(err => {
-        console.error('Failed to download image:', err);
-        // Fallback to direct link
-        link.href = dataUrl;
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        link.download = `kokorolens-content-${timestamp}.png`;
-        link.click();
-      });
-  } else {
-    // Handle regular URL
-    link.href = dataUrl;
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    link.download = `kokorolens-content-${timestamp}.png`;
-    link.click();
-  }
+  showToast('Gambar berhasil diunduh', 'success');
+}
+
+// Toast notification helper
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: ${type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(34, 197, 94, 0.9)'};
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 function copyCaption(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
   if (!content || !content.caption) {
     console.error('Caption tidak tersedia untuk konten:', contentId);
+    showToast('Gagal: Caption tidak tersedia', 'error');
     return;
   }
   
-  navigator.clipboard.writeText(content.caption).then(() => {
-    const feedback = document.getElementById(`caption-feedback-${contentId}`);
-    if (feedback) {
-      feedback.style.display = 'inline';
-      setTimeout(() => {
-        feedback.style.display = 'none';
-      }, 3000);
+  const captionText = content.caption;
+  
+  // Try modern Clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(captionText).then(() => {
+      showToast('Caption berhasil disalin', 'success');
+    }).catch(err => {
+      console.error('Clipboard API failed:', err);
+      // Fallback to textarea method
+      fallbackCopy(captionText, 'Caption');
+    });
+  } else {
+    // Fallback for older browsers
+    fallbackCopy(captionText, 'Caption');
+  }
+}
+
+// Fallback copy method using textarea
+function fallbackCopy(text, label) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      showToast(`${label} berhasil disalin`, 'success');
+    } else {
+      showToast(`Gagal menyalin ${label}`, 'error');
     }
-  }).catch(err => {
-    console.error('Failed to copy caption:', err);
-  });
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+    showToast(`Gagal menyalin ${label}`, 'error');
+  }
+  
+  document.body.removeChild(textarea);
 }
 
 function copyHashtags(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
   if (!content || !content.hashtags) {
     console.error('Hashtag tidak tersedia untuk konten:', contentId);
+    showToast('Gagal: Hashtag tidak tersedia', 'error');
     return;
   }
   
-  navigator.clipboard.writeText(content.hashtags).then(() => {
-    const feedback = document.getElementById(`hashtag-feedback-${contentId}`);
-    if (feedback) {
-      feedback.style.display = 'inline';
-      setTimeout(() => {
-        feedback.style.display = 'none';
-      }, 3000);
-    }
-  }).catch(err => {
-    console.error('Failed to copy hashtags:', err);
-  });
+  // Handle if hashtags is an array
+  let hashtagText = content.hashtags;
+  if (Array.isArray(content.hashtags)) {
+    hashtagText = content.hashtags.join(' ');
+  }
+  
+  // Try modern Clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(hashtagText).then(() => {
+      showToast('Hashtag berhasil disalin', 'success');
+    }).catch(err => {
+      console.error('Clipboard API failed:', err);
+      // Fallback to textarea method
+      fallbackCopy(hashtagText, 'Hashtag');
+    });
+  } else {
+    // Fallback for older browsers
+    fallbackCopy(hashtagText, 'Hashtag');
+  }
 }
 
 async function regenerateContent(recommendationId, contentId) {
