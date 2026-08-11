@@ -65,10 +65,8 @@ exports.handler = async (event, context) => {
     await saveJob(jobId, jobData);
     console.log('[START IMAGE JOB] Job initialized');
     
-    // TEMPORARY: Disable background invocation for testing write/read flow
     // Trigger background function via internal HTTP call
     // This is a simple approach - in production you might use event triggers or queues
-    /*
     try {
       const backgroundUrl = `${process.env.URL}/.netlify/functions/generate-content-image-background`;
       console.log('[START IMAGE JOB] Background invocation URL:', backgroundUrl);
@@ -102,8 +100,6 @@ exports.handler = async (event, context) => {
       console.error('[START IMAGE JOB] Failed to trigger background function', invokeError.message);
       // Job is saved, background function can be triggered separately
     }
-    */
-    console.log('[START IMAGE JOB] Background invocation DISABLED for testing');
     
     // Return immediately with jobId
     return {
