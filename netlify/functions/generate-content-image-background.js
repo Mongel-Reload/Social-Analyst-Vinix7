@@ -219,7 +219,15 @@ async function updateJobStatus(jobId, status, error = null, image = null) {
     const store = getStore({
       name: 'kokorolens-image-jobs',
       siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_BLOBS_TOKEN
+      token: process.env.NETLIFY_BLOBS_TOKEN,
+      consistency: 'strong'
+    });
+    
+    console.log('[JOB UPDATE]', {
+      store: 'kokorolens-image-jobs',
+      jobId,
+      key: jobId,
+      status
     });
     
     const jobData = {

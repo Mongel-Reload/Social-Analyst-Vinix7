@@ -65,8 +65,10 @@ exports.handler = async (event, context) => {
     await saveJob(jobId, jobData);
     console.log('[START IMAGE JOB] Job initialized');
     
+    // TEMPORARY: Disable background invocation for testing write/read flow
     // Trigger background function via internal HTTP call
     // This is a simple approach - in production you might use event triggers or queues
+    /*
     try {
       const backgroundUrl = `${process.env.URL}/.netlify/functions/generate-content-image-background`;
       console.log('[START IMAGE JOB] Background invocation URL:', backgroundUrl);
@@ -100,6 +102,8 @@ exports.handler = async (event, context) => {
       console.error('[START IMAGE JOB] Failed to trigger background function', invokeError.message);
       // Job is saved, background function can be triggered separately
     }
+    */
+    console.log('[START IMAGE JOB] Background invocation DISABLED for testing');
     
     // Return immediately with jobId
     return {
@@ -135,10 +139,30 @@ async function saveJob(jobId, jobData) {
     const store = getStore({
       name: 'kokorolens-image-jobs',
       siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_BLOBS_TOKEN
+      token: process.env.NETLIFY_BLOBS_TOKEN,
+      consistency: 'strong'
+    });
+    
+    console.log('[JOB CREATE]', {
+      store: 'kokorolens-image-jobs',
+      jobId,
+      key: jobId
     });
     
     await store.setJSON(jobId, jobData);
+    
+    // Verify write before returning
+    const verification = await store.get(jobId, { type: 'json' });
+    console.log('[JOB WRITE VERIFY]', {
+      jobId,
+      found: Boolean(verification),
+      status: verification?.status || null
+    });
+    
+    if (!verification) {
+      throw new Error('Blob write verification failed - job not found after write');
+    }
+    
     console.log('[START IMAGE JOB] Job saved to Blobs');
   } catch (e) {
     console.error('[START IMAGE JOB] Failed to save job', e.message);

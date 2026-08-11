@@ -97,13 +97,32 @@ async function getJob(jobId) {
     const store = getStore({
       name: 'kokorolens-image-jobs',
       siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_BLOBS_TOKEN
+      token: process.env.NETLIFY_BLOBS_TOKEN,
+      consistency: 'strong'
+    });
+    
+    console.log('[JOB READ]', {
+      store: 'kokorolens-image-jobs',
+      jobId,
+      key: jobId
     });
     
     const jobData = await store.get(jobId, { type: 'json' });
+    
+    if (!jobData) {
+      console.warn('[JOB NOT FOUND]', {
+        jobId,
+        store: 'kokorolens-image-jobs'
+      });
+    }
+    
     return jobData;
   } catch (e) {
     if (e.message?.includes('not found') || e.status === 404) {
+      console.warn('[JOB NOT FOUND]', {
+        jobId,
+        store: 'kokorolens-image-jobs'
+      });
       return null;
     }
     console.error('[IMAGE STATUS] Failed to get job', e.message);
