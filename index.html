@@ -5591,6 +5591,28 @@ function showContentGeneratorSection() {
   }
 }
 
+function normalizeRecommendation(rec, index) {
+  if (typeof rec === 'string') {
+    return {
+      id: index,
+      title: `Rekomendasi ${index + 1}`,
+      concept: rec,
+      format: 'Single Post',
+      call_to_action: '',
+      data_basis: ''
+    };
+  }
+
+  return {
+    id: rec.id ?? index,
+    title: rec.title || rec.content_idea || `Rekomendasi ${index + 1}`,
+    concept: rec.concept || rec.description || '',
+    format: rec.format || 'Single Post',
+    call_to_action: rec.call_to_action || '',
+    data_basis: rec.data_basis || ''
+  };
+}
+
 function renderRecommendationSelection() {
   const container = document.getElementById('recommendationCards');
   if (!container) return;
@@ -5603,24 +5625,24 @@ function renderRecommendationSelection() {
   }
   
   aiRecommendationData.content_ideas.forEach((idea, index) => {
+    const normalized = normalizeRecommendation(idea, index);
     const status = recommendationStatus[index] || 'pending';
-    const statusBadge = status === 'completed' 
-      ? '<span style="color:#86efac;margin-left:8px">✓ Konten sudah dibuat</span>'
-      : status === 'generating'
-      ? '<span style="color:#fdba74;margin-left:8px">⏳ Sedang diproses...</span>'
-      : '';
+    
+    let statusBadge = '';
+    if (status === 'completed') {
+      statusBadge = '<span style="color:#22c55e;font-size:12px;margin-left:8px">✓ Konten sudah dibuat</span>';
+    } else if (status === 'generating') {
+      statusBadge = '<span style="color:#f59e0b;font-size:12px;margin-left:8px">⏳ Sedang diproses...</span>';
+    }
     
     const card = document.createElement('div');
     card.className = 'card';
     card.style.cssText = 'padding:16px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px';
     card.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:start">
-        <div>
-          <h4 style="margin:0 0 8px 0;color:#d8b4fe">Rekomendasi ${index + 1}</h4>
-          <p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(idea.title || idea.content_idea || idea)}</p>
-        </div>
-        ${statusBadge}
-      </div>
+      <h4 style="margin:0 0 8px 0;color:#d8b4fe">Rekomendasi ${index + 1}</h4>
+      <p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(normalized.title)}</p>
+      ${normalized.concept ? `<p style="margin:8px 0 0 0;color:#9aa4b2;font-size:13px;line-height:1.4">${sanitizeText(normalized.concept)}</p>` : ''}
+      ${statusBadge}
       ${status !== 'completed' && status !== 'generating' ? `
         <button class="btn primary" onclick="generateContentFromRecommendation(${index})" style="margin-top:12px;padding:8px 16px;font-size:14px">
           ✨ Generate Konten Instagram
@@ -5650,12 +5672,14 @@ function renderRemainingRecommendations() {
   section.style.display = 'block';
   
   remainingRecommendations.forEach(({ idea, index }) => {
+    const normalized = normalizeRecommendation(idea, index);
     const card = document.createElement('div');
     card.className = 'card';
     card.style.cssText = 'padding:16px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px';
     card.innerHTML = `
       <h4 style="margin:0 0 8px 0;color:#d8b4fe">Rekomendasi ${index + 1}</h4>
-      <p style="margin:0 0 12px 0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(idea.title || idea.content_idea || idea)}</p>
+      <p style="margin:0 0 12px 0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(normalized.title)}</p>
+      ${normalized.concept ? `<p style="margin:0 0 12px 0;color:#9aa4b2;font-size:13px;line-height:1.4">${sanitizeText(normalized.concept)}</p>` : ''}
       <button class="btn primary" onclick="generateContentFromRecommendation(${index})" style="padding:8px 16px;font-size:14px">
         ✨ Buat Konten dari Rekomendasi Ini
       </button>
@@ -5676,6 +5700,8 @@ async function generateContentFromRecommendation(recommendationIndex) {
     return;
   }
   
+  const normalized = normalizeRecommendation(recommendation, recommendationIndex);
+  
   // Update status
   recommendationStatus[recommendationIndex] = 'generating';
   currentGeneratingRecommendation = recommendationIndex;
@@ -5688,34 +5714,29 @@ async function generateContentFromRecommendation(recommendationIndex) {
   try {
     // Stage 1: Preparing concept
     updateLoadingText('Mempersiapkan konsep konten...');
-    await sleep(1000);
     
     // Stage 2: Creating visual
     updateLoadingText('Membuat visual Instagram...');
-    const imageData = await generateImage(recommendation);
+    const imageData = await generateImage(normalized);
     
     // Stage 3: Adding brand identity
     updateLoadingText('Menambahkan identitas brand...');
     const finalImage = await addLogoToImage(imageData);
     
-    // Stage 4: Composing caption
-    updateLoadingText('Menyusun caption...');
-    const caption = await generateCaption(recommendation);
-    
-    // Stage 5: Composing hashtags
-    updateLoadingText('Menyusun hashtag...');
-    const hashtags = await generateHashtags(recommendation);
+    // Stage 4: Composing caption and hashtags
+    updateLoadingText('Menyusun caption dan hashtag...');
+    const copyData = await generateCaptionAndHashtags(normalized);
     
     // Store generated content
     const generatedContent = {
       id: Date.now(),
       recommendationId: recommendationIndex,
-      recommendationTitle: recommendation.title || recommendation.content_idea || recommendation,
-      recommendationDescription: recommendation.concept || recommendation.description || '',
+      recommendationTitle: normalized.title,
+      recommendationDescription: normalized.concept,
       rawImage: imageData,
       finalImage: finalImage,
-      caption: caption,
-      hashtags: hashtags,
+      caption: copyData.caption,
+      hashtags: copyData.hashtags,
       createdAt: new Date().toISOString()
     };
     
@@ -5812,10 +5833,66 @@ function renderGeneratedContent(content) {
 }
 
 async function generateImage(recommendation) {
-  // TODO: Call Netlify function for image generation
-  // For now, return a placeholder
-  await sleep(2000);
-  return 'https://via.placeholder.com/1080x1350/1a1a2e/ffffff?text=Generated+Image';
+  try {
+    // Build prompt from recommendation
+    const prompt = `Create a polished professional Instagram feed marketing visual based on the following recommendation derived from social media sentiment analysis.
+
+Recommendation:
+${recommendation.title}
+
+Concept:
+${recommendation.concept}
+
+Call to Action:
+${recommendation.call_to_action}
+
+Data Basis:
+${recommendation.data_basis}
+
+Audience:
+Indonesian social media audience.
+
+Requirements:
+- modern professional digital marketing visual
+- visually engaging
+- clean composition
+- strong focal point
+- premium but approachable
+- suitable for Instagram feed
+- portrait orientation
+- leave safe space around edges
+- avoid fake logos
+- avoid random unreadable text
+- do not invent statistics or claims
+- image should visually communicate the recommendation`;
+
+    // Call Netlify function for image generation
+    const response = await fetch('/.netlify/functions/generate-content-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Image generation failed');
+    }
+    
+    // Convert response to usable format
+    if (data.image.type === 'base64') {
+      return `data:image/png;base64,${data.image.value}`;
+    } else if (data.image.type === 'url') {
+      return data.image.value;
+    } else {
+      throw new Error('Invalid image response format');
+    }
+  } catch (error) {
+    console.error('Image generation error:', error);
+    throw new Error('Gagal membuat gambar: ' + error.message);
+  }
 }
 
 async function addLogoToImage(imageData) {
@@ -5825,10 +5902,10 @@ async function addLogoToImage(imageData) {
     const ctx = canvas.getContext('2d');
     
     // Set canvas size to Instagram portrait (4:5 ratio)
-    const width = 1080;
-    const height = 1350;
-    canvas.width = width;
-    canvas.height = height;
+    const targetWidth = 1080;
+    const targetHeight = 1350;
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
     
     // Load the generated image
     const img = new Image();
@@ -5840,10 +5917,30 @@ async function addLogoToImage(imageData) {
       img.src = imageData;
     });
     
-    // Draw the generated image covering the canvas
-    ctx.drawImage(img, 0, 0, width, height);
+    // Calculate crop to 4:5 ratio (center crop)
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    const targetRatio = targetWidth / targetHeight;
     
-    // Load and draw logo overlay
+    let sourceX, sourceY, sourceWidth, sourceHeight;
+    
+    if (imgRatio > targetRatio) {
+      // Image is wider than target - crop sides
+      sourceHeight = img.naturalHeight;
+      sourceWidth = sourceHeight * targetRatio;
+      sourceX = (img.naturalWidth - sourceWidth) / 2;
+      sourceY = 0;
+    } else {
+      // Image is taller than target - crop top/bottom
+      sourceWidth = img.naturalWidth;
+      sourceHeight = sourceWidth / targetRatio;
+      sourceX = 0;
+      sourceY = (img.naturalHeight - sourceHeight) / 2;
+    }
+    
+    // Draw cropped image covering the canvas
+    ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+    
+    // Load and draw logo overlay (top-right position)
     const logo = new Image();
     logo.crossOrigin = 'anonymous';
     
@@ -5857,14 +5954,14 @@ async function addLogoToImage(imageData) {
     });
     
     if (logo.complete && logo.naturalWidth > 0) {
-      // Calculate logo size (15% of canvas width, max 150px)
-      const logoWidth = Math.min(width * 0.15, 150);
+      // Calculate logo size (10-15% of canvas width, max 150px)
+      const logoWidth = Math.min(targetWidth * 0.12, 150);
       const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
       
-      // Position logo at bottom-right corner with padding
-      const padding = 20;
-      const logoX = width - logoWidth - padding;
-      const logoY = height - logoHeight - padding;
+      // Position logo at top-right corner with padding
+      const padding = 40;
+      const logoX = targetWidth - logoWidth - padding;
+      const logoY = padding; // Safe margin from top
       
       // Draw logo with slight transparency
       ctx.globalAlpha = 0.9;
@@ -5875,7 +5972,7 @@ async function addLogoToImage(imageData) {
       ctx.font = 'bold 24px Arial';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
       ctx.textAlign = 'right';
-      ctx.fillText('KokoroLens', width - 20, height - 20);
+      ctx.fillText('KokoroLens', targetWidth - 20, targetHeight - 20);
     }
     
     // Convert canvas to data URL
@@ -5889,18 +5986,48 @@ async function addLogoToImage(imageData) {
   }
 }
 
-async function generateCaption(recommendation) {
-  // TODO: Call AI to generate caption
-  // For now, return a placeholder
-  await sleep(1500);
-  return 'Caption yang menarik untuk konten Instagram Anda. Berisi informasi yang relevan dan engaging untuk audiens.';
-}
-
-async function generateHashtags(recommendation) {
-  // TODO: Call AI to generate hashtags
-  // For now, return a placeholder
-  await sleep(1000);
-  return '#DigitalMarketing #SocialMediaMarketing #Instagram #ContentMarketing #BrandAwareness';
+async function generateCaptionAndHashtags(recommendation) {
+  try {
+    // Get sentiment context from AI recommendation data
+    let sentimentContext = '';
+    if (aiRecommendationData) {
+      if (aiRecommendationData.executive_summary) {
+        sentimentContext += `Executive Summary: ${aiRecommendationData.executive_summary}\n`;
+      }
+      if (aiRecommendationData.key_insights && aiRecommendationData.key_insights.length > 0) {
+        sentimentContext += 'Key Insights:\n';
+        aiRecommendationData.key_insights.forEach((insight, i) => {
+          sentimentContext += `${i + 1}. ${insight.insight}: ${insight.data_basis}\n`;
+        });
+      }
+    }
+    
+    // Call Netlify function for caption and hashtag generation
+    const response = await fetch('/.netlify/functions/generate-content-copy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        recommendation: recommendation,
+        sentimentContext: sentimentContext
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || 'Caption generation failed');
+    }
+    
+    return {
+      caption: data.data.caption,
+      hashtags: data.data.hashtags
+    };
+  } catch (error) {
+    console.error('Caption generation error:', error);
+    throw new Error('Gagal membuat caption: ' + error.message);
+  }
 }
 
 function downloadGeneratedImage(contentId) {
@@ -5912,7 +6039,8 @@ function downloadGeneratedImage(contentId) {
   
   const link = document.createElement('a');
   link.href = content.finalImage;
-  link.download = `kokorolens-content-${contentId}.png`;
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  link.download = `kokorolens-rekomendasi-${content.recommendationId}-${timestamp}.png`;
   link.click();
 }
 
@@ -5977,10 +6105,6 @@ async function regenerateContent(recommendationId, contentId) {
   
   // Generate new content
   await generateContentFromRecommendation(recommendationId);
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 
