@@ -626,6 +626,33 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <button class="btn primary" onclick="retryAIRecommendation()" style="margin-top:10px">Coba Lagi</button>
         </div>
       </div>
+      
+      <!-- 14. AI Content Generator -->
+      <div id="contentGeneratorSection" class="card" style="margin-bottom:15px;display:none">
+        <h3 style="margin-bottom:15px">✨ AI Content Generator</h3>
+        
+        <!-- Recommendation Selection -->
+        <div id="recommendationSelection" style="margin-top:20px">
+          <p style="color:#9aa4b2;margin-bottom:15px">Pilih salah satu rekomendasi untuk membuat konten Instagram:</p>
+          <div id="recommendationCards" style="display:flex;flex-direction:column;gap:12px"></div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="contentGeneratorLoading" style="display:none;text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:15px">✨</div>
+          <p id="contentGeneratorLoadingText" style="color:#9aa4b2">Mempersiapkan konsep konten...</p>
+        </div>
+        
+        <!-- Generated Contents Container -->
+        <div id="generatedContentsContainer" style="margin-top:20px"></div>
+        
+        <!-- Remaining Recommendations -->
+        <div id="remainingRecommendations" style="margin-top:30px;display:none">
+          <h4 style="margin-bottom:15px;color:#d8b4fe">🔄 Buat Konten dari Rekomendasi Lain</h4>
+          <p style="color:#9aa4b2;margin-bottom:15px">Ingin mengeksplorasi rekomendasi lainnya? Pilih rekomendasi berikut untuk membuat konten baru.</p>
+          <div id="remainingRecommendationCards" style="display:flex;flex-direction:column;gap:12px"></div>
+        </div>
+      </div>
     </section>
     <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul style="line-height:1.9;color:#d1d5db"><li>Menunggu data untuk analisis dampak...</li></ul></div></div></div></section>
 
@@ -2994,7 +3021,13 @@ function clearSentimentFile() {
   document.getElementById('sentimentTrendSection').style.display = 'none';
   document.getElementById('sentimentMLInsightSection').style.display = 'none';
   document.getElementById('sentimentAISection').style.display = 'none';
+  document.getElementById('contentGeneratorSection').style.display = 'none';
   document.getElementById('sentimentExportSection').style.display = 'none';
+  
+  // Clear content generator state
+  generatedContents = [];
+  recommendationStatus = {};
+  currentGeneratingRecommendation = null;
 }
 
 function handleCSVUpload(e) {
@@ -3548,11 +3581,8 @@ function showLinguisticFeatures() {
   const negations = sentimentLinguisticFeatures.map(f => f.negation_count || 0).reduce((a, b) => a + b, 0);
   
   document.getElementById('lingTopIntensifiers').textContent = intensifiers > 0 ? `sangat (${intensifiers})` : '-';
+  document.getElementById('lingTopSofteners').textContent = softeners > 0 ? `cukup (${softeners})` : '-';
   document.getElementById('lingTopNegations').textContent = negations > 0 ? `tidak (${negations})` : '-';
-  
-  // Add top emoji display if needed
-  const topEmoji = totals.positive_emoji_count > totals.negative_emoji_count ? 'Positif' : 
-                   totals.negative_emoji_count > totals.positive_emoji_count ? 'Negatif' : 'Netral';
   
   // Store for insights
   window.linguisticTotals = totals;
@@ -4685,8 +4715,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let aiRecommendationData = null;
 
+// AI CONTENT GENERATOR STATE
+let generatedContents = []; // Array to store all generated contents
+let currentGeneratingRecommendation = null; // Currently processing recommendation
+let recommendationStatus = {}; // Track status of each recommendation: { id: 'pending'|'generating'|'completed'|'failed' }
+
 function setupAIHandlers() {
   // No button handler needed - AI recommendation runs automatically after analysis
+  setupContentGeneratorHandlers();
 }
 
 // Calculate statistics for AI analysis
@@ -5458,7 +5494,373 @@ function displayAIRecommendation(response) {
       limitationsEl.appendChild(div);
     });
   }
+  
+  // Show content generator section
+  showContentGeneratorSection();
 }
+
+// ============================================
+// AI CONTENT GENERATOR
+// ============================================
+
+function setupContentGeneratorHandlers() {
+  // Initialize content generator when AI recommendation is ready
+}
+
+function showContentGeneratorSection() {
+  if (!aiRecommendationData || !aiRecommendationData.content_ideas) {
+    console.log('No content ideas available');
+    return;
+  }
+  
+  const section = document.getElementById('contentGeneratorSection');
+  if (section) {
+    section.style.display = 'block';
+  }
+  
+  // Reset state
+  generatedContents = [];
+  recommendationStatus = {};
+  currentGeneratingRecommendation = null;
+  
+  // Initialize recommendation status
+  aiRecommendationData.content_ideas.forEach((idea, index) => {
+    recommendationStatus[index] = 'pending';
+  });
+  
+  // Show recommendation selection
+  renderRecommendationSelection();
+}
+
+function renderRecommendationSelection() {
+  const container = document.getElementById('recommendationCards');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (!aiRecommendationData || !aiRecommendationData.content_ideas) {
+    container.innerHTML = '<p style="color:#9aa4b2">Tidak ada rekomendasi tersedia</p>';
+    return;
+  }
+  
+  aiRecommendationData.content_ideas.forEach((idea, index) => {
+    const status = recommendationStatus[index] || 'pending';
+    const statusBadge = status === 'completed' 
+      ? '<span style="color:#86efac;margin-left:8px">✓ Konten sudah dibuat</span>'
+      : status === 'generating'
+      ? '<span style="color:#fdba74;margin-left:8px">⏳ Sedang diproses...</span>'
+      : '';
+    
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'padding:16px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <h4 style="margin:0 0 8px 0;color:#d8b4fe">Rekomendasi ${index + 1}</h4>
+          <p style="margin:0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(idea.title || idea.content_idea || idea)}</p>
+        </div>
+        ${statusBadge}
+      </div>
+      ${status !== 'completed' && status !== 'generating' ? `
+        <button class="btn primary" onclick="generateContentFromRecommendation(${index})" style="margin-top:12px;padding:8px 16px;font-size:14px">
+          ✨ Generate Konten Instagram
+        </button>
+      ` : ''}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderRemainingRecommendations() {
+  const container = document.getElementById('remainingRecommendationCards');
+  const section = document.getElementById('remainingRecommendations');
+  if (!container || !section) return;
+  
+  container.innerHTML = '';
+  
+  const remainingRecommendations = aiRecommendationData.content_ideas
+    .map((idea, index) => ({ idea, index }))
+    .filter(({ index }) => recommendationStatus[index] !== 'completed');
+  
+  if (remainingRecommendations.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  
+  remainingRecommendations.forEach(({ idea, index }) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'padding:16px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);border-radius:8px';
+    card.innerHTML = `
+      <h4 style="margin:0 0 8px 0;color:#d8b4fe">Rekomendasi ${index + 1}</h4>
+      <p style="margin:0 0 12px 0;color:#d1d5db;font-size:14px;line-height:1.5">${sanitizeText(idea.title || idea.content_idea || idea)}</p>
+      <button class="btn primary" onclick="generateContentFromRecommendation(${index})" style="padding:8px 16px;font-size:14px">
+        ✨ Buat Konten dari Rekomendasi Ini
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function generateContentFromRecommendation(recommendationIndex) {
+  if (!aiRecommendationData || !aiRecommendationData.content_ideas) {
+    alert('Rekomendasi tidak tersedia');
+    return;
+  }
+  
+  const recommendation = aiRecommendationData.content_ideas[recommendationIndex];
+  if (!recommendation) {
+    alert('Rekomendasi tidak valid');
+    return;
+  }
+  
+  // Update status
+  recommendationStatus[recommendationIndex] = 'generating';
+  currentGeneratingRecommendation = recommendationIndex;
+  
+  // Hide selection, show loading
+  document.getElementById('recommendationSelection').style.display = 'none';
+  document.getElementById('contentGeneratorLoading').style.display = 'block';
+  document.getElementById('remainingRecommendations').style.display = 'none';
+  
+  try {
+    // Stage 1: Preparing concept
+    updateLoadingText('Mempersiapkan konsep konten...');
+    await sleep(1000);
+    
+    // Stage 2: Creating visual
+    updateLoadingText('Membuat visual Instagram...');
+    const imageData = await generateImage(recommendation);
+    
+    // Stage 3: Adding brand identity
+    updateLoadingText('Menambahkan identitas brand...');
+    const finalImage = await addLogoToImage(imageData);
+    
+    // Stage 4: Composing caption
+    updateLoadingText('Menyusun caption...');
+    const caption = await generateCaption(recommendation);
+    
+    // Stage 5: Composing hashtags
+    updateLoadingText('Menyusun hashtag...');
+    const hashtags = await generateHashtags(recommendation);
+    
+    // Store generated content
+    const generatedContent = {
+      id: Date.now(),
+      recommendationId: recommendationIndex,
+      recommendationTitle: recommendation.title || recommendation.content_idea || recommendation,
+      recommendationDescription: recommendation.concept || recommendation.description || '',
+      rawImage: imageData,
+      finalImage: finalImage,
+      caption: caption,
+      hashtags: hashtags,
+      createdAt: new Date().toISOString()
+    };
+    
+    generatedContents.push(generatedContent);
+    recommendationStatus[recommendationIndex] = 'completed';
+    
+    // Hide loading, show results
+    document.getElementById('contentGeneratorLoading').style.display = 'none';
+    
+    // Render the new content
+    renderGeneratedContent(generatedContent);
+    
+    // Update recommendation selection
+    renderRecommendationSelection();
+    
+    // Show remaining recommendations
+    renderRemainingRecommendations();
+    
+    updateLoadingText('✓ Konten berhasil dibuat');
+    
+  } catch (error) {
+    console.error('Content generation error:', error);
+    recommendationStatus[recommendationIndex] = 'failed';
+    
+    document.getElementById('contentGeneratorLoading').style.display = 'none';
+    document.getElementById('recommendationSelection').style.display = 'block';
+    
+    alert('Gagal membuat konten: ' + error.message);
+    renderRecommendationSelection();
+  }
+  
+  currentGeneratingRecommendation = null;
+}
+
+function updateLoadingText(text) {
+  const loadingText = document.getElementById('contentGeneratorLoadingText');
+  if (loadingText) {
+    loadingText.textContent = text;
+  }
+}
+
+function renderGeneratedContent(content) {
+  const container = document.getElementById('generatedContentsContainer');
+  if (!container) return;
+  
+  const contentIndex = generatedContents.findIndex(c => c.id === content.id);
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.cssText = 'margin-bottom:20px;padding:20px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);border-radius:8px';
+  card.id = `content-${content.id}`;
+  
+  card.innerHTML = `
+    <h4 style="margin:0 0 15px 0;color:#67e8f9">📱 Konten ${contentIndex + 1}</h4>
+    <div style="margin-bottom:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+      <small style="color:#9aa4b2">Berdasarkan Rekomendasi:</small>
+      <div style="color:#d1d5db;font-weight:600;margin-top:4px">${sanitizeText(content.recommendationTitle)}</div>
+    </div>
+    
+    <!-- Generated Image -->
+    <div style="margin-bottom:15px">
+      <img src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;max-width:400px;border-radius:8px;aspect-ratio:4/5;object-fit:cover">
+      <button class="btn secondary" onclick="downloadGeneratedImage('${content.id}')" style="margin-top:10px;padding:8px 16px;font-size:14px">
+        ⬇ Download Gambar
+      </button>
+    </div>
+    
+    <!-- Caption -->
+    <div style="margin-bottom:15px">
+      <h5 style="margin:0 0 8px 0;color:#d1d5db">Caption Instagram</h5>
+      <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.caption)}</p>
+      <button class="btn secondary" onclick="copyCaption('${content.id}')" style="padding:6px 12px;font-size:13px">
+        📋 Salin Caption
+      </button>
+      <span id="caption-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Caption berhasil disalin</span>
+    </div>
+    
+    <!-- Hashtags -->
+    <div style="margin-bottom:15px">
+      <h5 style="margin:0 0 8px 0;color:#d1d5db">Hashtag</h5>
+      <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.hashtags)}</p>
+      <button class="btn secondary" onclick="copyHashtags('${content.id}')" style="padding:6px 12px;font-size:13px">
+        📋 Salin Hashtag
+      </button>
+      <span id="hashtag-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Hashtag berhasil disalin</span>
+    </div>
+    
+    <!-- Regenerate Button -->
+    <button class="btn secondary" onclick="regenerateContent(${content.recommendationId}, ${content.id})" style="padding:8px 16px;font-size:14px">
+      🔄 Generate Ulang Konten Ini
+    </button>
+  `;
+  
+  container.appendChild(card);
+}
+
+async function generateImage(recommendation) {
+  // TODO: Call Netlify function for image generation
+  // For now, return a placeholder
+  await sleep(2000);
+  return 'https://via.placeholder.com/1080x1350/1a1a2e/ffffff?text=Generated+Image';
+}
+
+async function addLogoToImage(imageData) {
+  // TODO: Add logo overlay to image
+  // For now, return the same image
+  await sleep(500);
+  return imageData;
+}
+
+async function generateCaption(recommendation) {
+  // TODO: Call AI to generate caption
+  // For now, return a placeholder
+  await sleep(1500);
+  return 'Caption yang menarik untuk konten Instagram Anda. Berisi informasi yang relevan dan engaging untuk audiens.';
+}
+
+async function generateHashtags(recommendation) {
+  // TODO: Call AI to generate hashtags
+  // For now, return a placeholder
+  await sleep(1000);
+  return '#DigitalMarketing #SocialMediaMarketing #Instagram #ContentMarketing #BrandAwareness';
+}
+
+function downloadGeneratedImage(contentId) {
+  const content = generatedContents.find(c => c.id === contentId);
+  if (!content || !content.finalImage) {
+    alert('Gambar tidak tersedia');
+    return;
+  }
+  
+  const link = document.createElement('a');
+  link.href = content.finalImage;
+  link.download = `kokorolens-content-${contentId}.png`;
+  link.click();
+}
+
+function copyCaption(contentId) {
+  const content = generatedContents.find(c => c.id === contentId);
+  if (!content || !content.caption) {
+    alert('Caption tidak tersedia');
+    return;
+  }
+  
+  navigator.clipboard.writeText(content.caption).then(() => {
+    const feedback = document.getElementById(`caption-feedback-${contentId}`);
+    if (feedback) {
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 3000);
+    }
+  }).catch(err => {
+    console.error('Failed to copy caption:', err);
+    alert('Gagal menyalin caption');
+  });
+}
+
+function copyHashtags(contentId) {
+  const content = generatedContents.find(c => c.id === contentId);
+  if (!content || !content.hashtags) {
+    alert('Hashtag tidak tersedia');
+    return;
+  }
+  
+  navigator.clipboard.writeText(content.hashtags).then(() => {
+    const feedback = document.getElementById(`hashtag-feedback-${contentId}`);
+    if (feedback) {
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 3000);
+    }
+  }).catch(err => {
+    console.error('Failed to copy hashtags:', err);
+    alert('Gagal menyalin hashtag');
+  });
+}
+
+async function regenerateContent(recommendationId, contentId) {
+  if (!confirm('Apakah Anda ingin membuat ulang konten ini? Konten lama akan digantikan.')) {
+    return;
+  }
+  
+  // Remove old content from display
+  const oldCard = document.getElementById(`content-${contentId}`);
+  if (oldCard) {
+    oldCard.remove();
+  }
+  
+  // Remove from array
+  generatedContents = generatedContents.filter(c => c.id !== contentId);
+  
+  // Reset status
+  recommendationStatus[recommendationId] = 'pending';
+  
+  // Generate new content
+  await generateContentFromRecommendation(recommendationId);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 
 </script>
 
