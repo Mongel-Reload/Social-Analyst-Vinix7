@@ -226,10 +226,10 @@ exports.handler = async (event, context) => {
     };
     
   } catch (error) {
-    console.log({
-      stage: 'internal_error',
-      elapsedMs: Date.now() - startedAt,
-      error: error.message
+    console.error('[CATCH ERROR]', {
+      errorName: error.name,
+      errorMessage: error.message,
+      errorStack: error.stack?.split('\n')?.slice(0, 3)
     });
     
     if (error.name === 'AbortError') {
@@ -238,19 +238,20 @@ exports.handler = async (event, context) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: false,
-          code: 'TIMEOUT',
-          message: 'Pembuatan gambar membutuhkan waktu terlalu lama. Silakan coba kembali.'
+          providerStatus: 504,
+          providerMessage: 'Request timeout - image generation took too long'
         })
       };
     }
     
+    // Forward actual error message for debugging
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: false,
-        code: 'INTERNAL_ERROR',
-        message: 'Terjadi kesalahan pada layanan pembuatan gambar.'
+        providerStatus: 500,
+        providerMessage: error.message || 'Unknown error'
       })
     };
   }
