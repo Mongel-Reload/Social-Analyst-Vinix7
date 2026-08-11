@@ -59,27 +59,15 @@ exports.handler = async (event, context) => {
     await updateJobStatus(jobId, 'processing', null);
     console.log('[IMAGE JOB] status: processing');
     
-    // TEMPORARY: Test architecture without KoboiLLM
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Simulate completion with test data
-    console.log('[IMAGE JOB] TEST MODE - Simulating completion');
-    
-    await updateJobStatus(jobId, 'completed', null, {
-      type: 'url',
-      value: 'https://via.placeholder.com/1024x1536/22d3ee/ffffff?text=Test+Image+Generation',
-      test: true
-    });
-    
-    console.log('[IMAGE JOB] TEST MODE - completed');
-    return { statusCode: 200, body: 'Job completed (test mode)' };
-    
-    // REAL KOBOILLM CODE (commented out for testing)
-    /*
     // Build prompt from recommendation
     const prompt = buildPrompt(recommendation, sentimentContext);
-    console.log('[IMAGE JOB] Koboi request started');
+    console.log('[KOBOI REQUEST START]', {
+      jobId,
+      finalUrl,
+      model,
+      promptLength: prompt.length,
+      size: '1024x1536'
+    });
     
     // Make request to KoboiLLM
     const payload = {
@@ -99,9 +87,15 @@ exports.handler = async (event, context) => {
     });
     
     const duration = Date.now() - startedAt;
-    console.log('[IMAGE JOB] Koboi completed', { duration: `${duration}ms`, status: response.status });
-    
     const rawBody = await response.text();
+    
+    console.log('[KOBOI RESPONSE]', {
+      status: response.status,
+      statusText: response.statusText,
+      duration: `${duration}ms`,
+      contentType: response.headers.get('content-type'),
+      bodyPreview: response.ok ? '[success response]' : rawBody.slice(0, 1000)
+    });
     
     if (!response.ok) {
       console.error('[IMAGE JOB] Koboi error', { status: response.status, body: rawBody.slice(0, 500) });
@@ -142,24 +136,22 @@ exports.handler = async (event, context) => {
     const imageType = imageData.url ? 'url' : 'base64';
     
     if (!imageValue) {
-      console.error('[IMAGE JOB] No image value');
+      console.error('[IMAGE JOB] No image URL or base64 in response');
       await updateJobStatus(jobId, 'failed', {
         type: 'INVALID_RESPONSE',
-        message: 'No image value in response'
+        message: 'No image URL or base64 in response'
       });
-      return { statusCode: 502, body: 'No image value' };
+      return { statusCode: 502, body: 'No image data' };
     }
     
-    console.log('[IMAGE JOB] completed', { imageType, hasValue: true });
-    
-    // Update job status to completed with image result
+    // Save completed job with image
     await updateJobStatus(jobId, 'completed', null, {
       type: imageType,
       value: imageValue
     });
     
+    console.log('[IMAGE JOB] completed', { imageType, duration: `${duration}ms` });
     return { statusCode: 200, body: 'Job completed' };
-    */
     
   } catch (error) {
     console.error('[IMAGE JOB] Error', {
