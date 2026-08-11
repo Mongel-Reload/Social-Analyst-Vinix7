@@ -5715,15 +5715,15 @@ async function generateContentFromRecommendation(recommendationIndex) {
     // Stage 1: Preparing concept
     updateLoadingText('Mempersiapkan konsep konten...');
     
-    // Stage 2: Creating visual
+    // Stage 2: Creating visual (RAW AI IMAGE - no canvas processing for debugging)
     updateLoadingText('Membuat visual Instagram...');
-    const imageData = await generateImage(normalized);
+    const rawImageData = await generateImage(normalized);
     
-    // Stage 3: Adding brand identity
-    updateLoadingText('Menambahkan identitas brand...');
-    const finalImage = await addLogoToImage(imageData);
+    // TEMPORARY: Skip canvas processing for debugging
+    // const finalImage = await addLogoToImage(rawImageData);
+    const finalImage = rawImageData;
     
-    // Stage 4: Composing caption and hashtags
+    // Stage 3: Composing caption and hashtags
     updateLoadingText('Menyusun caption dan hashtag...');
     const copyData = await generateCaptionAndHashtags(normalized);
     
@@ -5733,7 +5733,7 @@ async function generateContentFromRecommendation(recommendationIndex) {
       recommendationId: recommendationIndex,
       recommendationTitle: normalized.title,
       recommendationDescription: normalized.concept,
-      rawImage: imageData,
+      rawImage: rawImageData,
       finalImage: finalImage,
       caption: copyData.caption,
       hashtags: copyData.hashtags,
@@ -5878,7 +5878,14 @@ Requirements:
     const data = await response.json();
     
     if (!data.success) {
-      throw new Error(data.message || 'Image generation failed');
+      // Display actual provider error for debugging
+      const errorMessage = data.providerMessage || data.message || 'Image generation failed';
+      console.error('[IMAGE GENERATION ERROR]', {
+        error: data.error,
+        providerStatus: data.providerStatus,
+        providerMessage: data.providerMessage
+      });
+      throw new Error(errorMessage);
     }
     
     // Convert response to usable format

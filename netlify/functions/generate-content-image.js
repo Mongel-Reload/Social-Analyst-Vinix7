@@ -51,6 +51,13 @@ exports.handler = async (event, context) => {
     };
   }
   
+  console.log('[IMAGE ENV CHECK]', {
+    baseUrl: process.env.IMAGE_API_BASE_URL,
+    endpoint: process.env.IMAGE_API_ENDPOINT,
+    model: process.env.IMAGE_MODEL,
+    hasApiKey: Boolean(process.env.IMAGE_API_KEY)
+  });
+  
   console.log({ stage: 'env_validated', elapsedMs: Date.now() - startedAt, model, baseUrl, endpoint });
   
   try {
@@ -86,18 +93,24 @@ exports.handler = async (event, context) => {
     
     // Construct URL safely
     const url = `${baseUrl}${endpoint}`;
+    console.log('[FINAL URL]', url);
     console.log({ stage: 'url_constructed', elapsedMs: Date.now() - startedAt, url });
     
-    // Prepare request to KoboiLLM
+    // Prepare minimal request to KoboiLLM
     const requestBody = {
       model: model,
       prompt: requestData.prompt,
       size: '1024x1536',
-      quality: 'high',
-      n: 1,
-      response_format: 'b64_json'
+      quality: 'medium',
+      n: 1
     };
     
+    console.log('[REQUEST PAYLOAD]', {
+      model: requestBody.model,
+      size: requestBody.size,
+      quality: requestBody.quality,
+      n: requestBody.n
+    });
     console.log({ stage: 'calling_provider', elapsedMs: Date.now() - startedAt });
     
     // Make request to KoboiLLM
@@ -116,57 +129,56 @@ exports.handler = async (event, context) => {
     
     clearTimeout(timeoutId);
     
-    console.log({
-      stage: 'provider_headers_received',
-      elapsedMs: Date.now() - startedAt,
-      status: response.status
+    const duration = Date.now() - startedAt;
+    console.log('[KOBOI IMAGE RESPONSE]', {
+      status: response.status,
+      statusText: response.statusText,
+      duration: `${duration}ms`
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.log({
-        stage: 'provider_error',
-        elapsedMs: Date.now() - startedAt,
-        status: response.status,
-        error: errorText.substring(0, 500)
+    // Read raw response as text first for debugging
+    const rawBody = await response.text();
+    console.log('[KOBOI RAW BODY PREVIEW]', rawBody.slice(0, 1000));
+    
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(rawBody);
+    } catch (e) {
+      console.error('[KOBOI PARSE ERROR]', {
+        error: e.message,
+        rawBodyPreview: rawBody.slice(0, 500)
       });
-      
-      let errorMessage = 'Image provider gagal memproses permintaan.';
-      let errorCode = 'PROVIDER_ERROR';
-      
-      if (response.status === 401) {
-        errorMessage = 'Image API authentication gagal.';
-        errorCode = 'AUTHENTICATION_FAILED';
-      } else if (response.status === 403) {
-        errorMessage = 'Image provider menolak request.';
-        errorCode = 'FORBIDDEN';
-      } else if (response.status === 429) {
-        errorMessage = 'Batas penggunaan Image API tercapai. Silakan coba kembali.';
-        errorCode = 'RATE_LIMIT_EXCEEDED';
-      } else if (response.status >= 500) {
-        errorMessage = 'Layanan pembuatan gambar sedang bermasalah.';
-        errorCode = 'SERVICE_UNAVAILABLE';
-      }
+      throw new Error(`KoboiLLM returned non-JSON response. HTTP ${response.status}`);
+    }
+    
+    if (!response.ok) {
+      const providerMessage = data?.error?.message || data?.message || rawBody || `HTTP ${response.status}`;
+      console.error('[KOBOI IMAGE ERROR]', {
+        status: response.status,
+        providerMessage
+      });
       
       return {
         statusCode: response.status,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: false,
-          code: errorCode,
-          message: errorMessage
+          error: 'IMAGE_PROVIDER_ERROR',
+          providerStatus: response.status,
+          providerMessage: providerMessage
         })
       };
     }
     
-    const responseData = await response.json();
-    console.log({
-      stage: 'provider_response_received',
-      elapsedMs: Date.now() - startedAt
+    console.log('[KOBOI IMAGE SUCCESS]', {
+      keys: Object.keys(data || {}),
+      dataLength: Array.isArray(data?.data) ? data.data.length : null,
+      firstItemKeys: data?.data?.[0] ? Object.keys(data.data[0]) : []
     });
     
     // Validate response structure
-    if (!responseData.data || !Array.isArray(responseData.data) || responseData.data.length === 0) {
+    if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
       return {
         statusCode: 502,
         headers: { 'Content-Type': 'application/json' },
@@ -178,7 +190,7 @@ exports.handler = async (event, context) => {
       };
     }
     
-    const imageData = responseData.data[0];
+    const imageData = data.data[0];
     
     // Support both b64_json and url
     let imageType, imageValue;
@@ -201,10 +213,9 @@ exports.handler = async (event, context) => {
       };
     }
     
-    console.log({
-      stage: 'response_returned',
-      elapsedMs: Date.now() - startedAt,
-      imageType
+    console.log('[FINAL IMAGE DATA]', {
+      imageType,
+      hasValue: Boolean(imageValue)
     });
     
     return {
