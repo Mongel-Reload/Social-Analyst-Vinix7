@@ -5760,10 +5760,74 @@ async function generateImage(recommendation) {
 }
 
 async function addLogoToImage(imageData) {
-  // TODO: Add logo overlay to image
-  // For now, return the same image
-  await sleep(500);
-  return imageData;
+  try {
+    // Create canvas for image composition
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to Instagram portrait (4:5 ratio)
+    const width = 1080;
+    const height = 1350;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Load the generated image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = imageData;
+    });
+    
+    // Draw the generated image covering the canvas
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    // Load and draw logo overlay
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    
+    await new Promise((resolve, reject) => {
+      logo.onload = resolve;
+      logo.onerror = () => {
+        console.warn('Failed to load logo, using text fallback');
+        resolve();
+      };
+      logo.src = '/assets/kokorolens-logo.png';
+    });
+    
+    if (logo.complete && logo.naturalWidth > 0) {
+      // Calculate logo size (15% of canvas width, max 150px)
+      const logoWidth = Math.min(width * 0.15, 150);
+      const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
+      
+      // Position logo at bottom-right corner with padding
+      const padding = 20;
+      const logoX = width - logoWidth - padding;
+      const logoY = height - logoHeight - padding;
+      
+      // Draw logo with slight transparency
+      ctx.globalAlpha = 0.9;
+      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+      ctx.globalAlpha = 1.0;
+    } else {
+      // Fallback: Draw text watermark if logo fails to load
+      ctx.font = 'bold 24px Arial';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.textAlign = 'right';
+      ctx.fillText('KokoroLens', width - 20, height - 20);
+    }
+    
+    // Convert canvas to data URL
+    const finalImageData = canvas.toDataURL('image/png');
+    
+    return finalImageData;
+  } catch (error) {
+    console.error('Logo overlay error:', error);
+    // Return original image if overlay fails
+    return imageData;
+  }
 }
 
 async function generateCaption(recommendation) {
