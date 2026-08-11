@@ -82,7 +82,8 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           jobId,
           recommendation: requestData.recommendation,
-          sentimentContext: requestData.sentimentContext
+          sentimentContext: requestData.sentimentContext,
+          brandProfile: requestData.brandProfile
         })
       });
       

@@ -128,6 +128,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <button data-page="dampak"><b class="ico">📈</b><span class="label">Dampak</span></button>
       <button data-page="input"><b class="ico">📥</b><span class="label">Input Data</span></button>
       <button data-page="sentimen"><b class="ico">😊</b><span class="label">Sentimen</span></button>
+      <button data-page="brand"><b class="ico">🎨</b><span class="label">Profil Brand</span></button>
       <button data-page="laporan"><b class="ico">📄</b><span class="label">Laporan</span></button>
     </nav>
 
@@ -599,6 +600,12 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
             <div id="aiNegative" style="color:#d1d5db;line-height:1.8"></div>
           </div>
           
+          <!-- AI Content Generator -->
+          <div class="card" style="margin-bottom:15px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3)">
+            <h4 style="margin-bottom:12px;color:#67e8f9">✨ AI Content Generator</h4>
+            <div id="aiContentIdeas" style="color:#d1d5db;line-height:1.8"></div>
+          </div>
+          
           <!-- Rekomendasi -->
           <div class="card" style="margin-bottom:15px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3)">
             <h4 style="margin-bottom:12px;color:#d8b4fe">💡 Rekomendasi Strategi</h4>
@@ -656,6 +663,95 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <p style="color:#9aa4b2;margin-bottom:15px">Ingin mengeksplorasi rekomendasi lainnya? Pilih rekomendasi berikut untuk membuat konten baru.</p>
           <div id="remainingRecommendationCards" style="display:flex;flex-direction:column;gap:12px"></div>
         </div>
+      </div>
+    </section>
+    <section id="brand" class="page">
+      <div class="head"><div><h1>Profil Brand</h1><p>Konfigurasi identitas brand untuk konten yang konsisten.</p></div></div>
+      
+      <div class="card">
+        <form id="brandProfileForm" onsubmit="saveBrandProfile(event)">
+          <div class="formgrid" style="margin-bottom:20px">
+            <div class="field">
+              <label>Nama Brand/Perusahaan</label>
+              <input type="text" id="brandName" placeholder="Contoh: KokoroLens" required>
+            </div>
+            <div class="field">
+              <label>Bidang Industri</label>
+              <input type="text" id="brandIndustry" placeholder="Contoh: Social Media Analytics" required>
+            </div>
+            <div class="field">
+              <label>Target Audiens</label>
+              <input type="text" id="brandAudience" placeholder="Contoh: Digital Marketers Indonesia" required>
+            </div>
+          </div>
+          
+          <div class="field" style="margin-bottom:20px">
+            <label>Deskripsi Brand</label>
+            <input type="text" id="brandDescription" placeholder="Deskripsi singkat tentang brand Anda" style="height:60px">
+          </div>
+          
+          <div class="formgrid" style="margin-bottom:20px">
+            <div class="field">
+              <label>Instagram</label>
+              <input type="text" id="brandInstagram" placeholder="@username">
+            </div>
+            <div class="field">
+              <label>TikTok</label>
+              <input type="text" id="brandTiktok" placeholder="@username">
+            </div>
+            <div class="field">
+              <label>Website</label>
+              <input type="text" id="brandWebsite" placeholder="https://example.com">
+            </div>
+          </div>
+          
+          <div style="margin-bottom:20px">
+            <label style="display:block;margin-bottom:8px;color:#d1d5db;font-weight:800;font-size:12px">Logo Brand (PNG)</label>
+            <div class="upload" style="padding:30px;min-height:200px;position:relative">
+              <input type="file" id="brandLogo" accept="image/png" style="position:absolute;inset:0;opacity:0;cursor:pointer" onchange="handleLogoUpload(event)">
+              <div id="logoPreviewContainer" style="display:none;text-align:center">
+                <img id="logoPreview" style="max-width:120px;max-height:120px;border-radius:12px;margin-bottom:10px">
+                <p style="color:#9aa4b2;font-size:12px;margin:0">Logo berhasil diupload</p>
+              </div>
+              <div id="logoUploadPlaceholder">
+                <div style="font-size:48px;margin-bottom:10px">📷</div>
+                <p style="color:#9aa4b2;margin:0">Klik atau drag & drop logo PNG</p>
+              </div>
+            </div>
+            <button type="button" onclick="extractColorsFromLogo()" class="btn secondary" style="margin-top:10px;padding:8px 16px;font-size:14px">
+              🎨 Ambil Warna dari Logo
+            </button>
+          </div>
+          
+          <div class="formgrid" style="margin-bottom:20px">
+            <div class="field">
+              <label>Primary Color</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="brandPrimaryColor" value="#22d3ee" style="width:60px;height:50px;padding:0;border:none;border-radius:8px;cursor:pointer">
+                <input type="text" id="brandPrimaryColorText" value="#22d3ee" placeholder="#22d3ee" style="flex:1">
+              </div>
+            </div>
+            <div class="field">
+              <label>Secondary Color</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="brandSecondaryColor" value="#3b82f6" style="width:60px;height:50px;padding:0;border:none;border-radius:8px;cursor:pointer">
+                <input type="text" id="brandSecondaryColorText" value="#3b82f6" placeholder="#3b82f6" style="flex:1">
+              </div>
+            </div>
+            <div class="field">
+              <label>Accent Color</label>
+              <div style="display:flex;gap:10px;align-items:center">
+                <input type="color" id="brandAccentColor" value="#8b5cf6" style="width:60px;height:50px;padding:0;border:none;border-radius:8px;cursor:pointer">
+                <input type="text" id="brandAccentColorText" value="#8b5cf6" placeholder="#8b5cf6" style="flex:1">
+              </div>
+            </div>
+          </div>
+          
+          <div style="display:flex;gap:12px">
+            <button type="submit" class="btn primary" style="flex:1">Simpan Profil Brand</button>
+            <button type="button" onclick="resetBrandProfile()" class="btn secondary" style="flex:1">Reset</button>
+          </div>
+        </form>
       </div>
     </section>
     <section id="dampak" class="page"><div class="head"><div><h1>Dampak</h1><p>Perbandingan performa antar periode.</p></div><div class="toolbar"><div class="custom-select" id="monthCustomDampak"><button type="button" class="custom-trigger">Januari <span>⌄</span></button><div class="custom-options"></div></div><div class="custom-select" id="yearCustomDampak"><button type="button" class="custom-trigger">2026 <span>⌄</span></button><div class="custom-options"></div></div></div></div><div id="dampakEmpty" class="card" style="text-align:center;padding:60px 20px"><div style="font-size:64px;margin-bottom:20px">📈</div><h3 style="margin-bottom:12px">Belum Ada Data Dampak</h3><p style="color:var(--muted);margin-bottom:24px">Silakan hubungkan Meta Graph API untuk melihat data dampak performa Anda.</p><button class="btn primary" onclick="showPage('meta')">Buka Halaman Meta API</button></div><div id="dampakContent" style="display:none"><div class="grid4"><div class="card kpi"><small>Reach</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Views</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Likes</small><strong>-</strong><span>-</span></div><div class="card kpi"><small>Share</small><strong>-</strong><span>-</span></div></div><div class="card" style="margin-top:15px"><h3>Impact Analysis</h3><canvas id="impact"></canvas></div><div class="grid2" style="margin-top:15px"><div class="card"><h3>Sentiment Trend</h3><canvas id="sent2"></canvas></div><div class="card"><h3>Key Insights</h3><ul style="line-height:1.9;color:#d1d5db"><li>Menunggu data untuk analisis dampak...</li></ul></div></div></div></section>
@@ -5212,7 +5308,7 @@ async function generateAIRecommendation() {
   }
 }
 
-// Retry AI Recommendation (for error state) - uses stored payload, doesn't re-run ML
+// Retry AI Recommendation (for error state) - uses async background job
 async function retryAIRecommendation() {
   if (!window.aiPayload) {
     console.error('No stored payload for retry');
@@ -5223,27 +5319,65 @@ async function retryAIRecommendation() {
   document.getElementById('aiLoading').style.display = 'block';
   
   try {
-    const response = await fetch('/.netlify/functions/ai-recommendation', {
+    // Start async job
+    updateAILoadingText('AI sedang menganalisis hasil sentimen...');
+    const startResponse = await fetch('/.netlify/functions/start-ai-recommendation', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(window.aiPayload)
     });
     
-    const data = await parseApiResponse(response);
+    const startData = await startResponse.json();
     
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Gagal menghasilkan rekomendasi');
+    if (!startResponse.ok || !startData.success) {
+      throw new Error(startData.error?.message || 'Gagal memulai job rekomendasi AI');
     }
     
-    console.log('AI Response:', data);
+    const jobId = startData.jobId;
+    console.log('AI Recommendation retry job started:', jobId);
     
-    const recommendationData = data.data || data;
-    aiRecommendationData = recommendationData;
+    // Poll job status
+    updateAILoadingText('AI sedang menyusun rekomendasi strategi...');
+    const maxPollingTime = 300000; // 5 minutes max
+    const pollingInterval = 3000; // 3 seconds
+    const startTime = Date.now();
     
-    document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiResults').style.display = 'block';
+    while (Date.now() - startTime < maxPollingTime) {
+      await new Promise(resolve => setTimeout(resolve, pollingInterval));
+      
+      const statusResponse = await fetch(`/.netlify/functions/ai-recommendation-status?id=${jobId}`);
+      const statusData = await statusResponse.json();
+      
+      console.log('AI Recommendation status:', statusData.status);
+      
+      if (statusData.status === 'completed' && statusData.result) {
+        // Store recommendation data
+        aiRecommendationData = statusData.result;
+        
+        console.log('[AI NORMALIZED RESULT]', {
+          hasExecutiveSummary: !!aiRecommendationData.executive_summary,
+          hasKeyInsights: Array.isArray(aiRecommendationData.key_insights) && aiRecommendationData.key_insights.length > 0,
+          hasContentIdeas: Array.isArray(aiRecommendationData.content_ideas) && aiRecommendationData.content_ideas.length > 0,
+          hasPriorityActions: Array.isArray(aiRecommendationData.priority_actions) && aiRecommendationData.priority_actions.length > 0,
+          hasStrategicRecommendations: Array.isArray(aiRecommendationData.strategic_recommendations) && aiRecommendationData.strategic_recommendations.length > 0,
+          hasLimitations: Array.isArray(aiRecommendationData.limitations) && aiRecommendationData.limitations.length > 0
+        });
+        
+        document.getElementById('aiLoading').style.display = 'none';
+        document.getElementById('aiResults').style.display = 'block';
+        
+        displayAIRecommendation(aiRecommendationData);
+        return;
+      }
+      
+      if (statusData.status === 'failed') {
+        throw new Error(statusData.error?.message || 'AI recommendation job failed');
+      }
+    }
     
-    displayAIRecommendation(recommendationData);
+    throw new Error('AI recommendation job timeout');
     
   } catch (error) {
     console.error('AI Retry Error:', error);
@@ -5254,7 +5388,7 @@ async function retryAIRecommendation() {
   }
 }
 
-// Regenerate AI Recommendation with updated statistics
+// Regenerate AI Recommendation with updated statistics - uses async background job
 async function regenerateAIRecommendation() {
   if (!sentimentPredictions) {
     alert('Tidak ada data prediksi untuk diregenerasi');
@@ -5273,28 +5407,65 @@ async function regenerateAIRecommendation() {
     // Store new payload
     window.aiPayload = stats;
     
-    // Call AI recommendation with updated statistics
-    const response = await fetch('/.netlify/functions/ai-recommendation', {
+    // Start async job
+    updateAILoadingText('AI sedang menganalisis hasil sentimen...');
+    const startResponse = await fetch('/.netlify/functions/start-ai-recommendation', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(stats)
     });
     
-    const data = await parseApiResponse(response);
+    const startData = await startResponse.json();
     
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Gagal menghasilkan rekomendasi');
+    if (!startResponse.ok || !startData.success) {
+      throw new Error(startData.error?.message || 'Gagal memulai job rekomendasi AI');
     }
     
-    console.log('AI Response:', data);
+    const jobId = startData.jobId;
+    console.log('AI Recommendation regenerate job started:', jobId);
     
-    const recommendationData = data.data || data;
-    aiRecommendationData = recommendationData;
+    // Poll job status
+    updateAILoadingText('AI sedang menyusun rekomendasi strategi...');
+    const maxPollingTime = 300000; // 5 minutes max
+    const pollingInterval = 3000; // 3 seconds
+    const startTime = Date.now();
     
-    document.getElementById('aiLoading').style.display = 'none';
-    document.getElementById('aiResults').style.display = 'block';
+    while (Date.now() - startTime < maxPollingTime) {
+      await new Promise(resolve => setTimeout(resolve, pollingInterval));
+      
+      const statusResponse = await fetch(`/.netlify/functions/ai-recommendation-status?id=${jobId}`);
+      const statusData = await statusResponse.json();
+      
+      console.log('AI Recommendation status:', statusData.status);
+      
+      if (statusData.status === 'completed' && statusData.result) {
+        // Store recommendation data
+        aiRecommendationData = statusData.result;
+        
+        console.log('[AI NORMALIZED RESULT]', {
+          hasExecutiveSummary: !!aiRecommendationData.executive_summary,
+          hasKeyInsights: Array.isArray(aiRecommendationData.key_insights) && aiRecommendationData.key_insights.length > 0,
+          hasContentIdeas: Array.isArray(aiRecommendationData.content_ideas) && aiRecommendationData.content_ideas.length > 0,
+          hasPriorityActions: Array.isArray(aiRecommendationData.priority_actions) && aiRecommendationData.priority_actions.length > 0,
+          hasStrategicRecommendations: Array.isArray(aiRecommendationData.strategic_recommendations) && aiRecommendationData.strategic_recommendations.length > 0,
+          hasLimitations: Array.isArray(aiRecommendationData.limitations) && aiRecommendationData.limitations.length > 0
+        });
+        
+        document.getElementById('aiLoading').style.display = 'none';
+        document.getElementById('aiResults').style.display = 'block';
+        
+        displayAIRecommendation(aiRecommendationData);
+        return;
+      }
+      
+      if (statusData.status === 'failed') {
+        throw new Error(statusData.error?.message || 'AI recommendation job failed');
+      }
+    }
     
-    displayAIRecommendation(recommendationData);
+    throw new Error('AI recommendation job timeout');
     
   } catch (error) {
     console.error('AI Regenerate Error:', error);
@@ -5357,11 +5528,11 @@ function displayAIRecommendation(response) {
     findingsEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat temuan utama yang dapat dipetakan dari hasil analisis.</p>';
   }
   
-  // Content Ideas (new simplified schema: title, format, concept, call_to_action, data_basis)
+  // Positive Factors (new field: factor, data_basis) - mapped to aiPositive
   const positiveEl = document.getElementById('aiPositive');
   positiveEl.innerHTML = '';
-  if (response.content_ideas && Array.isArray(response.content_ideas)) {
-    response.content_ideas.forEach((idea, index) => {
+  if (response.positive_factors && Array.isArray(response.positive_factors) && response.positive_factors.length > 0) {
+    response.positive_factors.forEach((factor, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
       div.style.padding = '12px';
@@ -5369,96 +5540,127 @@ function displayAIRecommendation(response) {
       div.style.borderRadius = '8px';
       div.style.borderLeft = '4px solid #22c55e';
       
-      const header = document.createElement('div');
-      header.style.display = 'flex';
-      header.style.justifyContent = 'space-between';
-      header.style.marginBottom = '8px';
-      
       const title = document.createElement('strong');
-      title.textContent = `${index + 1}. ${idea.title || ''}`;
+      title.textContent = `${index + 1}. ${factor.factor || ''}`;
+      title.style.display = 'block';
+      title.style.marginBottom = '4px';
       title.style.color = '#22c55e';
       
-      const format = document.createElement('span');
-      format.style.fontSize = '11px';
-      format.style.background = '#22c55e';
-      format.style.color = 'white';
-      format.style.padding = '2px 8px';
-      format.style.borderRadius = '4px';
-      format.textContent = idea.format || '';
+      div.appendChild(title);
       
-      div.appendChild(header);
-      
-      if (idea.concept && idea.concept.trim()) {
-        const concept = document.createElement('div');
-        concept.style.fontSize = '13px';
-        concept.style.color = '#d1d5db';
-        concept.style.marginBottom = '4px';
-        concept.textContent = 'Konsep: ' + idea.concept;
-        div.appendChild(concept);
-      }
-      
-      if (idea.call_to_action && idea.call_to_action.trim()) {
-        const cta = document.createElement('div');
-        cta.style.fontSize = '13px';
-        cta.style.color = '#9aa4b2';
-        cta.style.marginBottom = '4px';
-        cta.textContent = 'CTA: ' + idea.call_to_action;
-        div.appendChild(cta);
-      }
-      
-      if (idea.data_basis && idea.data_basis.trim()) {
+      if (factor.data_basis && factor.data_basis.trim()) {
         const dataBasis = document.createElement('div');
-        dataBasis.style.fontSize = '12px';
+        dataBasis.style.fontSize = '13px';
         dataBasis.style.color = '#9aa4b2';
-        dataBasis.textContent = 'Dasar data: ' + idea.data_basis;
+        dataBasis.textContent = 'Dasar data: ' + factor.data_basis;
         div.appendChild(dataBasis);
       }
       
       positiveEl.appendChild(div);
     });
+  } else {
+    positiveEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat faktor sentimen positif yang dapat dipetakan dari hasil analisis.</p>';
   }
   
-  // Priority Actions (new simplified schema: action, reason, success_metric)
+  // Negative Issues (new field: issue, data_basis) - mapped to aiNegative
   const negativeEl = document.getElementById('aiNegative');
   negativeEl.innerHTML = '';
-  if (response.priority_actions && Array.isArray(response.priority_actions) && response.priority_actions.length > 0) {
-    response.priority_actions.forEach((action, index) => {
+  if (response.negative_issues && Array.isArray(response.negative_issues) && response.negative_issues.length > 0) {
+    response.negative_issues.forEach((issue, index) => {
       const div = document.createElement('div');
       div.style.marginBottom = '12px';
       div.style.padding = '12px';
-      div.style.background = 'rgba(168, 85, 247, 0.1)';
+      div.style.background = 'rgba(239, 68, 68, 0.1)';
       div.style.borderRadius = '8px';
-      div.style.borderLeft = '4px solid #a855f7';
+      div.style.borderLeft = '4px solid #ef4444';
       
       const title = document.createElement('strong');
-      title.textContent = `${index + 1}. ${action.action || ''}`;
+      title.textContent = `${index + 1}. ${issue.issue || ''}`;
       title.style.display = 'block';
       title.style.marginBottom = '4px';
-      title.style.color = '#a855f7';
+      title.style.color = '#ef4444';
       
       div.appendChild(title);
       
-      if (action.reason && action.reason.trim()) {
-        const reason = document.createElement('div');
-        reason.style.fontSize = '13px';
-        reason.style.color = '#d1d5db';
-        reason.style.marginBottom = '4px';
-        reason.textContent = 'Alasan: ' + action.reason;
-        div.appendChild(reason);
-      }
-      
-      if (action.success_metric && action.success_metric.trim()) {
-        const metric = document.createElement('div');
-        metric.style.fontSize = '12px';
-        metric.style.color = '#9aa4b2';
-        metric.textContent = 'Metric sukses: ' + action.success_metric;
-        div.appendChild(metric);
+      if (issue.data_basis && issue.data_basis.trim()) {
+        const dataBasis = document.createElement('div');
+        dataBasis.style.fontSize = '13px';
+        dataBasis.style.color = '#9aa4b2';
+        dataBasis.textContent = 'Dasar data: ' + issue.data_basis;
+        div.appendChild(dataBasis);
       }
       
       negativeEl.appendChild(div);
     });
   } else {
-    negativeEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat prioritas tindakan yang dapat dipetakan dari hasil analisis.</p>';
+    negativeEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat permasalahan sentimen negatif yang dapat dipetakan dari hasil analisis.</p>';
+  }
+  
+  // Content Ideas (AI Content Generator) - new section for content generation
+  const contentIdeasEl = document.getElementById('aiContentIdeas');
+  if (contentIdeasEl) {
+    contentIdeasEl.innerHTML = '';
+    if (response.content_ideas && Array.isArray(response.content_ideas) && response.content_ideas.length > 0) {
+      response.content_ideas.forEach((idea, index) => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '12px';
+        div.style.padding = '12px';
+        div.style.background = 'rgba(34, 211, 238, 0.1)';
+        div.style.borderRadius = '8px';
+        div.style.borderLeft = '4px solid #22d3ee';
+        
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.marginBottom = '8px';
+        
+        const title = document.createElement('strong');
+        title.textContent = `${index + 1}. ${idea.title || ''}`;
+        title.style.color = '#22d3ee';
+        
+        const format = document.createElement('span');
+        format.style.fontSize = '11px';
+        format.style.background = '#22d3ee';
+        format.style.color = 'white';
+        format.style.padding = '2px 8px';
+        format.style.borderRadius = '4px';
+        format.textContent = idea.format || '';
+        
+        header.appendChild(title);
+        header.appendChild(format);
+        div.appendChild(header);
+        
+        if (idea.concept && idea.concept.trim()) {
+          const concept = document.createElement('div');
+          concept.style.fontSize = '13px';
+          concept.style.color = '#d1d5db';
+          concept.style.marginBottom = '4px';
+          concept.textContent = 'Konsep: ' + idea.concept;
+          div.appendChild(concept);
+        }
+        
+        if (idea.call_to_action && idea.call_to_action.trim()) {
+          const cta = document.createElement('div');
+          cta.style.fontSize = '13px';
+          cta.style.color = '#9aa4b2';
+          cta.style.marginBottom = '4px';
+          cta.textContent = 'CTA: ' + idea.call_to_action;
+          div.appendChild(cta);
+        }
+        
+        if (idea.data_basis && idea.data_basis.trim()) {
+          const dataBasis = document.createElement('div');
+          dataBasis.style.fontSize = '12px';
+          dataBasis.style.color = '#9aa4b2';
+          dataBasis.textContent = 'Dasar data: ' + idea.data_basis;
+          div.appendChild(dataBasis);
+        }
+        
+        contentIdeasEl.appendChild(div);
+      });
+    } else {
+      contentIdeasEl.innerHTML = '<p style="color:#9aa4b2;font-style:italic">Belum terdapat ide konten yang dapat dipetakan dari hasil analisis.</p>';
+    }
   }
   
   // Strategic Recommendations (new field: recommendation, rationale, expected_impact)
@@ -5865,38 +6067,54 @@ function renderGeneratedContent(content) {
       <div style="color:#d1d5db;font-weight:600;margin-top:4px">${sanitizeText(content.recommendationTitle)}</div>
     </div>
     
-    <!-- Generated Image -->
-    <div style="margin-bottom:15px">
-      <img src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;max-width:400px;border-radius:8px;aspect-ratio:4/5;object-fit:cover">
-      <button class="btn secondary" onclick="downloadGeneratedImage('${content.id}')" style="margin-top:10px;padding:8px 16px;font-size:14px">
-        ⬇ Download Gambar
-      </button>
+    <!-- 2-Column Layout for Desktop -->
+    <div style="display:grid;grid-template-columns:42% 58%;gap:20px;align-items:start">
+      
+      <!-- Left Column: Image + Download -->
+      <div>
+        <img src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;border-radius:8px;aspect-ratio:4/5;object-fit:cover">
+        <button class="btn secondary" onclick="downloadGeneratedImage('${content.id}')" style="margin-top:10px;padding:8px 16px;font-size:14px;width:100%">
+          ⬇ Download Gambar
+        </button>
+      </div>
+      
+      <!-- Right Column: Caption, Hashtags, Regenerate -->
+      <div>
+        <!-- Caption -->
+        <div style="margin-bottom:15px">
+          <h5 style="margin:0 0 8px 0;color:#d1d5db">Caption Instagram</h5>
+          <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.caption)}</p>
+          <button class="btn secondary" onclick="copyCaption('${content.id}')" style="padding:6px 12px;font-size:13px">
+            📋 Salin Caption
+          </button>
+          <span id="caption-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Caption berhasil disalin</span>
+        </div>
+        
+        <!-- Hashtags -->
+        <div style="margin-bottom:15px">
+          <h5 style="margin:0 0 8px 0;color:#d1d5db">Hashtag</h5>
+          <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.hashtags)}</p>
+          <button class="btn secondary" onclick="copyHashtags('${content.id}')" style="padding:6px 12px;font-size:13px">
+            📋 Salin Hashtag
+          </button>
+          <span id="hashtag-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Hashtag berhasil disalin</span>
+        </div>
+        
+        <!-- Regenerate Button -->
+        <button class="btn secondary" onclick="regenerateContent(${content.recommendationId}, ${content.id})" style="padding:8px 16px;font-size:14px">
+          🔄 Generate Ulang Konten Ini
+        </button>
+      </div>
     </div>
     
-    <!-- Caption -->
-    <div style="margin-bottom:15px">
-      <h5 style="margin:0 0 8px 0;color:#d1d5db">Caption Instagram</h5>
-      <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.caption)}</p>
-      <button class="btn secondary" onclick="copyCaption('${content.id}')" style="padding:6px 12px;font-size:13px">
-        📋 Salin Caption
-      </button>
-      <span id="caption-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Caption berhasil disalin</span>
-    </div>
-    
-    <!-- Hashtags -->
-    <div style="margin-bottom:15px">
-      <h5 style="margin:0 0 8px 0;color:#d1d5db">Hashtag</h5>
-      <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.hashtags)}</p>
-      <button class="btn secondary" onclick="copyHashtags('${content.id}')" style="padding:6px 12px;font-size:13px">
-        📋 Salin Hashtag
-      </button>
-      <span id="hashtag-feedback-${content.id}" style="margin-left:10px;color:#86efac;display:none">✓ Hashtag berhasil disalin</span>
-    </div>
-    
-    <!-- Regenerate Button -->
-    <button class="btn secondary" onclick="regenerateContent(${content.recommendationId}, ${content.id})" style="padding:8px 16px;font-size:14px">
-      🔄 Generate Ulang Konten Ini
-    </button>
+    <!-- Responsive: Stack on mobile/tablet -->
+    <style>
+      @media (max-width: 899px) {
+        #content-${content.id} > div:nth-child(3) {
+          grid-template-columns: 1fr !important;
+        }
+      }
+    </style>
   `;
   
   container.appendChild(card);
@@ -5944,7 +6162,8 @@ async function generateImage(recommendation) {
     },
     body: JSON.stringify({ 
       recommendation,
-      sentimentContext: aiRecommendationData || null
+      sentimentContext: aiRecommendationData || null,
+      brandProfile: brandProfile || null
     })
   });
   
@@ -6062,13 +6281,16 @@ async function addLogoToImage(imageData) {
     const logo = new Image();
     logo.crossOrigin = 'anonymous';
     
+    // Use brand logo if available, otherwise fallback to default
+    const logoSrc = brandProfile?.logo || '/assets/kokorolens-logo.png';
+    
     await new Promise((resolve, reject) => {
       logo.onload = resolve;
       logo.onerror = () => {
         console.warn('Failed to load logo, using text fallback');
         resolve();
       };
-      logo.src = '/assets/kokorolens-logo.png';
+      logo.src = logoSrc;
     });
     
     if (logo.complete && logo.naturalWidth > 0) {
@@ -6086,11 +6308,12 @@ async function addLogoToImage(imageData) {
       ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
       ctx.globalAlpha = 1.0;
     } else {
-      // Fallback: Draw text watermark if logo fails to load
+      // Fallback: Draw brand name text if logo fails to load
       ctx.font = 'bold 24px Arial';
       ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
       ctx.textAlign = 'right';
-      ctx.fillText('KokoroLens', targetWidth - 20, targetHeight - 20);
+      const brandName = brandProfile?.name || 'KokoroLens';
+      ctx.fillText(brandName, targetWidth - 20, targetHeight - 20);
     }
     
     // Convert canvas to data URL
@@ -6155,11 +6378,37 @@ function downloadGeneratedImage(contentId) {
     return;
   }
   
+  // Convert data URL to blob for proper download
+  const dataUrl = content.finalImage;
   const link = document.createElement('a');
-  link.href = content.finalImage;
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  link.download = `kokorolens-content-${timestamp}.png`;
-  link.click();
+  
+  if (dataUrl.startsWith('data:')) {
+    // Handle data URL by converting to blob
+    fetch(dataUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        link.download = `kokorolens-content-${timestamp}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        console.error('Failed to download image:', err);
+        // Fallback to direct link
+        link.href = dataUrl;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        link.download = `kokorolens-content-${timestamp}.png`;
+        link.click();
+      });
+  } else {
+    // Handle regular URL
+    link.href = dataUrl;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    link.download = `kokorolens-content-${timestamp}.png`;
+    link.click();
+  }
 }
 
 function copyCaption(contentId) {
@@ -6219,6 +6468,248 @@ async function regenerateContent(recommendationId, contentId) {
   await generateContentFromRecommendation(recommendationId);
 }
 
+// Brand Profile Functions
+let brandProfile = {
+  name: '',
+  industry: '',
+  audience: '',
+  description: '',
+  instagram: '',
+  tiktok: '',
+  website: '',
+  logo: null,
+  primaryColor: '#22d3ee',
+  secondaryColor: '#3b82f6',
+  accentColor: '#8b5cf6'
+};
+
+// Load brand profile from localStorage on page load
+function loadBrandProfile() {
+  try {
+    const saved = localStorage.getItem('kokorolens_brand_profile');
+    if (saved) {
+      brandProfile = JSON.parse(saved);
+      
+      // Populate form fields
+      document.getElementById('brandName').value = brandProfile.name || '';
+      document.getElementById('brandIndustry').value = brandProfile.industry || '';
+      document.getElementById('brandAudience').value = brandProfile.audience || '';
+      document.getElementById('brandDescription').value = brandProfile.description || '';
+      document.getElementById('brandInstagram').value = brandProfile.instagram || '';
+      document.getElementById('brandTiktok').value = brandProfile.tiktok || '';
+      document.getElementById('brandWebsite').value = brandProfile.website || '';
+      
+      // Set colors
+      document.getElementById('brandPrimaryColor').value = brandProfile.primaryColor || '#22d3ee';
+      document.getElementById('brandPrimaryColorText').value = brandProfile.primaryColor || '#22d3ee';
+      document.getElementById('brandSecondaryColor').value = brandProfile.secondaryColor || '#3b82f6';
+      document.getElementById('brandSecondaryColorText').value = brandProfile.secondaryColor || '#3b82f6';
+      document.getElementById('brandAccentColor').value = brandProfile.accentColor || '#8b5cf6';
+      document.getElementById('brandAccentColorText').value = brandProfile.accentColor || '#8b5cf6';
+      
+      // Show logo preview if exists
+      if (brandProfile.logo) {
+        document.getElementById('logoPreview').src = brandProfile.logo;
+        document.getElementById('logoPreviewContainer').style.display = 'block';
+        document.getElementById('logoUploadPlaceholder').style.display = 'none';
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load brand profile:', e);
+  }
+}
+
+// Save brand profile to localStorage
+function saveBrandProfile(event) {
+  event.preventDefault();
+  
+  brandProfile.name = document.getElementById('brandName').value;
+  brandProfile.industry = document.getElementById('brandIndustry').value;
+  brandProfile.audience = document.getElementById('brandAudience').value;
+  brandProfile.description = document.getElementById('brandDescription').value;
+  brandProfile.instagram = document.getElementById('brandInstagram').value;
+  brandProfile.tiktok = document.getElementById('brandTiktok').value;
+  brandProfile.website = document.getElementById('brandWebsite').value;
+  brandProfile.primaryColor = document.getElementById('brandPrimaryColor').value;
+  brandProfile.secondaryColor = document.getElementById('brandSecondaryColor').value;
+  brandProfile.accentColor = document.getElementById('brandAccentColor').value;
+  
+  try {
+    localStorage.setItem('kokorolens_brand_profile', JSON.stringify(brandProfile));
+    alert('Profil Brand berhasil disimpan!');
+  } catch (e) {
+    console.error('Failed to save brand profile:', e);
+    alert('Gagal menyimpan profil brand. Silakan coba lagi.');
+  }
+}
+
+// Reset brand profile
+function resetBrandProfile() {
+  if (confirm('Apakah Anda yakin ingin mereset profil brand?')) {
+    localStorage.removeItem('kokorolens_brand_profile');
+    brandProfile = {
+      name: '',
+      industry: '',
+      audience: '',
+      description: '',
+      instagram: '',
+      tiktok: '',
+      website: '',
+      logo: null,
+      primaryColor: '#22d3ee',
+      secondaryColor: '#3b82f6',
+      accentColor: '#8b5cf6'
+    };
+    
+    // Reset form fields
+    document.getElementById('brandProfileForm').reset();
+    document.getElementById('brandPrimaryColor').value = '#22d3ee';
+    document.getElementById('brandPrimaryColorText').value = '#22d3ee';
+    document.getElementById('brandSecondaryColor').value = '#3b82f6';
+    document.getElementById('brandSecondaryColorText').value = '#3b82f6';
+    document.getElementById('brandAccentColor').value = '#8b5cf6';
+    document.getElementById('brandAccentColorText').value = '#8b5cf6';
+    
+    // Reset logo preview
+    document.getElementById('logoPreviewContainer').style.display = 'none';
+    document.getElementById('logoUploadPlaceholder').style.display = 'block';
+    document.getElementById('logoPreview').src = '';
+  }
+}
+
+// Handle logo upload
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  if (file.type !== 'image/png') {
+    alert('Hanya file PNG yang diperbolehkan.');
+    event.target.value = '';
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    brandProfile.logo = e.target.result;
+    document.getElementById('logoPreview').src = e.target.result;
+    document.getElementById('logoPreviewContainer').style.display = 'block';
+    document.getElementById('logoUploadPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Extract colors from logo using Canvas API
+function extractColorsFromLogo() {
+  if (!brandProfile.logo) {
+    alert('Silakan upload logo terlebih dahulu.');
+    return;
+  }
+  
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Resize for faster processing
+    const maxSize = 100;
+    const scale = Math.min(maxSize / img.width, maxSize / img.height);
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+    
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    
+    // Get pixel data
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    
+    // Extract colors (simple quantization)
+    const colorMap = {};
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const a = pixels[i + 3];
+      
+      // Skip transparent pixels
+      if (a < 128) continue;
+      
+      // Quantize colors (round to nearest 32)
+      const qr = Math.round(r / 32) * 32;
+      const qg = Math.round(g / 32) * 32;
+      const qb = Math.round(b / 32) * 32;
+      
+      const colorKey = `${qr},${qg},${qb}`;
+      colorMap[colorKey] = (colorMap[colorKey] || 0) + 1;
+    }
+    
+    // Sort by frequency and get top 3
+    const sortedColors = Object.entries(colorMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+    
+    if (sortedColors.length >= 3) {
+      // Convert to hex
+      const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
+        const hex = Math.min(255, Math.max(0, x)).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      }).join('');
+      
+      const primary = rgbToHex(...sortedColors[0][0].split(',').map(Number));
+      const secondary = rgbToHex(...sortedColors[1][0].split(',').map(Number));
+      const accent = rgbToHex(...sortedColors[2][0].split(',').map(Number));
+      
+      // Update color inputs
+      document.getElementById('brandPrimaryColor').value = primary;
+      document.getElementById('brandPrimaryColorText').value = primary;
+      document.getElementById('brandSecondaryColor').value = secondary;
+      document.getElementById('brandSecondaryColorText').value = secondary;
+      document.getElementById('brandAccentColor').value = accent;
+      document.getElementById('brandAccentColorText').value = accent;
+      
+      alert('3 warna dominan berhasil diekstrak dari logo!');
+    } else {
+      alert('Gagal mengekstrak warna dari logo. Pastikan logo memiliki cukup variasi warna.');
+    }
+  };
+  
+  img.onerror = function() {
+    alert('Gagal memuat logo untuk ekstraksi warna.');
+  };
+  
+  img.src = brandProfile.logo;
+}
+
+// Sync color picker with text input
+function syncColorInputs() {
+  const colorInputs = [
+    { picker: 'brandPrimaryColor', text: 'brandPrimaryColorText' },
+    { picker: 'brandSecondaryColor', text: 'brandSecondaryColorText' },
+    { picker: 'brandAccentColor', text: 'brandAccentColorText' }
+  ];
+  
+  colorInputs.forEach(({ picker, text }) => {
+    const pickerEl = document.getElementById(picker);
+    const textEl = document.getElementById(text);
+    
+    if (pickerEl && textEl) {
+      pickerEl.addEventListener('input', () => {
+        textEl.value = pickerEl.value;
+      });
+      
+      textEl.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(textEl.value)) {
+          pickerEl.value = textEl.value;
+        }
+      });
+    }
+  });
+}
+
+// Initialize brand profile on page load
+document.addEventListener('DOMContentLoaded', () => {
+  loadBrandProfile();
+  syncColorInputs();
+});
 
 
 </script>

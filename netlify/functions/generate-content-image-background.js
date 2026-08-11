@@ -60,7 +60,7 @@ exports.handler = async (event, context) => {
     console.log('[IMAGE JOB] status: processing');
     
     // Build prompt from recommendation
-    const prompt = buildPrompt(recommendation, sentimentContext);
+    const prompt = buildPrompt(recommendation, sentimentContext, jobData.brandProfile);
     console.log('[KOBOI REQUEST START]', {
       jobId,
       finalUrl,
@@ -173,15 +173,27 @@ exports.handler = async (event, context) => {
 };
 
 // Helper: Build prompt from recommendation
-function buildPrompt(recommendation, sentimentContext) {
+function buildPrompt(recommendation, sentimentContext, brandProfile = null) {
   const title = recommendation?.title || '';
   const concept = recommendation?.concept || '';
   const callToAction = recommendation?.call_to_action || '';
   const dataBasis = recommendation?.data_basis || '';
   
+  let brandInfo = '';
+  if (brandProfile) {
+    brandInfo = `
+Brand Information:
+- Brand Name: ${brandProfile.name || 'Not specified'}
+- Industry: ${brandProfile.industry || 'Not specified'}
+- Target Audience: ${brandProfile.audience || 'Indonesian social media audience'}
+- Brand Colors: Primary ${brandProfile.primaryColor || '#22d3ee'}, Secondary ${brandProfile.secondaryColor || '#3b82f6'}, Accent ${brandProfile.accentColor || '#8b5cf6'}
+
+`;
+  }
+  
   return `Create a polished professional Instagram feed marketing visual based on the following recommendation derived from social media sentiment analysis.
 
-Recommendation:
+${brandInfo}Recommendation:
 ${title}
 
 Concept:
@@ -194,7 +206,7 @@ Data Basis:
 ${dataBasis}
 
 Audience:
-Indonesian social media audience.
+${brandProfile?.audience || 'Indonesian social media audience'}.
 
 Requirements:
 - modern professional digital marketing visual
@@ -208,7 +220,8 @@ Requirements:
 - avoid fake logos
 - avoid random unreadable text
 - do not invent statistics or claims
-- image should visually communicate the recommendation`;
+- image should visually communicate the recommendation
+${brandProfile ? `- use brand colors ${brandProfile.primaryColor}, ${brandProfile.secondaryColor}, ${brandProfile.accentColor} as primary color palette` : ''}`;
 }
 
 // Helper: Update job status in Netlify Blobs
