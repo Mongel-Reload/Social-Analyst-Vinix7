@@ -94,7 +94,11 @@ exports.handler = async (event, context) => {
 async function getJob(jobId) {
   try {
     const { getStore } = require('@netlify/blobs');
-    const store = getStore('kokorolens-image-jobs');
+    const store = getStore({
+      name: 'kokorolens-image-jobs',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_BLOBS_TOKEN
+    });
     
     const jobData = await store.get(jobId, { type: 'json' });
     return jobData;

@@ -216,7 +216,11 @@ Requirements:
 async function updateJobStatus(jobId, status, error = null, image = null) {
   try {
     const { getStore } = require('@netlify/blobs');
-    const store = getStore('kokorolens-image-jobs');
+    const store = getStore({
+      name: 'kokorolens-image-jobs',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_BLOBS_TOKEN
+    });
     
     const jobData = {
       id: jobId,
