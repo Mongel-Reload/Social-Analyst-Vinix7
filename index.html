@@ -3096,6 +3096,7 @@ function clearSentimentFile() {
   sentimentLinguisticFeatures = [];
   sentimentEvaluation = null;
   aiRecommendationData = null;
+  aiRecommendationAutoTriggered = false; // Reset flag for new analysis
   window.aiPayload = null;
   
   // Clear charts
@@ -3970,8 +3971,20 @@ function showPredictionResults() {
   // Show export buttons
   document.getElementById('sentimentExportSection').style.display = 'block';
   
-  // Show AI section
+  // Show AI section with loading state
   document.getElementById('sentimentAISection').style.display = 'block';
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiResults').style.display = 'none';
+  document.getElementById('aiError').style.display = 'none';
+  
+  // Clear any previous AI recommendation data to ensure fresh results
+  aiRecommendationData = null;
+  
+  // Auto-trigger AI recommendation after sentiment analysis completes (only once)
+  if (!aiRecommendationAutoTriggered) {
+    aiRecommendationAutoTriggered = true;
+    generateAIRecommendation();
+  }
 }
 
 function handleEditClickMain(e) {
@@ -4853,6 +4866,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 
 let aiRecommendationData = null;
+let aiRecommendationAutoTriggered = false; // Flag to prevent multiple auto-generations
 
 // AI CONTENT GENERATOR STATE
 let generatedContents = []; // Array to store all generated contents
