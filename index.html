@@ -3508,30 +3508,17 @@ function extractLinguisticFeatures(text) {
   return features;
 }
 
-// Seeded random number generator for reproducibility (LCG algorithm)
+// Seeded random number generator for reproducibility (simple deterministic)
 let seedCounter = 42;
 function seededRandom() {
-  seedCounter = (seedCounter * 9301 + 49297) % 233280;
-  return seedCounter / 233280;
+  seedCounter = (seedCounter * 1103515245 + 12345) % 2147483648;
+  return (seedCounter / 2147483648);
 }
 
-// Deterministic hash function for seed based on dataset content
-function generateDatasetSeed(dataset) {
-  let hash = 0;
-  const datasetString = JSON.stringify(dataset.map(d => d.komentar + d.label));
-  for (let i = 0; i < datasetString.length; i++) {
-    const char = datasetString.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash) % 1000 + 42; // Return consistent seed between 42-1042
-}
-
-// Reset seed counter before each analysis
+// Reset seed counter before each analysis (using fixed seed for testing)
 function resetSeedCounter(dataset) {
-  const datasetSeed = generateDatasetSeed(dataset);
-  seedCounter = datasetSeed;
-  console.log('[REPRODUCIBILITY] Seed counter reset to dataset-based seed:', seedCounter);
+  seedCounter = 42; // Fixed seed for absolute reproducibility
+  console.log('[REPRODUCIBILITY] Seed counter reset to fixed seed:', seedCounter);
   return seedCounter;
 }
 
@@ -3593,11 +3580,23 @@ function analyzeSentimentDataset() {
   const analysisSeed = resetSeedCounter(sentimentDataset);
   console.log('[REPRODUCIBILITY] Analysis seed:', analysisSeed);
 
-  // Clear any cached analysis results
+  // Clear ALL state variables for true reproducibility
   sentimentPreprocessed = [];
   sentimentPredictions = [];
   sentimentLinguisticFeatures = [];
   sentimentEvaluation = null;
+  aiRecommendationData = null;
+  aiRecommendationAutoTriggered = false;
+  window.aiPayload = null;
+
+  // Clear charts
+  if (charts.sentDistChart) { charts.sentDistChart.destroy(); charts.sentDistChart = null; }
+  if (charts.sentTrendChart) { charts.sentTrendChart.destroy(); charts.sentTrendChart = null; }
+  if (charts.confusionMatrixChart) { charts.confusionMatrixChart.destroy(); charts.confusionMatrixChart = null; }
+  if (charts.sentimentPieChart) { charts.sentimentPieChart.destroy(); charts.sentimentPieChart = null; }
+  if (charts.sentimentBarChart) { charts.sentimentBarChart.destroy(); charts.sentimentBarChart = null; }
+
+  console.log('[REPRODUCIBILITY] All state cleared for fresh analysis');
 
   try {
     // 1. Preprocessing
@@ -3633,19 +3632,31 @@ function analyzeSentimentDataset() {
     const trainData = [];
     const testData = [];
 
+    console.log('[REPRODUCIBILITY] Starting split with seed:', seedCounter);
+
     Object.keys(dataByLabel).forEach(label => {
       const labelData = dataByLabel[label];
+      const beforeSeed = seedCounter;
       const shuffled = [...labelData].sort(() => seededRandom() - 0.5);
+      const afterSeed = seedCounter;
+      console.log('[REPRODUCIBILITY] Shuffle label', label, 'seed range:', beforeSeed, '-', afterSeed);
       const splitIndex = Math.floor(shuffled.length * 0.8);
       trainData.push(...shuffled.slice(0, splitIndex));
       testData.push(...shuffled.slice(splitIndex));
     });
 
     // Shuffle train and test separately with seeded random
+    const beforeTrainSeed = seedCounter;
     trainData.sort(() => seededRandom() - 0.5);
-    testData.sort(() => seededRandom() - 0.5);
+    const afterTrainSeed = seedCounter;
+    console.log('[REPRODUCIBILITY] Train shuffle seed range:', beforeTrainSeed, '-', afterTrainSeed);
 
-    console.log('[REPRODUCIBILITY] Using seeded random with dataset-based seed:', analysisSeed);
+    const beforeTestSeed = seedCounter;
+    testData.sort(() => seededRandom() - 0.5);
+    const afterTestSeed = seedCounter;
+    console.log('[REPRODUCIBILITY] Test shuffle seed range:', beforeTestSeed, '-', afterTestSeed);
+
+    console.log('[REPRODUCIBILITY] Final seed counter:', seedCounter);
 
     console.log('[EVAL DEBUG 5 - TRAIN]', trainData.length);
     console.log('[EVAL DEBUG 6 - TEST]', testData.length);
@@ -3815,7 +3826,7 @@ function analyzeSentimentDataset() {
           testPredictionsLength: testPredictionsEval.length,
           labelsSample: testLabels.slice(0, 5),
           predictionsSample: testPredictionsEval.slice(0, 5),
-          randomSeed: analysisSeed
+          randomSeed: seedCounter
         });
 
         sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictionsEval, ['Positif', 'Netral', 'Negatif']);
@@ -3823,7 +3834,7 @@ function analyzeSentimentDataset() {
         console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
         console.log('[SIDANG METRICS]', {
           ...sentimentEvaluation,
-          randomSeed: analysisSeed
+          randomSeed: seedCounter
         });
 
         // Calculate validation info
