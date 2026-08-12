@@ -6520,18 +6520,26 @@ async function addLogoToImage(imageData) {
       const logoWidth = Math.min(targetWidth * 0.16, 190);
       const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
       
-      // Smart logo placement: analyze corner density
+      // Smart logo placement: prefer top corners (as reserved in prompt)
       const cornerDensity = analyzeCornerDensity(ctx, targetWidth, targetHeight);
       
-      // Sort corners by score (highest = least busy)
+      // Sort corners by score (highest = least busy), but prioritize top corners
       const sortedCorners = Object.entries(cornerDensity)
-        .sort((a, b) => b[1] - a[1])
-        .map(([corner, score]) => ({ corner, score }));
+        .map(([corner, score]) => ({ corner, score }))
+        .sort((a, b) => {
+          // Prioritize top corners
+          const aIsTop = a.corner.startsWith('top');
+          const bIsTop = b.corner.startsWith('top');
+          if (aIsTop && !bIsTop) return -1;
+          if (!aIsTop && bIsTop) return 1;
+          // Then by score
+          return b.score - a.score;
+        });
       
       console.log('[LOGO PLACEMENT] Corner analysis:', cornerDensity);
       
       // Choose corner with sufficient score (> 30), otherwise try next best
-      const padding = Math.round(targetWidth * 0.045); // 4-5% safe margin
+      const padding = Math.round(targetWidth * 0.06); // 6% safe margin to match prompt
       let logoX, logoY;
       let selectedCorner = sortedCorners[0].corner;
       
@@ -6562,6 +6570,7 @@ async function addLogoToImage(imageData) {
           logoY = targetHeight - logoHeight - padding;
           break;
         default:
+          // Default to top-right (preferred per prompt)
           logoX = targetWidth - logoWidth - padding;
           logoY = padding;
       }

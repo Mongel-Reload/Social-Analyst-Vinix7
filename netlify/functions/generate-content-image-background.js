@@ -231,14 +231,25 @@ Layout:
 - Native Instagram portrait 4:5 composition
 - ALL visual elements must fit completely inside the image
 - Nothing may continue beyond the bottom edge
-- Keep 60px minimum safe margin on all sides
+- Keep ~6% safe margin on all sides from edges
+- Reserve a dedicated logo area in ONE top corner (top-left or top-right)
+- Nothing may overlap the logo area - keep it visually clean
+- Logo must never overlap headline, face, card, or decoration
+- Headline maximum 2-3 lines and must not dominate more than ~25% of canvas height
+- Human subject maximum ~45% of canvas width
+- Information cards must remain large and readable - do not shrink them
 - Reserve the bottom 12% specifically for ONE final CTA
+- CTA must be fully visible with bottom safe margin
+- Never crop headline, logo, CTA, or information cards
+- Use clean grid alignment and consistent spacing
+- Avoid excessive decorative elements
+- Prioritize readability over filling empty space
 - Maximum 4 information cards
 - Do not create additional cards/sections below the CTA
 - Before finalizing the composition, ensure headline, person, cards, logo-safe-area and CTA are fully visible
 - Prefer less text and larger spacing rather than adding more vertical sections
 - The bottom CTA must have visible padding below it
-- All content inside safe margins (~5% from edges)
+- All content inside safe margins (~6% from edges)
 - Keep headline, cards, people, CTA and important visual elements away from the outer crop area
 - Large readable headline in upper area
 - Supporting information grouped into maximum 3-4 clean cards
@@ -246,8 +257,14 @@ Layout:
 - Use one main human/visual subject positioned primarily on one side
 - Do not place important text over the person's face/body
 - CTA should have its own clearly separated area near the bottom
-- CTA must be fully visible
 - Maintain safe margins around all edges
+
+Visual Hierarchy (top to bottom):
+1. Logo area (reserved clean corner)
+2. Headline
+3. Short supporting text
+4. Main visual + information cards
+5. CTA (bottom with safe margin)
 
 Typography:
 - Headline = largest
