@@ -446,26 +446,6 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         </div>
       </div>
       
-      <!-- 3.2 Ringkasan Sentimen -->
-      <div id="sentimentSummaryCardsSection" class="card" style="margin-bottom:15px;display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
-          <h3 style="margin:0">📈 Ringkasan Sentimen</h3>
-          <button class="btn secondary" onclick="refreshSummaryStats()" style="padding:6px 12px;font-size:13px">
-            🔄 Refresh
-          </button>
-        </div>
-        <div class="grid4">
-          <div class="card kpi" style="background:rgba(255,255,255,.05)"><small>Total Komentar</small><strong id="summaryTotal">-</strong><span>-</span></div>
-          <div class="card kpi" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3)"><small>Positif</small><strong id="summaryPositive">-</strong><span id="summaryPositivePct">-</span></div>
-          <div class="card kpi" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)"><small>Netral</small><strong id="summaryNeutral">-</strong><span id="summaryNeutralPct">-</span></div>
-          <div class="card kpi" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)"><small>Negatif</small><strong id="summaryNegative">-</strong><span id="summaryNegativePct">-</span></div>
-        </div>
-        <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
-          <small style="color:#9aa4b2">Average Confidence:</small>
-          <div id="summaryAvgConfidence" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
-        </div>
-      </div>
-      
       <!-- 4. Hasil Prediksi -->
       <div id="sentimentPredictionSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">🤖 Hasil Prediksi</h3>
@@ -485,6 +465,26 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
             <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody id="sentimentComparisonBody"></tbody>
           </table>
+        </div>
+      </div>
+      
+      <!-- 4.1 Ringkasan Sentimen -->
+      <div id="sentimentSummaryCardsSection" class="card" style="margin-bottom:15px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+          <h3 style="margin:0">📈 Ringkasan Sentimen</h3>
+          <button class="btn secondary" onclick="refreshSummaryStats()" style="padding:6px 12px;font-size:13px">
+            🔄 Refresh
+          </button>
+        </div>
+        <div class="grid4">
+          <div class="card kpi" style="background:rgba(255,255,255,.05)"><small>Total Komentar</small><strong id="summaryTotal">-</strong><span>-</span></div>
+          <div class="card kpi" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3)"><small>Positif</small><strong id="summaryPositive">-</strong><span id="summaryPositivePct">-</span></div>
+          <div class="card kpi" style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)"><small>Netral</small><strong id="summaryNeutral">-</strong><span id="summaryNeutralPct">-</span></div>
+          <div class="card kpi" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3)"><small>Negatif</small><strong id="summaryNegative">-</strong><span id="summaryNegativePct">-</span></div>
+        </div>
+        <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+          <small style="color:#9aa4b2">Average Confidence:</small>
+          <div id="summaryAvgConfidence" style="color:#d1d5db;font-weight:700;margin-top:4px">-</div>
         </div>
       </div>
       
