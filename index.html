@@ -375,8 +375,13 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       
       <!-- 3. Hasil Preprocessing -->
       <div id="sentimentPreprocessingSection" class="card" style="margin-bottom:15px;display:none">
-        <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing (3 Contoh)</h3>
-        <div id="sentimentPreprocessingBody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:15px"></div>
+        <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing (3-5 Contoh)</h3>
+        <div class="table" style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Komentar Asli</th><th>Cleaning</th><th>Case Folding</th><th>Tokenizing</th><th>Stopword Removal</th><th>Stemming</th><th>Hasil Akhir</th></tr></thead>
+            <tbody id="sentimentPreprocessingBody"></tbody>
+          </table>
+        </div>
       </div>
       
       <!-- 3.1 TF-IDF Feature Extraction -->
@@ -4349,52 +4354,19 @@ function showPreprocessingResults() {
   
   section.style.display = 'block';
   
-  // Get preprocessing steps for first 3 examples
-  const previewData = sentimentDataset.slice(0, 3).map(row => preprocessTextWithSteps(row.komentar));
+  // Get preprocessing steps for first 3-5 examples
+  const previewData = sentimentDataset.slice(0, 5).map(row => preprocessTextWithSteps(row.komentar));
   
   body.innerHTML = previewData.map(steps => `
-    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px">
-      <div style="margin-bottom:12px">
-        <small style="color:#9aa4b2">Komentar Asli</small>
-        <div style="color:#d1d5db;font-weight:600;margin-top:4px">${steps.original}</div>
-      </div>
-      
-      <div style="margin-bottom:12px">
-        <small style="color:#9aa4b2">↓ Cleaning</small>
-        <div style="color:#d1d5db;margin-top:4px">${steps.cleaning}</div>
-      </div>
-      
-      <div style="margin-bottom:12px">
-        <small style="color:#9aa4b2">↓ Case Folding</small>
-        <div style="color:#d1d5db;margin-top:4px">${steps.caseFolding}</div>
-      </div>
-      
-      <div style="margin-bottom:12px">
-        <small style="color:#9aa4b2">↓ Tokenizing</small>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-          ${steps.tokenizing.map(token => `<span style="background:rgba(34,197,94,0.2);color:#4ade80;padding:4px 8px;border-radius:4px;font-size:12px">${token}</span>`).join('')}
-        </div>
-      </div>
-      
-      <div style="margin-bottom:12px">
-        <small style="color:#9aa4b2">↓ Stopword Removal</small>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-          ${steps.stopwordRemoval.map(token => `<span style="background:rgba(251,191,36,0.2);color:#fbbf24;padding:4px 8px;border-radius:4px;font-size:12px">${token}</span>`).join('')}
-        </div>
-      </div>
-      
-      <div style="margin-bottom:12px">
-        <small style="color:#9aa4b2">↓ Stemming</small>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-          ${steps.stemming.map(token => `<span style="background:rgba(59,130,246,0.2);color:#60a5fa;padding:4px 8px;border-radius:4px;font-size:12px">${token}</span>`).join('')}
-        </div>
-      </div>
-      
-      <div>
-        <small style="color:#9aa4b2">↓ Hasil Akhir</small>
-        <div style="color:#d1d5db;font-weight:600;margin-top:4px">${steps.final}</div>
-      </div>
-    </div>
+    <tr>
+      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${steps.original}</td>
+      <td style="white-space:normal;word-wrap:break-word;max-width:150px">${steps.cleaning}</td>
+      <td style="white-space:normal;word-wrap:break-word;max-width:150px">${steps.caseFolding}</td>
+      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${JSON.stringify(steps.tokenizing)}</td>
+      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${JSON.stringify(steps.stopwordRemoval)}</td>
+      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${JSON.stringify(steps.stemming)}</td>
+      <td style="white-space:normal;word-wrap:break-word;max-width:150px">${steps.final}</td>
+    </tr>
   `).join('');
   
   // Calculate and show TF-IDF
