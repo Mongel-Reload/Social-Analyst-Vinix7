@@ -6084,12 +6084,24 @@ function renderGeneratedContent(content) {
     <!-- 2-Column Layout for Desktop -->
     <div style="display:grid;grid-template-columns:42% 58%;gap:20px;align-items:start">
       
-      <!-- Left Column: Image + Download -->
+      <!-- Left Column: Image + Download + Edit -->
       <div>
-        <img src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;border-radius:8px;aspect-ratio:4/5;object-fit:cover">
+        <img id="content-image-${content.id}" src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;border-radius:8px;aspect-ratio:4/5;object-fit:cover">
         <button class="btn secondary" onclick="downloadGeneratedImage('${content.id}')" style="margin-top:10px;padding:8px 16px;font-size:14px;width:100%">
           ⬇ Download Gambar
         </button>
+        <button class="btn secondary" onclick="toggleEditImageUI('${content.id}')" style="margin-top:8px;padding:8px 16px;font-size:14px;width:100%">
+          ✏️ Edit Gambar
+        </button>
+        
+        <!-- Edit Image UI (hidden by default) -->
+        <div id="edit-image-ui-${content.id}" style="display:none;margin-top:12px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
+          <h5 style="margin:0 0 8px 0;color:#d1d5db;font-size:13px">Edit Gambar dengan Prompt</h5>
+          <textarea id="edit-prompt-${content.id}" placeholder="Contoh: ubah background lebih cerah, perbesar judul, buat lebih minimalis..." style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(0,0,0,.3);color:#d1d5db;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
+          <button class="btn primary" onclick="editImage('${content.id}')" style="padding:8px 16px;font-size:13px;width:100%">
+            ✨ Terapkan Edit
+          </button>
+        </div>
       </div>
       
       <!-- Right Column: Caption, Hashtags, Regenerate -->
@@ -6423,15 +6435,37 @@ async function generateCaptionAndHashtags(recommendation) {
 
 function downloadGeneratedImage(contentId) {
   const content = generatedContents.find(c => c.id === contentId);
-  if (!content || !content.finalImage) {
-    console.error('Gambar tidak tersedia untuk konten:', contentId);
+  if (!content) {
+    console.error('Content not found:', contentId);
+    showToast('Gagal: Konten tidak ditemukan', 'error');
+    return;
+  }
+  
+  // Try multiple fallbacks for image source
+  let imageSource = content.finalImage || content.image || content.rawImage;
+  
+  // If still no image source, try to get from the DOM
+  if (!imageSource) {
+    const card = document.getElementById(`content-${contentId}`);
+    if (card) {
+      const img = card.querySelector('img');
+      if (img && img.src) {
+        imageSource = img.src;
+      }
+    }
+  }
+  
+  if (!imageSource) {
+    console.error('No image source available for content:', contentId);
     showToast('Gagal: Gambar belum tersedia', 'error');
     return;
   }
   
+  console.log('[DOWNLOAD IMAGE] Using source:', imageSource.substring(0, 100) + '...');
+  
   // Use anchor element for download
   const a = document.createElement('a');
-  a.href = content.finalImage;
+  a.href = imageSource;
   a.download = `kokorolens-content-${Date.now()}.png`;
   document.body.appendChild(a);
   a.click();
@@ -6559,6 +6593,85 @@ async function regenerateContent(recommendationId, contentId) {
   
   // Generate new content
   await generateContentFromRecommendation(recommendationId);
+}
+
+function toggleEditImageUI(contentId) {
+  const editUI = document.getElementById(`edit-image-ui-${contentId}`);
+  if (editUI) {
+    editUI.style.display = editUI.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+async function editImage(contentId) {
+  const content = generatedContents.find(c => c.id === contentId);
+  if (!content) {
+    showToast('Gagal: Konten tidak ditemukan', 'error');
+    return;
+  }
+  
+  const editPrompt = document.getElementById(`edit-prompt-${contentId}`);
+  if (!editPrompt || !editPrompt.value.trim()) {
+    showToast('Masukkan instruksi edit terlebih dahulu', 'error');
+    return;
+  }
+  
+  const instruction = editPrompt.value.trim();
+  
+  // Hide edit UI during generation
+  const editUI = document.getElementById(`edit-image-ui-${contentId}`);
+  if (editUI) {
+    editUI.style.display = 'none';
+  }
+  
+  // Show loading state on the image
+  const imgElement = document.getElementById(`content-image-${contentId}`);
+  if (imgElement) {
+    imgElement.style.opacity = '0.5';
+    imgElement.style.filter = 'blur(2px)';
+  }
+  
+  showToast('Sedang mengedit gambar...', 'success');
+  
+  try {
+    // Build modified recommendation with edit instruction
+    const modifiedRecommendation = {
+      title: content.recommendationTitle,
+      concept: content.recommendationDescription,
+      call_to_action: '', // Will be regenerated if needed
+      data_basis: `Original: ${content.recommendationDescription}. Edit instruction: ${instruction}`
+    };
+    
+    // Generate new image with edit instruction
+    const rawImageData = await generateImage(modifiedRecommendation);
+    const finalImage = await addLogoToImage(rawImageData);
+    
+    // Update content with new image
+    content.rawImage = rawImageData;
+    content.finalImage = finalImage;
+    
+    // Update the image in the DOM
+    if (imgElement) {
+      imgElement.src = finalImage;
+      imgElement.style.opacity = '1';
+      imgElement.style.filter = 'none';
+    }
+    
+    showToast('Gambar berhasil diedit', 'success');
+    
+    // Clear the edit prompt
+    editPrompt.value = '';
+    
+  } catch (error) {
+    console.error('Edit image error:', error);
+    
+    // Restore image state
+    if (imgElement) {
+      imgElement.style.opacity = '1';
+      imgElement.style.filter = 'none';
+    }
+    
+    showToast('Gagal mengedit gambar: ' + error.message, 'error');
+  }
 }
 
 // Brand Profile Functions
