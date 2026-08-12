@@ -3467,6 +3467,41 @@ function extractLinguisticFeatures(text) {
   return features;
 }
 
+// Fetch model evaluation metrics from backend
+async function fetchModelEvaluationMetrics() {
+  try {
+    const response = await fetch('http://localhost:5000/metrics');
+    const data = await response.json();
+    
+    if (data.ok && data.metrics) {
+      // Convert backend metrics to frontend format
+      sentimentEvaluation = {
+        accuracy: data.metrics.accuracy,
+        weightedPrecision: data.metrics.precision,
+        weightedRecall: data.metrics.recall,
+        weightedF1: data.metrics.f1_score,
+        confusionMatrix: data.metrics.confusion_matrix,
+        classificationReport: data.metrics.classification_report,
+        validationInfo: {
+          total: data.metrics.confusion_matrix.flat().reduce((a, b) => a + b, 0),
+          correct: data.metrics.confusion_matrix[0][0] + data.metrics.confusion_matrix[1][1] + data.metrics.confusion_matrix[2][2],
+          wrong: 0 // Will be calculated
+        }
+      };
+      sentimentEvaluation.validationInfo.wrong = sentimentEvaluation.validationInfo.total - sentimentEvaluation.validationInfo.correct;
+      
+      console.log('Loaded model evaluation metrics from backend:', sentimentEvaluation);
+      showEvaluationResults();
+      showConfusionMatrix();
+      showClassificationReport();
+    } else {
+      console.warn('Backend metrics not available:', data.error || 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Error fetching model evaluation metrics:', error);
+  }
+}
+
 function analyzeSentimentDataset() {
   if (!sentimentDataset || sentimentDataset.length === 0) {
     alert('Silakan upload dataset terlebih dahulu!');
@@ -3629,48 +3664,11 @@ function analyzeSentimentDataset() {
     // Show prediction results
     showPredictionResults();
     
-    // 6. Evaluate if labels exist (using TEST set only)
-    const hasLabels = sentimentDataset.some(row => row.label);
-    console.log('Has labels:', hasLabels);
+    // Show sentiment distribution charts
+    showSentimentDistribution();
     
-    if (hasLabels) {
-      const testLabels = testData.map(d => d.label || 'Netral');
-      console.log('Test labels sample:', testLabels.slice(0, 10));
-      console.log('Test data count:', testData.length);
-      
-      sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictions, ['Positif', 'Netral', 'Negatif']);
-      
-      console.log('Evaluation metrics:', sentimentEvaluation);
-      
-      // Calculate validation info
-      const correct = testLabels.filter((label, i) => label === testPredictions[i]).length;
-      const wrong = testLabels.length - correct;
-      sentimentEvaluation.validationInfo = {
-        total: testLabels.length,
-        correct: correct,
-        wrong: wrong
-      };
-      
-      // Show evaluation results
-      showEvaluationResults();
-      
-      // Show confusion matrix
-      showConfusionMatrix();
-      
-      // Show classification report
-      showClassificationReport();
-      
-      // Show sentiment distribution charts
-      showSentimentDistribution();
-    } else {
-      // Hide evaluation sections if no labels
-      document.getElementById('sentimentEvaluationSection').style.display = 'none';
-      document.getElementById('sentimentConfusionSection').style.display = 'none';
-      document.getElementById('sentimentClassificationSection').style.display = 'none';
-      
-      // Show sentiment distribution charts without evaluation
-      showSentimentDistribution();
-    }
+    // Note: Model evaluation metrics are loaded from backend on page load
+    // They represent the fixed test set performance, not user dataset
     
     hideLoading();
     
@@ -3681,10 +3679,6 @@ function analyzeSentimentDataset() {
     // Show ML insights
     showMLInsights();
     
-    // Show sentiment trend chart
-    showSentimentTrendChart();
-    
-    // Call AI recommendation
     generateAIRecommendation();
     
     alert(`Analisis selesai! ${sentimentPredictions.length} komentar diproses.`);
@@ -4929,6 +4923,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSentimentUploadHandlers();
   setupExportHandlers();
   setupAIHandlers();
+  // Load model evaluation metrics from backend on page load
+  fetchModelEvaluationMetrics();
 });
 
 // ============================================
