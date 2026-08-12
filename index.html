@@ -377,8 +377,18 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <div id="sentimentPreprocessingSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">🔤 Hasil Preprocessing (3-5 Contoh)</h3>
         <div class="table" style="overflow-x:auto">
-          <table>
-            <thead><tr><th>Komentar Asli</th><th>Cleaning</th><th>Case Folding</th><th>Tokenizing</th><th>Stopword Removal</th><th>Stemming</th><th>Hasil Akhir</th></tr></thead>
+          <table style="min-width:1600px;word-break:normal;overflow-wrap:break-word">
+            <thead>
+              <tr>
+                <th style="min-width:180px">Komentar Asli</th>
+                <th style="min-width:180px">Cleaning</th>
+                <th style="min-width:180px">Case Folding</th>
+                <th style="min-width:260px">Tokenizing</th>
+                <th style="min-width:260px">Stopword Removal</th>
+                <th style="min-width:240px">Stemming</th>
+                <th style="min-width:220px">Hasil Akhir</th>
+              </tr>
+            </thead>
             <tbody id="sentimentPreprocessingBody"></tbody>
           </table>
         </div>
@@ -4359,13 +4369,13 @@ function showPreprocessingResults() {
   
   body.innerHTML = previewData.map(steps => `
     <tr>
-      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${steps.original}</td>
-      <td style="white-space:normal;word-wrap:break-word;max-width:150px">${steps.cleaning}</td>
-      <td style="white-space:normal;word-wrap:break-word;max-width:150px">${steps.caseFolding}</td>
-      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${JSON.stringify(steps.tokenizing)}</td>
-      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${JSON.stringify(steps.stopwordRemoval)}</td>
-      <td style="white-space:normal;word-wrap:break-word;max-width:200px">${JSON.stringify(steps.stemming)}</td>
-      <td style="white-space:normal;word-wrap:break-word;max-width:150px">${steps.final}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${steps.original}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${steps.cleaning}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${steps.caseFolding}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${JSON.stringify(steps.tokenizing)}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${JSON.stringify(steps.stopwordRemoval)}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${JSON.stringify(steps.stemming)}</td>
+      <td style="word-break:normal;overflow-wrap:break-word">${steps.final}</td>
     </tr>
   `).join('');
   
