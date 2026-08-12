@@ -6405,36 +6405,35 @@ async function addLogoToImage(imageData) {
       img.src = imageData;
     });
     
-    // Calculate aspect-ratio-safe fitting (contain mode - preserve all content)
+    // Calculate minimal crop to 4:5 ratio (cover mode - fill canvas edge-to-edge)
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const targetRatio = targetWidth / targetHeight;
     
-    let drawWidth, drawHeight, drawX, drawY;
+    let sourceX, sourceY, sourceWidth, sourceHeight;
     
-    // Calculate scale factor to fit entire image within target canvas
-    const scale = Math.min(targetWidth / img.naturalWidth, targetHeight / img.naturalHeight);
+    if (imgRatio > targetRatio) {
+      // Image is wider than target - crop sides minimally
+      sourceHeight = img.naturalHeight;
+      sourceWidth = sourceHeight * targetRatio;
+      sourceX = (img.naturalWidth - sourceWidth) / 2;
+      sourceY = 0;
+    } else {
+      // Image is taller than target - crop top/bottom minimally
+      sourceWidth = img.naturalWidth;
+      sourceHeight = sourceWidth / targetRatio;
+      sourceX = 0;
+      sourceY = (img.naturalHeight - sourceHeight) / 2;
+    }
     
-    drawWidth = img.naturalWidth * scale;
-    drawHeight = img.naturalHeight * scale;
-    
-    // Center the image on the canvas
-    drawX = (targetWidth - drawWidth) / 2;
-    drawY = (targetHeight - drawHeight) / 2;
-    
-    console.log('[IMAGE SCALING]', {
+    console.log('[IMAGE CROP]', {
       source: `${img.naturalWidth}x${img.naturalHeight}`,
       target: `${targetWidth}x${targetHeight}`,
-      scale: scale.toFixed(4),
-      draw: `${Math.round(drawWidth)}x${Math.round(drawHeight)}`,
-      position: `${Math.round(drawX)},${Math.round(drawY)}`
+      crop: `${Math.round(sourceWidth)}x${Math.round(sourceHeight)}`,
+      position: `${Math.round(sourceX)},${Math.round(sourceY)}`
     });
     
-    // Fill background with a neutral color before drawing
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, targetWidth, targetHeight);
-    
-    // Draw image scaled to fit (contain mode - preserves all content)
-    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+    // Draw cropped image covering the canvas (edge-to-edge, no white padding)
+    ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
     
     // Load and draw logo overlay with smart placement
     const logo = new Image();

@@ -217,7 +217,9 @@ ${layoutType}
 DESIGN SYSTEM:
 
 Design:
-- Instagram portrait 4:5 ratio
+- Instagram feed portrait 4:5 composition (edge-to-edge design)
+- Generate natively for 4:5 ratio - do not use letterboxing or padding
+- Fill entire canvas edge-to-edge with content
 - Clean modern professional social-media layout
 - Strong visual hierarchy
 - Generous whitespace
@@ -226,7 +228,7 @@ Design:
 - Avoid excessive decorative elements
 
 Layout:
-- Compose ALL important content inside a centered 4:5 Instagram-safe area with ~5% margin
+- All content inside safe margins (~5% from edges)
 - Keep headline, cards, people, CTA and important visual elements away from the outer crop area
 - Large readable headline in upper area
 - Supporting information grouped into maximum 3-4 clean cards
@@ -234,6 +236,7 @@ Layout:
 - Use one main human/visual subject positioned primarily on one side
 - Do not place important text over the person's face/body
 - CTA should have its own clearly separated area near the bottom
+- CTA must be fully visible
 - Maintain safe margins around all edges
 
 Typography:
