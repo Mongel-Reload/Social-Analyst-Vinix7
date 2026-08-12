@@ -214,15 +214,53 @@ ${brandProfile?.audience || 'Indonesian social media audience'}.
 Layout Type:
 ${layoutType}
 
-Design Brief:
-- Content Objective: Visually communicate the recommendation concept
-- Layout: ${layoutType} style
-- Headline: One main headline based on the recommendation title
-- Supporting Points: Maximum 3-4 key points from the concept
-- CTA: Single clear call to action
-- Brand Colors: ${brandProfile ? `Use ${brandProfile.primaryColor}, ${brandProfile.secondaryColor}, ${brandProfile.accentColor} as primary color palette` : 'Use professional color palette'}
-- Visual Direction: Clean, modern, mobile-readable design
-- Logo Safe-Zone: Leave one corner (top-left, top-right, bottom-left, or bottom-right) clean for logo overlay with 4-5% safe margin
+DESIGN SYSTEM:
+
+Design:
+- Instagram portrait 4:5 ratio
+- Clean modern professional social-media layout
+- Strong visual hierarchy
+- Generous whitespace
+- Clear separation between headline, supporting information, visual subject, and CTA
+- Avoid crowded poster composition
+- Avoid excessive decorative elements
+
+Layout:
+- Large readable headline in upper area
+- Supporting information grouped into maximum 3-4 clean cards
+- Cards must have consistent size, spacing, padding, border radius, and alignment
+- Use one main human/visual subject positioned primarily on one side
+- Do not place important text over the person's face/body
+- CTA should have its own clearly separated area near the bottom
+- Maintain safe margins around all edges
+
+Typography:
+- Headline = largest
+- Card title = medium/bold
+- Supporting copy = smaller but clearly readable on mobile
+- Maximum 2 font styles
+- Avoid tiny text
+- Avoid long paragraphs inside the image
+
+Branding:
+- Use Brand Profile colors consistently: primary → dominant, secondary → supporting, accent → CTA/highlights, neutral/white → readability
+- Do NOT randomly introduce unrelated dominant colors
+
+Logo:
+- Do NOT generate/recreate the company logo
+- Reserve a visually clean logo-safe area in one corner (top-left, top-right, bottom-left, or bottom-right)
+- The real uploaded logo will be overlaid afterward
+- Do NOT render a visible logo placeholder, box, border, safe-zone, or fake logo
+
+Content:
+- Maximum: 1 headline, optional short subheadline, 3-4 information points, 1 CTA
+- If available grounded information is insufficient, use fewer cards
+- NEVER fill empty space by inventing facts
+
+IMPORTANT:
+- This is a DESIGN SYSTEM, not one fixed template
+- Allow different compositions depending on content type
+- Every result must remain clean, balanced, mobile-readable, and professionally structured
 
 CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
 - Do NOT invent minimum semester requirements
@@ -237,29 +275,7 @@ CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
 - Do NOT invent any factual company information not provided in this brief
 - Only use factual claims that exist in the actual analysis data, recommendation data, or Brand Profile
 - If factual information is unavailable, use safe/general wording instead
-- Creative headlines and CTA are allowed, but invented company facts are NOT allowed
-
-Content Density Requirements:
-- Prioritize 1 main headline
-- Maximum 3-4 supporting points
-- 1 CTA
-- Move detailed explanation to caption (not in image)
-- Avoid tiny text
-- Avoid excessive information cards
-- Design must be readable on mobile screen
-
-Technical Requirements:
-- Modern professional digital marketing visual
-- Visually engaging
-- Clean composition
-- Strong focal point
-- Premium but approachable
-- Suitable for Instagram feed
-- Portrait orientation (4:5 ratio)
-- Leave safe space around edges
-- Avoid fake logos
-- Avoid random unreadable text
-- Image should visually communicate the recommendation`;
+- Creative headlines and CTA are allowed, but invented company facts are NOT allowed`;
 }
 
 // Helper: Determine layout type based on recommendation content
