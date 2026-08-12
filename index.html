@@ -3818,14 +3818,15 @@ function analyzeSentimentDataset() {
     // 11. Calculate global metrics from ALL out-of-fold predictions
     const actualLabels = labeledData.map(row => row.label);
 
-    // Debug: Compare actual vs predicted
-    console.log('[DEBUG LABEL PREDICTION COMPARISON]', {
-      total: actualLabels.length,
-      comparisons: actualLabels.map((actual, i) => ({
-        actual,
-        predicted: outOfFoldPredictions[i],
-        match: actual === outOfFoldPredictions[i]
-      }))
+    // Debug: Compare actual vs predicted in readable format
+    console.log('[DEBUG LABEL PREDICTION COMPARISON]');
+    console.log('Total rows:', actualLabels.length);
+    console.log('Actual vs Predicted:');
+    actualLabels.forEach((actual, i) => {
+      const predicted = outOfFoldPredictions[i];
+      const match = actual === predicted;
+      const symbol = match ? '✓' : '✗';
+      console.log(`${symbol} Row ${i}: Actual="${actual}" | Predicted="${predicted}" | Match=${match}`);
     });
 
     sentimentEvaluation = calculateEvaluationMetrics(actualLabels, outOfFoldPredictions, ['Positif', 'Netral', 'Negatif']);
