@@ -3817,6 +3817,17 @@ function analyzeSentimentDataset() {
 
     // 11. Calculate global metrics from ALL out-of-fold predictions
     const actualLabels = labeledData.map(row => row.label);
+
+    // Debug: Compare actual vs predicted
+    console.log('[DEBUG LABEL PREDICTION COMPARISON]', {
+      total: actualLabels.length,
+      comparisons: actualLabels.map((actual, i) => ({
+        actual,
+        predicted: outOfFoldPredictions[i],
+        match: actual === outOfFoldPredictions[i]
+      }))
+    });
+
     sentimentEvaluation = calculateEvaluationMetrics(actualLabels, outOfFoldPredictions, ['Positif', 'Netral', 'Negatif']);
 
     // Add validation info
@@ -5025,11 +5036,28 @@ function showFinalResults() {
   const hasLabels = sentimentDataset.some(row => row.label);
   const displayData = kFoldPredictionDetails || [];
 
+  console.log('[VALIDATION TABLE DEBUG]', {
+    hasLabels,
+    kFoldPredictionDetailsExists: !!kFoldPredictionDetails,
+    kFoldPredictionDetailsLength: kFoldPredictionDetails?.length,
+    displayDataLength: displayData.length,
+    sentimentPredictionsLength: sentimentPredictions?.length
+  });
+
   if (displayData.length === 0 && hasLabels) {
     console.warn('[VALIDATION TABLE] No K-Fold prediction details available');
     body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8">Data validasi tidak tersedia</td></tr>';
     return;
   }
+
+  const correctCount = displayData.filter(item => item.isCorrect).length;
+  const wrongCount = displayData.filter(item => !item.isCorrect).length;
+
+  console.log('[VALIDATION TABLE COUNTS]', {
+    correct: correctCount,
+    wrong: wrongCount,
+    total: displayData.length
+  });
 
   body.innerHTML = displayData.map(item => {
     const status = item.isCorrect ? '✓ Sesuai' : '✗ Tidak Sesuai';
