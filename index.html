@@ -3508,6 +3508,15 @@ function extractLinguisticFeatures(text) {
   return features;
 }
 
+// Seeded random number generator for reproducibility
+function seededRandom(seed) {
+  let x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+// Fixed seed for reproducible train/test split
+const RANDOM_SEED = 42;
+
 // Fetch model evaluation metrics from backend
 // DISABLED: This function depends on localhost:5000 which is not available in Netlify deployment
 // Evaluation is now done client-side using the original evaluate-if-labels-exist logic
@@ -3595,17 +3604,21 @@ function analyzeSentimentDataset() {
     // Split each label group
     const trainData = [];
     const testData = [];
+    let currentSeed = RANDOM_SEED;
+
     Object.keys(dataByLabel).forEach(label => {
       const labelData = dataByLabel[label];
-      const shuffled = [...labelData].sort(() => Math.random() - 0.5);
+      const shuffled = [...labelData].sort(() => seededRandom(currentSeed++) - 0.5);
       const splitIndex = Math.floor(shuffled.length * 0.8);
       trainData.push(...shuffled.slice(0, splitIndex));
       testData.push(...shuffled.slice(splitIndex));
     });
 
-    // Shuffle train and test separately
-    trainData.sort(() => Math.random() - 0.5);
-    testData.sort(() => Math.random() - 0.5);
+    // Shuffle train and test separately with seeded random
+    trainData.sort(() => seededRandom(currentSeed++) - 0.5);
+    testData.sort(() => seededRandom(currentSeed++) - 0.5);
+
+    console.log('[REPRODUCIBILITY] Using fixed seed:', RANDOM_SEED);
 
     console.log('[EVAL DEBUG 5 - TRAIN]', trainData.length);
     console.log('[EVAL DEBUG 6 - TEST]', testData.length);
@@ -3774,13 +3787,17 @@ function analyzeSentimentDataset() {
           testLabelsLength: testLabels.length,
           testPredictionsLength: testPredictionsEval.length,
           labelsSample: testLabels.slice(0, 5),
-          predictionsSample: testPredictionsEval.slice(0, 5)
+          predictionsSample: testPredictionsEval.slice(0, 5),
+          randomSeed: RANDOM_SEED
         });
 
         sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictionsEval, ['Positif', 'Netral', 'Negatif']);
 
         console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
-        console.log('[SIDANG METRICS]', sentimentEvaluation);
+        console.log('[SIDANG METRICS]', {
+          ...sentimentEvaluation,
+          randomSeed: RANDOM_SEED
+        });
 
         // Calculate validation info
         const correct = testLabels.filter((label, i) => label === testPredictionsEval[i]).length;
