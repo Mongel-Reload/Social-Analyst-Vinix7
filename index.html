@@ -3515,10 +3515,24 @@ function seededRandom() {
   return seedCounter / 233280;
 }
 
+// Deterministic hash function for seed based on dataset content
+function generateDatasetSeed(dataset) {
+  let hash = 0;
+  const datasetString = JSON.stringify(dataset.map(d => d.komentar + d.label));
+  for (let i = 0; i < datasetString.length; i++) {
+    const char = datasetString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash) % 1000 + 42; // Return consistent seed between 42-1042
+}
+
 // Reset seed counter before each analysis
-function resetSeedCounter() {
-  seedCounter = 42;
-  console.log('[REPRODUCIBILITY] Seed counter fully reset to:', seedCounter);
+function resetSeedCounter(dataset) {
+  const datasetSeed = generateDatasetSeed(dataset);
+  seedCounter = datasetSeed;
+  console.log('[REPRODUCIBILITY] Seed counter reset to dataset-based seed:', seedCounter);
+  return seedCounter;
 }
 
 // Fetch model evaluation metrics from backend
@@ -3575,9 +3589,9 @@ function analyzeSentimentDataset() {
 
   console.log('[UI FLOW] Starting sentiment analysis');
 
-  // Reset seed counter for reproducibility
-  resetSeedCounter();
-  console.log('[REPRODUCIBILITY] Seed counter reset to:', seedCounter);
+  // Reset seed counter for reproducibility based on dataset content
+  const analysisSeed = resetSeedCounter(sentimentDataset);
+  console.log('[REPRODUCIBILITY] Analysis seed:', analysisSeed);
 
   // Clear any cached analysis results
   sentimentPreprocessed = [];
@@ -3631,7 +3645,7 @@ function analyzeSentimentDataset() {
     trainData.sort(() => seededRandom() - 0.5);
     testData.sort(() => seededRandom() - 0.5);
 
-    console.log('[REPRODUCIBILITY] Using seeded random with seed:', seedCounter);
+    console.log('[REPRODUCIBILITY] Using seeded random with dataset-based seed:', analysisSeed);
 
     console.log('[EVAL DEBUG 5 - TRAIN]', trainData.length);
     console.log('[EVAL DEBUG 6 - TEST]', testData.length);
@@ -3801,7 +3815,7 @@ function analyzeSentimentDataset() {
           testPredictionsLength: testPredictionsEval.length,
           labelsSample: testLabels.slice(0, 5),
           predictionsSample: testPredictionsEval.slice(0, 5),
-          randomSeed: seedCounter
+          randomSeed: analysisSeed
         });
 
         sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictionsEval, ['Positif', 'Netral', 'Negatif']);
@@ -3809,7 +3823,7 @@ function analyzeSentimentDataset() {
         console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
         console.log('[SIDANG METRICS]', {
           ...sentimentEvaluation,
-          randomSeed: seedCounter
+          randomSeed: analysisSeed
         });
 
         // Calculate validation info
