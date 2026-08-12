@@ -3206,6 +3206,19 @@ function normalizeHeader(header) {
     .replace(/_+/g, '_');
 }
 
+// Normalize sentiment label to standard format
+function normalizeLabel(value) {
+  if (!value || typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+
+  if (['positif', 'positive'].includes(normalized)) return 'Positif';
+  if (['netral', 'neutral'].includes(normalized)) return 'Netral';
+  if (['negatif', 'negative'].includes(normalized)) return 'Negatif';
+
+  console.warn('[NORMALIZE LABEL] Unknown label value:', value);
+  return null;
+}
+
 // Header aliases mapping
 const HEADER_ALIASES = {
   tanggal_upload: ['tanggal_upload', 'tanggal upload', 'tanggal', 'upload_date', 'date', 'tanggal posting'],
@@ -3309,13 +3322,8 @@ function processDataset(data) {
   const komentarCol = findColumnByAlias(headers, 'komentar');
   const labelCol = findColumnByAlias(headers, 'label');
   
-  console.log('Column mapping:', { tanggalUploadCol, usernameCol, komentarCol, labelCol });
-
-  console.log('[LABEL DETECTION]', {
-    headers,
-    labelCol,
-    sampleLabels: sentimentDataset.slice(0, 5).map(x => x.label)
-  });
+  console.log('[EVAL DEBUG 1 - HEADERS]', headers);
+  console.log('[EVAL DEBUG 2 - LABEL COL]', labelCol);
 
   if (!labelCol) {
     console.warn('[LABEL DETECTION] WARNING: Label column not found in dataset. Evaluation metrics will not be available.');
@@ -3361,6 +3369,13 @@ function processDataset(data) {
   }
   
   console.log('Processed dataset:', sentimentDataset.slice(0, 5));
+
+  console.log('[EVAL DEBUG 3 - DATASET]', {
+    total: sentimentDataset.length,
+    withLabel: sentimentDataset.filter(x => x.label && x.label.trim() !== '').length,
+    withoutLabel: sentimentDataset.filter(x => !x.label || x.label.trim() === '').length,
+    examples: sentimentDataset.slice(0, 5).map(x => ({ komentar: x.komentar, label: x.label }))
+  });
   
   // Show preview
   showDatasetPreview();
@@ -3636,7 +3651,7 @@ function analyzeSentimentDataset() {
     
     // 2. Train/Test Split (80/20) with stratification
     console.log('Splitting data with stratification...');
-    
+
     // Group by label for stratified split
     const dataByLabel = {};
     sentimentPreprocessed.forEach(row => {
@@ -3644,7 +3659,7 @@ function analyzeSentimentDataset() {
       if (!dataByLabel[label]) dataByLabel[label] = [];
       dataByLabel[label].push(row);
     });
-    
+
     // Split each label group
     const trainData = [];
     const testData = [];
@@ -3655,11 +3670,13 @@ function analyzeSentimentDataset() {
       trainData.push(...shuffled.slice(0, splitIndex));
       testData.push(...shuffled.slice(splitIndex));
     });
-    
+
     // Shuffle train and test separately
     trainData.sort(() => Math.random() - 0.5);
     testData.sort(() => Math.random() - 0.5);
-    
+
+    console.log('[EVAL DEBUG 5 - TRAIN]', trainData.length);
+    console.log('[EVAL DEBUG 6 - TEST]', testData.length);
     console.log('Train data:', trainData.length, 'Test data:', testData.length);
     
     // Log label distribution in train data
@@ -3775,48 +3792,92 @@ function analyzeSentimentDataset() {
     showSentimentDistribution();
 
     // 6. Evaluate if labels exist (using TEST set only)
-    const hasLabels = sentimentDataset.some(row => row.label);
-    console.log('Has labels:', hasLabels);
+    const hasLabels = sentimentDataset.some(row => row.label && row.label.trim() !== '');
+    console.log('[EVAL DEBUG 4 - HAS LABELS]', hasLabels);
 
     if (hasLabels) {
-      const testLabels = testData.map(d => d.label || 'Netral');
-      console.log('Test labels sample:', testLabels.slice(0, 10));
-      console.log('Test data count:', testData.length);
+      try {
+        // Filter test data to only include rows with valid labels
+        const validTestData = testData.filter(d => {
+          const normalizedLabel = normalizeLabel(d.label);
+          return normalizedLabel !== null;
+        });
 
-      console.log('[SIDANG EVALUATION]', {
-        datasetTotal: sentimentDataset.length,
-        testDataLength: testData.length,
-        testLabelsLength: testLabels.length,
-        testPredictionsLength: testPredictions.length,
-        labelsSample: testLabels.slice(0, 5),
-        predictionsSample: testPredictions.slice(0, 5)
-      });
+        console.log('[EVAL DEBUG - VALID TEST DATA]', {
+          originalTestCount: testData.length,
+          validTestCount: validTestData.length,
+          invalidCount: testData.length - validTestData.length
+        });
 
-      sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictions, ['Positif', 'Netral', 'Negatif']);
+        if (validTestData.length === 0) {
+          console.error('[EVALUATION FAILED] No valid test labels found after normalization');
+          alert('Evaluasi gagal: Tidak ada label valid yang ditemukan pada dataset. Pastikan kolom label berisi nilai: Positif, Netral, atau Negatif.');
+          return;
+        }
 
-      console.log('[SIDANG METRICS]', sentimentEvaluation);
+        // Create evaluation data with matched predictions
+        const evaluationData = validTestData.map(row => {
+          const actual = normalizeLabel(row.label);
+          // Find the corresponding prediction from testPredictions
+          const testIndex = testData.findIndex(d => d === row);
+          const predicted = testIndex !== -1 ? testPredictions[testIndex] : null;
 
-      // Calculate validation info
-      const correct = testLabels.filter((label, i) => label === testPredictions[i]).length;
-      const wrong = testLabels.length - correct;
-      sentimentEvaluation.validationInfo = {
-        total: testLabels.length,
-        correct: correct,
-        wrong: wrong
-      };
+          return {
+            comment: row.komentar,
+            actual: actual,
+            predicted: predicted
+          };
+        });
 
-      // Show evaluation results
-      showEvaluationResults();
+        const testLabels = evaluationData.map(x => x.actual);
+        const testPredictions = evaluationData.map(x => x.predicted);
 
-      // Show confusion matrix
-      showConfusionMatrix();
+        console.log('[EVAL DEBUG 7 - TEST LABELS]', testLabels);
+        console.log('[EVAL DEBUG 8 - PREDICTIONS]', testPredictions);
 
-      // Show classification report
-      showClassificationReport();
+        console.log('[SIDANG EVALUATION]', {
+          datasetTotal: sentimentDataset.length,
+          testDataLength: testData.length,
+          validTestDataLength: validTestData.length,
+          testLabelsLength: testLabels.length,
+          testPredictionsLength: testPredictions.length,
+          labelsSample: testLabels.slice(0, 5),
+          predictionsSample: testPredictions.slice(0, 5)
+        });
 
-      // Show sentiment distribution charts
-      showSentimentDistribution();
+        sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictions, ['Positif', 'Netral', 'Negatif']);
+
+        console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
+        console.log('[SIDANG METRICS]', sentimentEvaluation);
+
+        // Calculate validation info
+        const correct = testLabels.filter((label, i) => label === testPredictions[i]).length;
+        const wrong = testLabels.length - correct;
+        sentimentEvaluation.validationInfo = {
+          total: testLabels.length,
+          correct: correct,
+          wrong: wrong
+        };
+
+        // Show evaluation results
+        console.log('[EVAL DEBUG 10 - BEFORE RENDER]', sentimentEvaluation);
+        showEvaluationResults();
+        console.log('[EVAL DEBUG 10 - AFTER RENDER]', 'showEvaluationResults called');
+
+        // Show confusion matrix
+        showConfusionMatrix();
+
+        // Show classification report
+        showClassificationReport();
+
+        // Show sentiment distribution charts
+        showSentimentDistribution();
+      } catch (error) {
+        console.error('[EVALUATION FAILED]', error);
+        alert('Evaluasi gagal: ' + error.message);
+      }
     } else {
+      console.warn('[EVALUATION SKIPPED] No labels found in dataset');
       // Hide evaluation sections if no labels
       document.getElementById('sentimentEvaluationSection').style.display = 'none';
       document.getElementById('sentimentConfusionSection').style.display = 'none';
@@ -4628,30 +4689,87 @@ function calculateAndShowTFIDF() {
 }
 
 function showEvaluationResults() {
+  console.log('[EVAL DEBUG 10 - RENDER START]', sentimentEvaluation);
+
   const section = document.getElementById('sentimentEvaluationSection');
-  
-  if (!section || !sentimentEvaluation) return;
-  
+
+  if (!section) {
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentEvaluationSection not found');
+    return;
+  }
+
+  if (!sentimentEvaluation) {
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentEvaluation is null/undefined');
+    return;
+  }
+
   section.style.display = 'block';
-  
+
   const elAccuracy = document.getElementById('sentimentAccuracy');
-  if(elAccuracy) elAccuracy.textContent = (sentimentEvaluation.accuracy * 100).toFixed(2) + '%';
+  console.log('[EVAL DEBUG 10 - RENDER] elAccuracy:', elAccuracy);
+  if(elAccuracy) {
+    elAccuracy.textContent = (sentimentEvaluation.accuracy * 100).toFixed(2) + '%';
+    console.log('[EVAL DEBUG 10 - RENDER] Set accuracy to:', (sentimentEvaluation.accuracy * 100).toFixed(2) + '%');
+  } else {
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentAccuracy element not found');
+  }
+
   const elPrecision = document.getElementById('sentimentPrecision');
-  if(elPrecision) elPrecision.textContent = (sentimentEvaluation.weightedPrecision * 100).toFixed(2) + '%';
+  console.log('[EVAL DEBUG 10 - RENDER] elPrecision:', elPrecision);
+  if(elPrecision) {
+    elPrecision.textContent = (sentimentEvaluation.weightedPrecision * 100).toFixed(2) + '%';
+    console.log('[EVAL DEBUG 10 - RENDER] Set precision to:', (sentimentEvaluation.weightedPrecision * 100).toFixed(2) + '%');
+  } else {
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentPrecision element not found');
+  }
+
   const elRecall = document.getElementById('sentimentRecall');
-  if(elRecall) elRecall.textContent = (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%';
+  console.log('[EVAL DEBUG 10 - RENDER] elRecall:', elRecall);
+  if(elRecall) {
+    elRecall.textContent = (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%';
+    console.log('[EVAL DEBUG 10 - RENDER] Set recall to:', (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%');
+  } else {
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentRecall element not found');
+  }
+
   const elF1 = document.getElementById('sentimentF1');
-  if(elF1) elF1.textContent = (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%';
+  console.log('[EVAL DEBUG 10 - RENDER] elF1:', elF1);
+  if(elF1) {
+    elF1.textContent = (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%';
+    console.log('[EVAL DEBUG 10 - RENDER] Set F1 to:', (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%');
+  } else {
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentF1 element not found');
+  }
   
   // Show validation info
   if (sentimentEvaluation.validationInfo) {
+    console.log('[EVAL DEBUG 10 - RENDER] validationInfo:', sentimentEvaluation.validationInfo);
     const elTotal = document.getElementById('sentimentEvalTotal');
-    if(elTotal) elTotal.textContent = sentimentEvaluation.validationInfo.total;
+    if(elTotal) {
+      elTotal.textContent = sentimentEvaluation.validationInfo.total;
+      console.log('[EVAL DEBUG 10 - RENDER] Set total to:', sentimentEvaluation.validationInfo.total);
+    } else {
+      console.error('[EVAL DEBUG 10 - RENDER] sentimentEvalTotal element not found');
+    }
     const elCorrect = document.getElementById('sentimentEvalCorrect');
-    if(elCorrect) elCorrect.textContent = sentimentEvaluation.validationInfo.correct;
+    if(elCorrect) {
+      elCorrect.textContent = sentimentEvaluation.validationInfo.correct;
+      console.log('[EVAL DEBUG 10 - RENDER] Set correct to:', sentimentEvaluation.validationInfo.correct);
+    } else {
+      console.error('[EVAL DEBUG 10 - RENDER] sentimentEvalCorrect element not found');
+    }
     const elWrong = document.getElementById('sentimentEvalWrong');
-    if(elWrong) elWrong.textContent = sentimentEvaluation.validationInfo.wrong;
+    if(elWrong) {
+      elWrong.textContent = sentimentEvaluation.validationInfo.wrong;
+      console.log('[EVAL DEBUG 10 - RENDER] Set wrong to:', sentimentEvaluation.validationInfo.wrong);
+    } else {
+      console.error('[EVAL DEBUG 10 - RENDER] sentimentEvalWrong element not found');
+    }
+  } else {
+    console.error('[EVAL DEBUG 10 - RENDER] validationInfo is missing');
   }
+
+  console.log('[EVAL DEBUG 10 - RENDER COMPLETE]');
 }
 
 function showConfusionMatrix() {
