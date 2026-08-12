@@ -228,6 +228,7 @@ Design:
 - Avoid excessive decorative elements
 
 Layout:
+- Native Instagram portrait 4:5 composition
 - ALL visual elements must fit completely inside the image
 - Nothing may continue beyond the bottom edge
 - Keep 60px minimum safe margin on all sides
