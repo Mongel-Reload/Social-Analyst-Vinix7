@@ -3094,6 +3094,50 @@ function showFileInfo(fileName) {
   }
 }
 
+function resetAnalysisResults() {
+  // Hide all result sections when new dataset is uploaded
+  // This ensures UI shows only preview + info until analysis is run
+  document.getElementById('sentimentPreprocessingSection').style.display = 'none';
+  document.getElementById('sentimentTFIDFSection').style.display = 'none';
+  document.getElementById('sentimentLinguisticSection').style.display = 'none';
+  document.getElementById('sentimentSummaryCardsSection').style.display = 'none';
+  document.getElementById('sentimentPredictionSection').style.display = 'none';
+  document.getElementById('sentimentComparisonSection').style.display = 'none';
+  document.getElementById('sentimentEvaluationSection').style.display = 'none';
+  document.getElementById('sentimentConfusionSection').style.display = 'none';
+  document.getElementById('sentimentClassificationSection').style.display = 'none';
+  document.getElementById('sentimentPieSection').style.display = 'none';
+  document.getElementById('sentimentBarSection').style.display = 'none';
+  document.getElementById('sentimentTrendSection').style.display = 'none';
+  document.getElementById('sentimentMLInsightSection').style.display = 'none';
+  document.getElementById('sentimentAISection').style.display = 'none';
+  document.getElementById('contentGeneratorSection').style.display = 'none';
+  document.getElementById('sentimentExportSection').style.display = 'none';
+
+  // Clear analysis data
+  sentimentPreprocessed = [];
+  sentimentPredictions = [];
+  sentimentLinguisticFeatures = [];
+  sentimentEvaluation = null;
+  aiRecommendationData = null;
+  aiRecommendationAutoTriggered = false;
+  window.aiPayload = null;
+
+  // Clear charts
+  if (charts.sentDistChart) { charts.sentDistChart.destroy(); charts.sentDistChart = null; }
+  if (charts.sentTrendChart) { charts.sentTrendChart.destroy(); charts.sentTrendChart = null; }
+  if (charts.confusionMatrixChart) { charts.confusionMatrixChart.destroy(); charts.confusionMatrixChart = null; }
+  if (charts.sentimentPieChart) { charts.sentimentPieChart.destroy(); charts.sentimentPieChart = null; }
+  if (charts.sentimentBarChart) { charts.sentimentBarChart.destroy(); charts.sentimentBarChart = null; }
+
+  // Clear content generator state
+  generatedContents = [];
+  recommendationStatus = {};
+  currentGeneratingRecommendation = null;
+
+  console.log('[UI FLOW] Analysis results reset for new dataset');
+}
+
 function clearSentimentFile() {
   const uploadOptions = document.getElementById('sentimentUploadOptions');
   const dropzone = document.getElementById('sentimentDropzone');
@@ -3114,46 +3158,14 @@ function clearSentimentFile() {
   
   // Clear dataset
   sentimentDataset = [];
-  sentimentPreprocessed = [];
-  sentimentPredictions = [];
-  sentimentLinguisticFeatures = [];
-  sentimentEvaluation = null;
-  aiRecommendationData = null;
-  aiRecommendationAutoTriggered = false; // Reset flag for new analysis
-  window.aiPayload = null;
-  
-  // Clear charts
-  if (charts.sentDistChart) { charts.sentDistChart.destroy(); charts.sentDistChart = null; }
-  if (charts.sentTrendChart) { charts.sentTrendChart.destroy(); charts.sentTrendChart = null; }
-  if (charts.confusionMatrixChart) { charts.confusionMatrixChart.destroy(); charts.confusionMatrixChart = null; }
-  if (charts.sentimentPieChart) { charts.sentimentPieChart.destroy(); charts.sentimentPieChart = null; }
-  if (charts.sentimentBarChart) { charts.sentimentBarChart.destroy(); charts.sentimentBarChart = null; }
-  
-  // Hide all result sections
+
+  // Also hide preview and info sections (full reset to initial state)
   document.getElementById('sentimentPreviewSection').style.display = 'none';
   document.getElementById('sentimentInfoSection').style.display = 'none';
   document.getElementById('sentimentProgressSection').style.display = 'none';
-  document.getElementById('sentimentPreprocessingSection').style.display = 'none';
-  document.getElementById('sentimentTFIDFSection').style.display = 'none';
-  document.getElementById('sentimentLinguisticSection').style.display = 'none';
-  document.getElementById('sentimentSummaryCardsSection').style.display = 'none';
-  document.getElementById('sentimentPredictionSection').style.display = 'none';
-  document.getElementById('sentimentComparisonSection').style.display = 'none';
-  document.getElementById('sentimentEvaluationSection').style.display = 'none';
-  document.getElementById('sentimentConfusionSection').style.display = 'none';
-  document.getElementById('sentimentClassificationSection').style.display = 'none';
-  document.getElementById('sentimentPieSection').style.display = 'none';
-  document.getElementById('sentimentBarSection').style.display = 'none';
-  document.getElementById('sentimentTrendSection').style.display = 'none';
-  document.getElementById('sentimentMLInsightSection').style.display = 'none';
-  document.getElementById('sentimentAISection').style.display = 'none';
-  document.getElementById('contentGeneratorSection').style.display = 'none';
-  document.getElementById('sentimentExportSection').style.display = 'none';
-  
-  // Clear content generator state
-  generatedContents = [];
-  recommendationStatus = {};
-  currentGeneratingRecommendation = null;
+
+  // Reset all analysis results
+  resetAnalysisResults();
 }
 
 function handleCSVUpload(e) {
@@ -3376,7 +3388,10 @@ function processDataset(data) {
     withoutLabel: sentimentDataset.filter(x => !x.label || x.label.trim() === '').length,
     examples: sentimentDataset.slice(0, 5).map(x => ({ komentar: x.komentar, label: x.label }))
   });
-  
+
+  // Reset all result sections when new dataset is uploaded
+  resetAnalysisResults();
+
   // Show preview
   showDatasetPreview();
   
@@ -3493,68 +3508,6 @@ function extractLinguisticFeatures(text) {
   return features;
 }
 
-// Generate fingerprint for dataset
-function generateDatasetFingerprint(dataset) {
-  if (!dataset || dataset.length === 0) return null;
-  
-  // Sort dataset by comment to ensure consistent fingerprint
-  const sorted = [...dataset].sort((a, b) => (a.komentar || '').localeCompare(b.komentar || ''));
-  
-  // Create string representation
-  const datasetString = JSON.stringify(sorted.map(row => ({
-    komentar: row.komentar,
-    label: row.label
-  })));
-  
-  // Simple hash function
-  let hash = 0;
-  for (let i = 0; i < datasetString.length; i++) {
-    const char = datasetString.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  
-  return Math.abs(hash).toString(36);
-}
-
-// Save analysis results to localStorage
-function saveAnalysisResults(fingerprint, results) {
-  if (!fingerprint) return;
-  
-  const storageKey = `kokorolens_sentiment_${fingerprint}`;
-  const data = {
-    timestamp: Date.now(),
-    results: results
-  };
-  
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(data));
-    console.log('Analysis results saved with fingerprint:', fingerprint);
-  } catch (error) {
-    console.error('Error saving analysis results:', error);
-  }
-}
-
-// Load analysis results from localStorage
-function loadAnalysisResults(fingerprint) {
-  if (!fingerprint) return null;
-  
-  const storageKey = `kokorolens_sentiment_${fingerprint}`;
-  
-  try {
-    const data = localStorage.getItem(storageKey);
-    if (data) {
-      const parsed = JSON.parse(data);
-      console.log('Analysis results loaded from cache:', fingerprint);
-      return parsed.results;
-    }
-  } catch (error) {
-    console.error('Error loading analysis results:', error);
-  }
-  
-  return null;
-}
-
 // Fetch model evaluation metrics from backend
 // DISABLED: This function depends on localhost:5000 which is not available in Netlify deployment
 // Evaluation is now done client-side using the original evaluate-if-labels-exist logic
@@ -3595,33 +3548,10 @@ async function fetchModelEvaluationMetrics() {
 */
 
 function showEvaluationFallback() {
-  // This function should not be used - section should only show real data or "Belum ada hasil analisis"
-  const section = document.getElementById('sentimentEvaluationSection');
-  if (!section) return;
-  
-  section.style.display = 'block';
-  
-  const elAccuracy = document.getElementById('sentimentAccuracy');
-  if(elAccuracy) elAccuracy.textContent = 'Belum ada hasil analisis';
-  const elPrecision = document.getElementById('sentimentPrecision');
-  if(elPrecision) elPrecision.textContent = 'Belum ada hasil analisis';
-  const elRecall = document.getElementById('sentimentRecall');
-  if(elRecall) elRecall.textContent = 'Belum ada hasil analisis';
-  const elF1 = document.getElementById('sentimentF1');
-  if(elF1) elF1.textContent = 'Belum ada hasil analisis';
-  
-  const elTotal = document.getElementById('sentimentEvalTotal');
-  if(elTotal) elTotal.textContent = '-';
-  const elCorrect = document.getElementById('sentimentEvalCorrect');
-  if(elCorrect) elCorrect.textContent = '-';
-  const elWrong = document.getElementById('sentimentEvalWrong');
-  if(elWrong) elWrong.textContent = '-';
-  
-  // Hide confusion matrix and classification if no data
-  const confusionSection = document.getElementById('sentimentConfusionSection');
-  if(confusionSection) confusionSection.style.display = 'none';
-  const classificationSection = document.getElementById('sentimentClassificationSection');
-  if(classificationSection) classificationSection.style.display = 'none';
+  // DISABLED: This function should not be used
+  // Evaluation sections should remain hidden until actual evaluation is completed
+  // They should never show "-" or "Belum ada hasil analisis"
+  console.warn('[UI FLOW] showEvaluationFallback called - this should not happen');
 }
 
 function analyzeSentimentDataset() {
@@ -3629,7 +3559,9 @@ function analyzeSentimentDataset() {
     alert('Silakan upload dataset terlebih dahulu!');
     return;
   }
-  
+
+  console.log('[UI FLOW] Starting sentiment analysis');
+
   try {
     // 1. Preprocessing
     console.log('Starting preprocessing...');
@@ -3897,16 +3829,7 @@ function analyzeSentimentDataset() {
     showMLInsights();
     
     generateAIRecommendation();
-    
-    // Save analysis results to cache
-    const resultsToSave = {
-      preprocessed: sentimentPreprocessed,
-      predictions: sentimentPredictions,
-      linguisticFeatures: sentimentLinguisticFeatures,
-      evaluation: sentimentEvaluation
-    };
-    saveAnalysisResults(fingerprint, resultsToSave);
-    
+
     alert(`Analisis selesai! ${sentimentPredictions.length} komentar diproses.`);
     
   } catch (error) {
@@ -4699,10 +4622,12 @@ function showEvaluationResults() {
   }
 
   if (!sentimentEvaluation) {
-    console.error('[EVAL DEBUG 10 - RENDER] sentimentEvaluation is null/undefined');
+    console.error('[EVAL DEBUG 10 - RENDER] sentimentEvaluation is null/undefined - hiding section');
+    section.style.display = 'none';
     return;
   }
 
+  console.log('[UI FLOW] Showing evaluation section with real data');
   section.style.display = 'block';
 
   const elAccuracy = document.getElementById('sentimentAccuracy');
@@ -4773,10 +4698,21 @@ function showEvaluationResults() {
 }
 
 function showConfusionMatrix() {
+  console.log('[UI FLOW] showConfusionMatrix called');
   const section = document.getElementById('sentimentConfusionSection');
-  
-  if (!section || !sentimentEvaluation) return;
-  
+
+  if (!section) {
+    console.error('[UI FLOW] sentimentConfusionSection not found');
+    return;
+  }
+
+  if (!sentimentEvaluation) {
+    console.error('[UI FLOW] sentimentEvaluation is null/undefined - hiding confusion matrix');
+    section.style.display = 'none';
+    return;
+  }
+
+  console.log('[UI FLOW] Showing confusion matrix');
   section.style.display = 'block';
   
   const ctx = document.getElementById('confusionMatrixChart').getContext('2d');
@@ -4836,11 +4772,27 @@ function showConfusionMatrix() {
 }
 
 function showClassificationReport() {
+  console.log('[UI FLOW] showClassificationReport called');
   const section = document.getElementById('sentimentClassificationSection');
   const body = document.getElementById('sentimentClassificationBody');
-  
-  if (!section || !body || !sentimentEvaluation) return;
-  
+
+  if (!section) {
+    console.error('[UI FLOW] sentimentClassificationSection not found');
+    return;
+  }
+
+  if (!body) {
+    console.error('[UI FLOW] sentimentClassificationBody not found');
+    return;
+  }
+
+  if (!sentimentEvaluation) {
+    console.error('[UI FLOW] sentimentEvaluation is null/undefined - hiding classification report');
+    section.style.display = 'none';
+    return;
+  }
+
+  console.log('[UI FLOW] Showing classification report');
   section.style.display = 'block';
   
   body.innerHTML = sentimentEvaluation.classificationReport.map(row => `
@@ -5207,8 +5159,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupExportHandlers();
   setupAIHandlers();
 
-  // Show evaluation section with "Belum ada hasil analisis" message initially
-  showEvaluationFallback();
+  // Ensure all result sections are hidden initially
+  // Evaluation sections should only show after successful analysis
 });
 
 // ============================================
