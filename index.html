@@ -3660,7 +3660,8 @@ function analyzeSentimentDataset() {
     console.log('Predicting on test data...');
     const testPredictions = classifier.predict(testVectors);
     const testProbabilities = classifier.predict_proba(testVectors);
-    
+
+    console.log('[EVAL DEBUG 8 - TEST PREDICTIONS]', testPredictions.slice(0, 5));
     console.log('Test predictions sample:', testPredictions.slice(0, 10));
     console.log('Unique test predictions:', [...new Set(testPredictions)]);
     
@@ -3748,11 +3749,10 @@ function analyzeSentimentDataset() {
         }
 
         // Create evaluation data with matched predictions
-        const evaluationData = validTestData.map(row => {
+        const evaluationData = validTestData.map((row, index) => {
           const actual = normalizeLabel(row.label);
-          // Find the corresponding prediction from testPredictions
-          const testIndex = testData.findIndex(d => d === row);
-          const predicted = testIndex !== -1 ? testPredictions[testIndex] : null;
+          // Use corresponding prediction from testPredictions by index
+          const predicted = testPredictions[index] || null;
 
           return {
             comment: row.komentar,
@@ -3762,28 +3762,28 @@ function analyzeSentimentDataset() {
         });
 
         const testLabels = evaluationData.map(x => x.actual);
-        const testPredictions = evaluationData.map(x => x.predicted);
+        const testPredictionsEval = evaluationData.map(x => x.predicted);
 
         console.log('[EVAL DEBUG 7 - TEST LABELS]', testLabels);
-        console.log('[EVAL DEBUG 8 - PREDICTIONS]', testPredictions);
+        console.log('[EVAL DEBUG 8 - PREDICTIONS]', testPredictionsEval);
 
         console.log('[SIDANG EVALUATION]', {
           datasetTotal: sentimentDataset.length,
           testDataLength: testData.length,
           validTestDataLength: validTestData.length,
           testLabelsLength: testLabels.length,
-          testPredictionsLength: testPredictions.length,
+          testPredictionsLength: testPredictionsEval.length,
           labelsSample: testLabels.slice(0, 5),
-          predictionsSample: testPredictions.slice(0, 5)
+          predictionsSample: testPredictionsEval.slice(0, 5)
         });
 
-        sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictions, ['Positif', 'Netral', 'Negatif']);
+        sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictionsEval, ['Positif', 'Netral', 'Negatif']);
 
         console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
         console.log('[SIDANG METRICS]', sentimentEvaluation);
 
         // Calculate validation info
-        const correct = testLabels.filter((label, i) => label === testPredictions[i]).length;
+        const correct = testLabels.filter((label, i) => label === testPredictionsEval[i]).length;
         const wrong = testLabels.length - correct;
         sentimentEvaluation.validationInfo = {
           total: testLabels.length,
