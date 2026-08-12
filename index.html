@@ -502,6 +502,9 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <small style="color:#94a3b8;margin-left:20px">Prediksi Benar: <strong id="sentimentEvalCorrect">-</strong></small>
           <small style="color:#94a3b8;margin-left:20px">Prediksi Salah: <strong id="sentimentEvalWrong">-</strong></small>
         </div>
+        <div style="margin-top:10px">
+          <small id="sentimentEvalMethodology" style="color:#64748b;font-size:11px;display:none"></small>
+        </div>
       </div>
       
       <!-- 6. Confusion Matrix -->
@@ -3522,6 +3525,71 @@ function resetSeedCounter(dataset) {
   return seedCounter;
 }
 
+// Stratified K-Fold split for out-of-fold evaluation
+function stratifiedKFoldSplit(data, k, seed) {
+  const K_FOLDS = k;
+  const RANDOM_SEED = seed;
+
+  // Reset seed for reproducibility
+  seedCounter = RANDOM_SEED;
+
+  // 1. Group by label for stratification
+  const dataByLabel = {};
+  data.forEach((row, index) => {
+    const label = row.label || 'Netral';
+    if (!dataByLabel[label]) dataByLabel[label] = [];
+    dataByLabel[label].push({ row, originalIndex: index });
+  });
+
+  console.log('[K-FOLD STRATIFICATION]', {
+    totalData: data.length,
+    k: K_FOLDS,
+    seed: RANDOM_SEED,
+    labelDistribution: Object.keys(dataByLabel).map(label => ({
+      label,
+      count: dataByLabel[label].length
+    }))
+  });
+
+  // 2. Shuffle each label group with seeded random
+  const shuffledByLabel = {};
+  Object.keys(dataByLabel).forEach(label => {
+    const beforeSeed = seedCounter;
+    shuffledByLabel[label] = [...dataByLabel[label]].sort(() => seededRandom() - 0.5);
+    const afterSeed = seedCounter;
+    console.log('[K-FOLD SHUFFLE]', {
+      label,
+      count: shuffledByLabel[label].length,
+      seedRange: `${beforeSeed}-${afterSeed}`
+    });
+  });
+
+  // 3. Distribute each label group to k folds evenly
+  const folds = Array.from({ length: K_FOLDS }, () => []);
+  Object.keys(shuffledByLabel).forEach(label => {
+    const labelData = shuffledByLabel[label];
+    labelData.forEach((item, i) => {
+      const foldIndex = i % K_FOLDS;
+      folds[foldIndex].push(item);
+    });
+  });
+
+  // Log fold sizes and label distribution
+  folds.forEach((fold, foldIndex) => {
+    const labelCounts = {};
+    fold.forEach(item => {
+      const label = item.row.label || 'Netral';
+      labelCounts[label] = (labelCounts[label] || 0) + 1;
+    });
+    console.log(`[K-FOLD ${foldIndex + 1}]`, {
+      size: fold.length,
+      labelDistribution: labelCounts
+    });
+  });
+
+  return folds;
+}
+
 // Fetch model evaluation metrics from backend
 // DISABLED: This function depends on localhost:5000 which is not available in Netlify deployment
 // Evaluation is now done client-side using the original evaluate-if-labels-exist logic
@@ -3576,7 +3644,7 @@ function analyzeSentimentDataset() {
 
   console.log('[UI FLOW] Starting sentiment analysis');
 
-  // Reset seed counter for reproducibility based on dataset content
+  // Reset seed counter for reproducibility
   const analysisSeed = resetSeedCounter(sentimentDataset);
   console.log('[REPRODUCIBILITY] Analysis seed:', analysisSeed);
 
@@ -3617,61 +3685,7 @@ function analyzeSentimentDataset() {
     // Show preprocessing results
     showPreprocessingResults();
     
-    // 2. Train/Test Split (80/20) with stratification
-    console.log('Splitting data with stratification...');
-
-    // Group by label for stratified split
-    const dataByLabel = {};
-    sentimentPreprocessed.forEach(row => {
-      const label = row.label || 'Netral';
-      if (!dataByLabel[label]) dataByLabel[label] = [];
-      dataByLabel[label].push(row);
-    });
-
-    // Split each label group
-    const trainData = [];
-    const testData = [];
-
-    console.log('[REPRODUCIBILITY] Starting split with seed:', seedCounter);
-
-    Object.keys(dataByLabel).forEach(label => {
-      const labelData = dataByLabel[label];
-      const beforeSeed = seedCounter;
-      const shuffled = [...labelData].sort(() => seededRandom() - 0.5);
-      const afterSeed = seedCounter;
-      console.log('[REPRODUCIBILITY] Shuffle label', label, 'seed range:', beforeSeed, '-', afterSeed);
-      const splitIndex = Math.floor(shuffled.length * 0.8);
-      trainData.push(...shuffled.slice(0, splitIndex));
-      testData.push(...shuffled.slice(splitIndex));
-    });
-
-    // Shuffle train and test separately with seeded random
-    const beforeTrainSeed = seedCounter;
-    trainData.sort(() => seededRandom() - 0.5);
-    const afterTrainSeed = seedCounter;
-    console.log('[REPRODUCIBILITY] Train shuffle seed range:', beforeTrainSeed, '-', afterTrainSeed);
-
-    const beforeTestSeed = seedCounter;
-    testData.sort(() => seededRandom() - 0.5);
-    const afterTestSeed = seedCounter;
-    console.log('[REPRODUCIBILITY] Test shuffle seed range:', beforeTestSeed, '-', afterTestSeed);
-
-    console.log('[REPRODUCIBILITY] Final seed counter:', seedCounter);
-
-    console.log('[EVAL DEBUG 5 - TRAIN]', trainData.length);
-    console.log('[EVAL DEBUG 6 - TEST]', testData.length);
-    console.log('Train data:', trainData.length, 'Test data:', testData.length);
-    
-    // Log label distribution in train data
-    const trainLabelCounts = {};
-    trainData.forEach(d => {
-      if (d.label) {
-        trainLabelCounts[d.label] = (trainLabelCounts[d.label] || 0) + 1;
-      }
-    });
-    console.log('Train label distribution:', trainLabelCounts);
-    
-    // 3. Linguistic Feature Extraction
+    // 2. Linguistic Feature Extraction
     sentimentLinguisticFeatures = sentimentPreprocessed.map(row => extractLinguisticFeatures(row.komentar));
     
     // Show linguistic features
@@ -3679,66 +3693,172 @@ function analyzeSentimentDataset() {
     
     // Show summary cards
     showSentimentSummaryCards();
-    
-    // 4. TF-IDF Vectorization
-    console.log('Vectorizing with TF-IDF...');
-    const vectorizer = new TFIDFVectorizer();
-    const trainTexts = trainData.map(d => d.preprocessed);
-    const testTexts = testData.map(d => d.preprocessed);
-    
-    console.log('Sample train texts:', trainTexts.slice(0, 3));
-    
-    const trainVectors = vectorizer.fitTransform(trainTexts);
-    const testVectors = vectorizer.transform(testTexts);
-    
-    console.log('Vocabulary size:', Object.keys(vectorizer.vocabulary).length);
-    console.log('Sample train vector:', trainVectors[0]);
-    
-    // 5. Train Naive Bayes
-    console.log('Training Naive Bayes...');
-    const classifier = new MultinomialNaiveBayes();
-    const trainLabels = trainData.map(d => d.label || 'Netral');
-    
-    console.log('Train labels sample:', trainLabels.slice(0, 10));
-    console.log('Unique train labels:', [...new Set(trainLabels)]);
-    
-    classifier.fit(trainVectors, trainLabels);
-    
-    console.log('Classifier classes:', classifier.classes);
-    console.log('Classifier priors:', classifier.classPriors);
-    
-    // 6. Predict on TEST data only (not all data)
-    console.log('Predicting on test data...');
-    const testPredictions = classifier.predict(testVectors);
-    const testProbabilities = classifier.predict_proba(testVectors);
 
-    console.log('[EVAL DEBUG 8 - TEST PREDICTIONS]', testPredictions.slice(0, 5));
-    console.log('Test predictions sample:', testPredictions.slice(0, 10));
-    console.log('Unique test predictions:', [...new Set(testPredictions)]);
-    
-    // 7. Predict on ALL data for display purposes (train + test)
-    console.log('Predicting on all data for display...');
-    const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
-    const allVectors = vectorizer.transform(allTexts);
-    const predictions = classifier.predict(allVectors);
-    const probabilities = classifier.predict_proba(allVectors);
-    
-    console.log('Predictions sample:', predictions.slice(0, 10));
-    console.log('Unique predictions:', [...new Set(predictions)]);
-    
+    // 3. Filter labeled data for K-Fold evaluation
+    const labeledData = sentimentPreprocessed.filter(row => {
+      const normalizedLabel = normalizeLabel(row.label);
+      return normalizedLabel !== null;
+    });
+
+    const unlabeledCount = sentimentPreprocessed.length - labeledData.length;
+
+    console.log('[K-FOLD CONFIG]', {
+      totalDataset: sentimentPreprocessed.length,
+      labeledRows: labeledData.length,
+      unlabeledRows: unlabeledCount,
+      folds: 5,
+      seed: 42
+    });
+
+    // 4. Stratified K-Fold Cross-Validation
+    const K_FOLDS = 5;
+    const RANDOM_SEED = 42;
+    const folds = stratifiedKFoldSplit(labeledData, K_FOLDS, RANDOM_SEED);
+
+    // Initialize out-of-fold predictions array
+    const outOfFoldPredictions = new Array(labeledData.length);
+    const outOfFoldProbabilities = new Array(labeledData.length);
+    const predictionDetails = new Array(labeledData.length);
+
+    // 5. K-Fold Loop
+    for (let fold = 0; fold < K_FOLDS; fold++) {
+      console.log(`[FOLD ${fold + 1}/${K_FOLDS}] Starting...`);
+
+      // Separate train and test for this fold
+      const trainData = [];
+      const testIndices = [];
+      const testData = [];
+
+      folds.forEach((foldData, foldIndex) => {
+        if (foldIndex === fold) {
+          // Test fold
+          foldData.forEach(item => {
+            testIndices.push(item.originalIndex);
+            testData.push(item.row);
+          });
+        } else {
+          // Train fold
+          trainData.push(...foldData.map(item => item.row));
+        }
+      });
+
+      console.log(`[FOLD ${fold + 1}]`, {
+        trainSize: trainData.length,
+        testSize: testData.length
+      });
+
+      // 6. TF-IDF: fit ONLY on train fold
+      const vectorizer = new TFIDFVectorizer();
+      const trainTexts = trainData.map(d => d.preprocessed);
+      const trainVectors = vectorizer.fitTransform(trainTexts);
+
+      // 7. Train Naive Bayes: fit ONLY on train fold
+      const classifier = new MultinomialNaiveBayes();
+      const trainLabels = trainData.map(d => d.label || 'Netral');
+      classifier.fit(trainVectors, trainLabels);
+
+      // 8. Predict on test fold: transform (NO fitting on test)
+      const testTexts = testData.map(d => d.preprocessed);
+      const testVectors = vectorizer.transform(testTexts);
+      const testPredictions = classifier.predict(testVectors);
+      const testProbabilities = classifier.predict_proba(testVectors);
+
+      // 9. Store predictions by original index
+      folds[fold].forEach((item, i) => {
+        const originalIndex = item.originalIndex;
+        outOfFoldPredictions[originalIndex] = testPredictions[i];
+        outOfFoldProbabilities[originalIndex] = testProbabilities[i];
+        predictionDetails[originalIndex] = {
+          originalIndex: originalIndex,
+          comment: item.row.komentar,
+          actualLabel: item.row.label,
+          predictedLabel: testPredictions[i],
+          fold: fold,
+          isCorrect: item.row.label === testPredictions[i]
+        };
+      });
+
+      console.log(`[FOLD ${fold + 1}] Completed`, {
+        predictionsStored: testPredictions.length
+      });
+    }
+
+    // 10. Validation Assertions
+    const totalLabeled = labeledData.length;
+    const predictionsComplete = outOfFoldPredictions.every(p => p !== undefined);
+    const correctCount = labeledData.filter((row, i) => row.label === outOfFoldPredictions[i]).length;
+    const wrongCount = totalLabeled - correctCount;
+
+    console.log('[EVALUATION VALIDATION]', {
+      totalLabeled: totalLabeled,
+      correctPlusWrong: correctCount + wrongCount,
+      confusionMatrixTotal: correctCount + wrongCount,
+      predictionsComplete: predictionsComplete,
+      outOfFoldPredictionsLength: outOfFoldPredictions.length
+    });
+
+    if (!predictionsComplete) {
+      console.error('[EVALUATION FAILED] Not all out-of-fold predictions filled');
+      alert('Evaluasi gagal: Tidak semua prediksi out-of-fold terisi. Silakan periksa log console.');
+      return;
+    }
+
+    if (correctCount + wrongCount !== totalLabeled) {
+      console.error('[EVALUATION FAILED] Correct + Wrong != Total Labeled');
+      alert('Evaluasi gagal: Jumlah prediksi benar + salah tidak sama dengan total data berlabel.');
+      return;
+    }
+
+    // 11. Calculate global metrics from ALL out-of-fold predictions
+    const actualLabels = labeledData.map(row => row.label);
+    sentimentEvaluation = calculateEvaluationMetrics(actualLabels, outOfFoldPredictions, ['Positif', 'Netral', 'Negatif']);
+
+    // Add validation info
+    sentimentEvaluation.validationInfo = {
+      total: totalLabeled,
+      correct: correctCount,
+      wrong: wrongCount
+    };
+
+    // Add methodology info
+    sentimentEvaluation.method = 'Stratified 5-Fold Cross-Validation';
+
+    console.log('[OOF EVALUATION]', {
+      totalLabeled: totalLabeled,
+      totalPredictions: outOfFoldPredictions.length,
+      correct: correctCount,
+      wrong: wrongCount,
+      accuracy: sentimentEvaluation.accuracy,
+      precision: sentimentEvaluation.weightedPrecision,
+      recall: sentimentEvaluation.weightedRecall,
+      f1: sentimentEvaluation.weightedF1
+    });
+
+    // 12. Train on ALL labeled data for display predictions
+    console.log('Training final model on all labeled data for display...');
+    const finalVectorizer = new TFIDFVectorizer();
+    const allTexts = labeledData.map(d => d.preprocessed);
+    const allVectors = finalVectorizer.fitTransform(allTexts);
+    const allLabels = labeledData.map(d => d.label || 'Netral');
+    const finalClassifier = new MultinomialNaiveBayes();
+    finalClassifier.fit(allVectors, allLabels);
+
+    // Predict on ALL data (including unlabeled) for display
+    const allDataTexts = sentimentPreprocessed.map(d => d.preprocessed);
+    const allDataVectors = finalVectorizer.transform(allDataTexts);
+    const allPredictions = finalClassifier.predict(allDataVectors);
+    const allProbabilities = finalClassifier.predict_proba(allDataVectors);
+
     // Check if all predictions are the same
-    const uniquePredictions = [...new Set(predictions)];
+    const uniquePredictions = [...new Set(allPredictions)];
     if (uniquePredictions.length === 1) {
       console.warn('All predictions are the same:', uniquePredictions[0]);
       console.warn('Using fallback keyword-based classification');
       
-      // Fallback to keyword-based classification with varying confidence
       sentimentPredictions = sentimentPreprocessed.map(row => {
-        // Check if there's a stored correction for this comment
         const storedPrediction = getStoredPrediction(row.komentar);
         const sentiment = storedPrediction || classifyByKeyword(row.komentar);
-        // Generate varying confidence based on text length and keyword matches
-        const baseConfidence = 0.6 + Math.random() * 0.3; // 0.6 to 0.9
+        const baseConfidence = 0.6 + Math.random() * 0.3;
         return {
           ...row,
           predicted: sentiment,
@@ -3747,17 +3867,14 @@ function analyzeSentimentDataset() {
         };
       });
     } else {
-      // Store predictions with confidence from actual model probabilities
       sentimentPredictions = sentimentPreprocessed.map((row, i) => {
-        // Check if there's a stored correction for this comment
         const storedPrediction = getStoredPrediction(row.komentar);
-        const finalPrediction = storedPrediction || predictions[i];
-        
+        const finalPrediction = storedPrediction || allPredictions[i];
         return {
           ...row,
           predicted: finalPrediction,
-          confidence: probabilities[i],
-          confidencePercent: (Math.max(...Object.values(probabilities[i])) * 100).toFixed(1)
+          confidence: allProbabilities[i],
+          confidencePercent: (Math.max(...Object.values(allProbabilities[i])) * 100).toFixed(1)
         };
       });
     }
@@ -3775,103 +3892,23 @@ function analyzeSentimentDataset() {
     // Show sentiment distribution charts
     showSentimentDistribution();
 
-    // 6. Evaluate if labels exist (using TEST set only)
-    const hasLabels = sentimentDataset.some(row => row.label && row.label.trim() !== '');
-    console.log('[EVAL DEBUG 4 - HAS LABELS]', hasLabels);
+    // 13. Show evaluation results if labels exist
+    if (labeledData.length > 0) {
+      console.log('[EVAL DEBUG 10 - BEFORE RENDER]', sentimentEvaluation);
+      showEvaluationResults();
+      console.log('[EVAL DEBUG 10 - AFTER RENDER]', 'showEvaluationResults called');
 
-    if (hasLabels) {
-      try {
-        // Filter test data to only include rows with valid labels
-        const validTestData = testData.filter(d => {
-          const normalizedLabel = normalizeLabel(d.label);
-          return normalizedLabel !== null;
-        });
+      // Show confusion matrix
+      showConfusionMatrix();
 
-        console.log('[EVAL DEBUG - VALID TEST DATA]', {
-          originalTestCount: testData.length,
-          validTestCount: validTestData.length,
-          invalidCount: testData.length - validTestData.length
-        });
-
-        if (validTestData.length === 0) {
-          console.error('[EVALUATION FAILED] No valid test labels found after normalization');
-          alert('Evaluasi gagal: Tidak ada label valid yang ditemukan pada dataset. Pastikan kolom label berisi nilai: Positif, Netral, atau Negatif.');
-          return;
-        }
-
-        // Create evaluation data with matched predictions
-        const evaluationData = validTestData.map((row, index) => {
-          const actual = normalizeLabel(row.label);
-          // Use corresponding prediction from testPredictions by index
-          const predicted = testPredictions[index] || null;
-
-          return {
-            comment: row.komentar,
-            actual: actual,
-            predicted: predicted
-          };
-        });
-
-        const testLabels = evaluationData.map(x => x.actual);
-        const testPredictionsEval = evaluationData.map(x => x.predicted);
-
-        console.log('[EVAL DEBUG 7 - TEST LABELS]', testLabels);
-        console.log('[EVAL DEBUG 8 - PREDICTIONS]', testPredictionsEval);
-
-        console.log('[SIDANG EVALUATION]', {
-          datasetTotal: sentimentDataset.length,
-          testDataLength: testData.length,
-          validTestDataLength: validTestData.length,
-          testLabelsLength: testLabels.length,
-          testPredictionsLength: testPredictionsEval.length,
-          labelsSample: testLabels.slice(0, 5),
-          predictionsSample: testPredictionsEval.slice(0, 5),
-          randomSeed: seedCounter
-        });
-
-        sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictionsEval, ['Positif', 'Netral', 'Negatif']);
-
-        console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
-        console.log('[SIDANG METRICS]', {
-          ...sentimentEvaluation,
-          randomSeed: seedCounter
-        });
-
-        // Calculate validation info
-        const correct = testLabels.filter((label, i) => label === testPredictionsEval[i]).length;
-        const wrong = testLabels.length - correct;
-        sentimentEvaluation.validationInfo = {
-          total: testLabels.length,
-          correct: correct,
-          wrong: wrong
-        };
-
-        // Show evaluation results
-        console.log('[EVAL DEBUG 10 - BEFORE RENDER]', sentimentEvaluation);
-        showEvaluationResults();
-        console.log('[EVAL DEBUG 10 - AFTER RENDER]', 'showEvaluationResults called');
-
-        // Show confusion matrix
-        showConfusionMatrix();
-
-        // Show classification report
-        showClassificationReport();
-
-        // Show sentiment distribution charts
-        showSentimentDistribution();
-      } catch (error) {
-        console.error('[EVALUATION FAILED]', error);
-        alert('Evaluasi gagal: ' + error.message);
-      }
+      // Show classification report
+      showClassificationReport();
     } else {
       console.warn('[EVALUATION SKIPPED] No labels found in dataset');
       // Hide evaluation sections if no labels
       document.getElementById('sentimentEvaluationSection').style.display = 'none';
       document.getElementById('sentimentConfusionSection').style.display = 'none';
       document.getElementById('sentimentClassificationSection').style.display = 'none';
-
-      // Show sentiment distribution charts without evaluation
-      showSentimentDistribution();
     }
 
     hideLoading();
@@ -4744,6 +4781,13 @@ function showEvaluationResults() {
       console.log('[EVAL DEBUG 10 - RENDER] Set wrong to:', sentimentEvaluation.validationInfo.wrong);
     } else {
       console.error('[EVAL DEBUG 10 - RENDER] sentimentEvalWrong element not found');
+    }
+
+    // Add methodology text
+    const elMethodology = document.getElementById('sentimentEvalMethodology');
+    if(elMethodology) {
+      elMethodology.textContent = sentimentEvaluation.method || 'Stratified 5-Fold Cross-Validation. Setiap komentar dievaluasi satu kali sebagai data uji.';
+      elMethodology.style.display = 'block';
     }
   } else {
     console.error('[EVAL DEBUG 10 - RENDER] validationInfo is missing');
