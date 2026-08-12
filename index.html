@@ -548,12 +548,13 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <div id="mlInsightsList" style="display:flex;flex-direction:column;gap:10px"></div>
       </div>
       
-      <!-- 10. Tabel Hasil Akhir -->
+      <!-- 10. Tabel Validasi Evaluasi -->
       <div id="sentimentFinalSection" class="card" style="margin-bottom:15px;display:none">
-        <h3 style="margin-bottom:15px">✅ Hasil Akhir</h3>
-        <div class="table" style="max-height:300px;overflow-y:auto">
+        <h3 style="margin-bottom:15px">✅ Validasi Evaluasi</h3>
+        <p style="color:#94a3b8;font-size:12px;margin-bottom:10px">Tabel ini menunjukkan perbandingan langsung antara Label Manual (Ground Truth) dan Prediksi Model untuk setiap komentar yang dievaluasi.</p>
+        <div class="table" style="max-height:400px;overflow-y:auto">
           <table>
-            <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi</th><th>Status</th></tr></thead>
+            <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Status</th></tr></thead>
             <tbody id="sentimentFinalBody"></tbody>
           </table>
         </div>
@@ -2674,6 +2675,7 @@ let sentimentDataset = null;
 let sentimentPreprocessed = null;
 let sentimentPredictions = null;
 let sentimentEvaluation = null;
+let kFoldPredictionDetails = null; // Store OOF predictions for validation table
 
 // Indonesian stopwords
 const indonesianStopwords = [
@@ -3653,6 +3655,7 @@ function analyzeSentimentDataset() {
   sentimentPredictions = [];
   sentimentLinguisticFeatures = [];
   sentimentEvaluation = null;
+  kFoldPredictionDetails = null;
   aiRecommendationData = null;
   aiRecommendationAutoTriggered = false;
   window.aiPayload = null;
@@ -3789,6 +3792,9 @@ function analyzeSentimentDataset() {
     const correctCount = labeledData.filter((row, i) => row.label === outOfFoldPredictions[i]).length;
     const wrongCount = totalLabeled - correctCount;
 
+    // Store prediction details globally for validation table
+    kFoldPredictionDetails = predictionDetails;
+
     console.log('[EVALUATION VALIDATION]', {
       totalLabeled: totalLabeled,
       correctPlusWrong: correctCount + wrongCount,
@@ -3903,12 +3909,16 @@ function analyzeSentimentDataset() {
 
       // Show classification report
       showClassificationReport();
+
+      // Show validation table (Hasil Akhir)
+      showFinalResults();
     } else {
       console.warn('[EVALUATION SKIPPED] No labels found in dataset');
       // Hide evaluation sections if no labels
       document.getElementById('sentimentEvaluationSection').style.display = 'none';
       document.getElementById('sentimentConfusionSection').style.display = 'none';
       document.getElementById('sentimentClassificationSection').style.display = 'none';
+      document.getElementById('sentimentFinalSection').style.display = 'none';
     }
 
     hideLoading();
@@ -5002,24 +5012,32 @@ function showSentimentDistribution() {
 function showFinalResults() {
   const section = document.getElementById('sentimentFinalSection');
   const body = document.getElementById('sentimentFinalBody');
-  
+
   if (!section || !body) return;
-  
+
   section.style.display = 'block';
-  
+
+  // Use K-Fold prediction details for validation table (actual evaluation predictions)
+  // Fallback to sentimentPredictions if no K-Fold details (unlabeled data)
   const hasLabels = sentimentDataset.some(row => row.label);
-  
-  body.innerHTML = sentimentPredictions.map(row => {
-    const status = hasLabels && row.label
-      ? (row.label === row.predicted ? '✓ Sesuai' : '✗ Tidak Sesuai')
-      : '-';
-    
+  const displayData = kFoldPredictionDetails || [];
+
+  if (displayData.length === 0 && hasLabels) {
+    console.warn('[VALIDATION TABLE] No K-Fold prediction details available');
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8">Data validasi tidak tersedia</td></tr>';
+    return;
+  }
+
+  body.innerHTML = displayData.map(item => {
+    const status = item.isCorrect ? '✓ Sesuai' : '✗ Tidak Sesuai';
+    const statusColor = item.isCorrect ? '#22c55e' : '#ef4444';
+
     return `
       <tr>
-        <td>${row.komentar.substring(0, 60)}${row.komentar.length > 60 ? '...' : ''}</td>
-        <td>${row.label || '-'}</td>
-        <td><span class="badge ${row.predicted === 'Positif' ? 'pos' : row.predicted === 'Negatif' ? 'neg' : 'neu'}">${row.predicted}</span></td>
-        <td>${status}</td>
+        <td>${item.comment.substring(0, 60)}${item.comment.length > 60 ? '...' : ''}</td>
+        <td>${item.actualLabel || '-'}</td>
+        <td><span class="badge ${item.predictedLabel === 'Positif' ? 'pos' : item.predictedLabel === 'Negatif' ? 'neg' : 'neu'}">${item.predictedLabel}</span></td>
+        <td style="color:${statusColor}">${status}</td>
       </tr>
     `;
   }).join('');
