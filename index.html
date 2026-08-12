@@ -6405,28 +6405,32 @@ async function addLogoToImage(imageData) {
       img.src = imageData;
     });
     
-    // Calculate crop to 4:5 ratio (center crop)
+    // Calculate aspect-ratio-safe fitting (contain instead of crop)
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const targetRatio = targetWidth / targetHeight;
     
-    let sourceX, sourceY, sourceWidth, sourceHeight;
+    let drawWidth, drawHeight, drawX, drawY;
     
     if (imgRatio > targetRatio) {
-      // Image is wider than target - crop sides
-      sourceHeight = img.naturalHeight;
-      sourceWidth = sourceHeight * targetRatio;
-      sourceX = (img.naturalWidth - sourceWidth) / 2;
-      sourceY = 0;
+      // Image is wider than target - scale to fit height
+      drawHeight = targetHeight;
+      drawWidth = drawHeight * imgRatio;
+      drawX = (targetWidth - drawWidth) / 2;
+      drawY = 0;
     } else {
-      // Image is taller than target - crop top/bottom
-      sourceWidth = img.naturalWidth;
-      sourceHeight = sourceWidth / targetRatio;
-      sourceX = 0;
-      sourceY = (img.naturalHeight - sourceHeight) / 2;
+      // Image is taller than target - scale to fit width
+      drawWidth = targetWidth;
+      drawHeight = drawWidth / imgRatio;
+      drawX = 0;
+      drawY = (targetHeight - drawHeight) / 2;
     }
     
-    // Draw cropped image covering the canvas
-    ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+    // Fill background with a neutral color before drawing
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    
+    // Draw image scaled to fit (contain mode - preserves all content)
+    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
     
     // Load and draw logo overlay with smart placement
     const logo = new Image();
