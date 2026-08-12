@@ -3895,7 +3895,7 @@ function analyzeSentimentDataset() {
     });
     console.log('Prediction distribution:', predCounts);
     
-    // Show prediction results
+    // Show prediction results (main table with display predictions)
     showPredictionResults();
     
     // Show sentiment distribution charts
@@ -3913,7 +3913,7 @@ function analyzeSentimentDataset() {
       // Show classification report
       showClassificationReport();
 
-      // Show validation table (Hasil Akhir)
+      // Show validation table (using K-Fold OOF predictions)
       showFinalResults();
     } else {
       console.warn('[EVALUATION SKIPPED] No labels found in dataset');
