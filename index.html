@@ -6097,15 +6097,15 @@ function renderGeneratedContent(content) {
           ⬇ Download Gambar
         </button>
         <button class="btn secondary edit-btn" data-content-id="${content.id}" style="margin-top:8px;padding:8px 16px;font-size:14px;width:100%">
-          ✏️ Edit Gambar
+          ✏️ Buat Variasi
         </button>
         
         <!-- Edit Image UI (hidden by default) -->
         <div id="edit-image-ui-${content.id}" style="display:none;margin-top:12px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
-          <h5 style="margin:0 0 8px 0;color:#d1d5db;font-size:13px">Edit Gambar dengan Prompt</h5>
+          <h5 style="margin:0 0 8px 0;color:#d1d5db;font-size:13px">Buat Variasi dengan Prompt</h5>
           <textarea id="edit-prompt-${content.id}" placeholder="Contoh: ubah background lebih cerah, perbesar judul, buat lebih minimalis..." style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(0,0,0,.3);color:#d1d5db;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
           <button class="btn primary apply-edit-btn" data-content-id="${content.id}" style="padding:8px 16px;font-size:13px;width:100%">
-            ✨ Terapkan Edit
+            ✨ Terapkan Variasi
           </button>
         </div>
       </div>
@@ -6428,7 +6428,7 @@ async function addLogoToImage(imageData) {
     // Draw cropped image covering the canvas
     ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
     
-    // Load and draw logo overlay (top-right position)
+    // Load and draw logo overlay with smart placement
     const logo = new Image();
     logo.crossOrigin = 'anonymous';
     
@@ -6449,10 +6449,54 @@ async function addLogoToImage(imageData) {
       const logoWidth = Math.min(targetWidth * 0.17, 190);
       const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
       
-      // Position logo at top-right corner with padding
+      // Smart logo placement: analyze corner density
+      const cornerDensity = analyzeCornerDensity(ctx, targetWidth, targetHeight);
+      
+      // Choose corner with least density (highest score = least busy)
+      const bestCorner = Object.entries(cornerDensity).reduce((best, [corner, score]) => 
+        score > best.score ? { corner, score } : best
+      , { corner: 'top-right', score: -1 });
+      
+      console.log('[LOGO PLACEMENT] Corner analysis:', cornerDensity, 'Selected:', bestCorner.corner);
+      
+      // Calculate position based on best corner
       const padding = 40;
-      const logoX = targetWidth - logoWidth - padding;
-      const logoY = padding; // Safe margin from top
+      let logoX, logoY;
+      
+      switch (bestCorner.corner) {
+        case 'top-left':
+          logoX = padding;
+          logoY = padding;
+          break;
+        case 'top-right':
+          logoX = targetWidth - logoWidth - padding;
+          logoY = padding;
+          break;
+        case 'bottom-left':
+          logoX = padding;
+          logoY = targetHeight - logoHeight - padding;
+          break;
+        case 'bottom-right':
+          logoX = targetWidth - logoWidth - padding;
+          logoY = targetHeight - logoHeight - padding;
+          break;
+        default:
+          logoX = targetWidth - logoWidth - padding;
+          logoY = padding;
+      }
+      
+      // Check if selected area is visually busy (low score)
+      if (bestCorner.score < 30) {
+        // Add semi-transparent badge behind logo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        const badgePadding = 10;
+        ctx.fillRect(
+          logoX - badgePadding,
+          logoY - badgePadding,
+          logoWidth + badgePadding * 2,
+          logoHeight + badgePadding * 2
+        );
+      }
       
       // Draw logo with slight transparency
       ctx.globalAlpha = 0.9;
@@ -6476,6 +6520,45 @@ async function addLogoToImage(imageData) {
     // Return original image if overlay fails
     return imageData;
   }
+}
+
+// Analyze corner density to find least busy area
+function analyzeCornerDensity(ctx, width, height) {
+  const sampleSize = 100; // Sample area size
+  const corners = {
+    'top-left': { x: 0, y: 0 },
+    'top-right': { x: width - sampleSize, y: 0 },
+    'bottom-left': { x: 0, y: height - sampleSize },
+    'bottom-right': { x: width - sampleSize, y: height - sampleSize }
+  };
+  
+  const density = {};
+  
+  for (const [corner, pos] of Object.entries(corners)) {
+    const imageData = ctx.getImageData(pos.x, pos.y, sampleSize, sampleSize);
+    const data = imageData.data;
+    
+    // Calculate variance as measure of detail density
+    let sum = 0;
+    let sumSquared = 0;
+    const pixelCount = data.length / 4;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      // Use luminance: 0.299*R + 0.587*G + 0.114*B
+      const luminance = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      sum += luminance;
+      sumSquared += luminance * luminance;
+    }
+    
+    const mean = sum / pixelCount;
+    const variance = (sumSquared / pixelCount) - (mean * mean);
+    
+    // Lower variance = less detail = better for logo placement
+    // Convert to score: higher = better placement
+    density[corner] = Math.max(0, 100 - variance / 10);
+  }
+  
+  return density;
 }
 
 async function generateCaptionAndHashtags(recommendation) {
@@ -6729,7 +6812,7 @@ async function editImage(contentId) {
   
   const editPrompt = document.getElementById(`edit-prompt-${contentId}`);
   if (!editPrompt || !editPrompt.value.trim()) {
-    showToast('Masukkan instruksi edit terlebih dahulu', 'error');
+    showToast('Masukkan instruksi variasi terlebih dahulu', 'error');
     return;
   }
   
@@ -6748,7 +6831,7 @@ async function editImage(contentId) {
     imgElement.style.filter = 'blur(2px)';
   }
   
-  showToast('Sedang mengedit gambar...', 'success');
+  showToast('Sedang membuat variasi gambar...', 'success');
   
   try {
     // Build modified recommendation with edit instruction
@@ -6756,7 +6839,7 @@ async function editImage(contentId) {
       title: content.recommendationTitle,
       concept: content.recommendationDescription,
       call_to_action: '', // Will be regenerated if needed
-      data_basis: `Original: ${content.recommendationDescription}. Edit instruction: ${instruction}`
+      data_basis: `Original: ${content.recommendationDescription}. Variation instruction: ${instruction}`
     };
     
     // Generate new image with edit instruction
@@ -6774,7 +6857,7 @@ async function editImage(contentId) {
       imgElement.style.filter = 'none';
     }
     
-    showToast('Gambar berhasil diedit', 'success');
+    showToast('Variasi gambar berhasil dibuat', 'success');
     
     // Clear the edit prompt
     editPrompt.value = '';
@@ -6788,7 +6871,7 @@ async function editImage(contentId) {
       imgElement.style.filter = 'none';
     }
     
-    showToast('Gagal mengedit gambar: ' + error.message, 'error');
+    showToast('Gagal membuat variasi: ' + error.message, 'error');
   }
 }
 
