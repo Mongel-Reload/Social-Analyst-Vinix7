@@ -6452,18 +6452,28 @@ async function addLogoToImage(imageData) {
       // Smart logo placement: analyze corner density
       const cornerDensity = analyzeCornerDensity(ctx, targetWidth, targetHeight);
       
-      // Choose corner with least density (highest score = least busy)
-      const bestCorner = Object.entries(cornerDensity).reduce((best, [corner, score]) => 
-        score > best.score ? { corner, score } : best
-      , { corner: 'top-right', score: -1 });
+      // Sort corners by score (highest = least busy)
+      const sortedCorners = Object.entries(cornerDensity)
+        .sort((a, b) => b[1] - a[1])
+        .map(([corner, score]) => ({ corner, score }));
       
-      console.log('[LOGO PLACEMENT] Corner analysis:', cornerDensity, 'Selected:', bestCorner.corner);
+      console.log('[LOGO PLACEMENT] Corner analysis:', cornerDensity);
       
-      // Calculate position based on best corner
+      // Choose corner with sufficient score (> 30), otherwise try next best
       const padding = 40;
       let logoX, logoY;
+      let selectedCorner = sortedCorners[0].corner;
       
-      switch (bestCorner.corner) {
+      // If best corner is too busy, try the next best
+      if (sortedCorners[0].score < 30 && sortedCorners.length > 1) {
+        selectedCorner = sortedCorners[1].corner;
+        console.log('[LOGO PLACEMENT] Best corner too busy, using:', selectedCorner);
+      }
+      
+      console.log('[LOGO PLACEMENT] Selected corner:', selectedCorner);
+      
+      // Calculate position based on selected corner
+      switch (selectedCorner) {
         case 'top-left':
           logoX = padding;
           logoY = padding;
@@ -6485,20 +6495,12 @@ async function addLogoToImage(imageData) {
           logoY = padding;
       }
       
-      // Check if selected area is visually busy (low score)
-      if (bestCorner.score < 30) {
-        // Add semi-transparent badge behind logo
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        const badgePadding = 10;
-        ctx.fillRect(
-          logoX - badgePadding,
-          logoY - badgePadding,
-          logoWidth + badgePadding * 2,
-          logoHeight + badgePadding * 2
-        );
-      }
+      // Add subtle white outline/stroke for contrast if needed
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(logoX - 2, logoY - 2, logoWidth + 4, logoHeight + 4);
       
-      // Draw logo with slight transparency
+      // Draw logo with slight transparency, preserving original PNG transparency
       ctx.globalAlpha = 0.9;
       ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
       ctx.globalAlpha = 1.0;
