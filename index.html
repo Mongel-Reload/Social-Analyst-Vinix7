@@ -6445,8 +6445,8 @@ async function addLogoToImage(imageData) {
     });
     
     if (logo.complete && logo.naturalWidth > 0) {
-      // Calculate logo size (16-18% of canvas width, max 190px)
-      const logoWidth = Math.min(targetWidth * 0.17, 190);
+      // Calculate logo size (14-18% of canvas width, max 190px)
+      const logoWidth = Math.min(targetWidth * 0.16, 190);
       const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
       
       // Smart logo placement: analyze corner density
@@ -6460,7 +6460,7 @@ async function addLogoToImage(imageData) {
       console.log('[LOGO PLACEMENT] Corner analysis:', cornerDensity);
       
       // Choose corner with sufficient score (> 30), otherwise try next best
-      const padding = 40;
+      const padding = Math.round(targetWidth * 0.045); // 4-5% safe margin
       let logoX, logoY;
       let selectedCorner = sortedCorners[0].corner;
       
@@ -6470,7 +6470,7 @@ async function addLogoToImage(imageData) {
         console.log('[LOGO PLACEMENT] Best corner too busy, using:', selectedCorner);
       }
       
-      console.log('[LOGO PLACEMENT] Selected corner:', selectedCorner);
+      console.log('[LOGO PLACEMENT] Selected corner:', selectedCorner, 'Padding:', padding);
       
       // Calculate position based on selected corner
       switch (selectedCorner) {

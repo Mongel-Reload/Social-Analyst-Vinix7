@@ -179,6 +179,9 @@ function buildPrompt(recommendation, sentimentContext, brandProfile = null) {
   const callToAction = recommendation?.call_to_action || '';
   const dataBasis = recommendation?.data_basis || '';
   
+  // Determine layout type based on recommendation content
+  const layoutType = determineLayoutType(concept, title);
+  
   let brandInfo = '';
   if (brandProfile) {
     brandInfo = `
@@ -208,20 +211,82 @@ ${dataBasis}
 Audience:
 ${brandProfile?.audience || 'Indonesian social media audience'}.
 
-Requirements:
-- modern professional digital marketing visual
-- visually engaging
-- clean composition
-- strong focal point
-- premium but approachable
-- suitable for Instagram feed
-- portrait orientation
-- leave safe space around edges
-- avoid fake logos
-- avoid random unreadable text
-- do not invent statistics or claims
-- image should visually communicate the recommendation
-${brandProfile ? `- use brand colors ${brandProfile.primaryColor}, ${brandProfile.secondaryColor}, ${brandProfile.accentColor} as primary color palette` : ''}`;
+Layout Type:
+${layoutType}
+
+Design Brief:
+- Content Objective: Visually communicate the recommendation concept
+- Layout: ${layoutType} style
+- Headline: One main headline based on the recommendation title
+- Supporting Points: Maximum 3-4 key points from the concept
+- CTA: Single clear call to action
+- Brand Colors: ${brandProfile ? `Use ${brandProfile.primaryColor}, ${brandProfile.secondaryColor}, ${brandProfile.accentColor} as primary color palette` : 'Use professional color palette'}
+- Visual Direction: Clean, modern, mobile-readable design
+- Logo Safe-Zone: Leave one corner (top-left, top-right, bottom-left, or bottom-right) clean for logo overlay with 4-5% safe margin
+
+CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
+- Do NOT invent minimum semester requirements
+- Do NOT invent education requirements
+- Do NOT invent registration requirements
+- Do NOT invent document requirements
+- Do NOT invent dates or deadlines
+- Do NOT invent benefits or perks
+- Do NOT invent recruitment stages
+- Do NOT invent company policies
+- Do NOT invent statistics or numbers
+- Do NOT invent any factual company information not provided in this brief
+- Only use factual claims that exist in the actual analysis data, recommendation data, or Brand Profile
+- If factual information is unavailable, use safe/general wording instead
+- Creative headlines and CTA are allowed, but invented company facts are NOT allowed
+
+Content Density Requirements:
+- Prioritize 1 main headline
+- Maximum 3-4 supporting points
+- 1 CTA
+- Move detailed explanation to caption (not in image)
+- Avoid tiny text
+- Avoid excessive information cards
+- Design must be readable on mobile screen
+
+Technical Requirements:
+- Modern professional digital marketing visual
+- Visually engaging
+- Clean composition
+- Strong focal point
+- Premium but approachable
+- Suitable for Instagram feed
+- Portrait orientation (4:5 ratio)
+- Leave safe space around edges
+- Avoid fake logos
+- Avoid random unreadable text
+- Image should visually communicate the recommendation`;
+}
+
+// Helper: Determine layout type based on recommendation content
+function determineLayoutType(concept, title) {
+  const text = (concept + ' ' + title).toLowerCase();
+  
+  if (text.includes('faq') || text.includes('question') || text.includes('pertanyaan')) {
+    return 'Q&A / FAQ layout';
+  }
+  if (text.includes('education') || text.includes('learn') || text.includes('belajar') || text.includes('tutorial')) {
+    return 'Simple infographic';
+  }
+  if (text.includes('awareness') || text.includes('informasi') || text.includes('know') || text.includes('tahu')) {
+    return 'Visual-dominant';
+  }
+  if (text.includes('announcement') || text.includes('pengumuman') || text.includes('launch') || text.includes('rilis')) {
+    return 'Announcement / poster';
+  }
+  if (text.includes('engagement') || text.includes('interaksi') || text.includes('survey') || text.includes('poll')) {
+    return 'Question + CTA';
+  }
+  if (text.includes('tips') || text.includes('trick') || text.includes('cara') || text.includes('how to')) {
+    return 'Concise tips layout';
+  }
+  
+  // Default: clean visual with headline
+  return 'Clean visual with headline and supporting points';
 }
 
 // Helper: Update job status in Netlify Blobs
