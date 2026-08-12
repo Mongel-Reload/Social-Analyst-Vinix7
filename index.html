@@ -3496,10 +3496,43 @@ async function fetchModelEvaluationMetrics() {
       showClassificationReport();
     } else {
       console.warn('Backend metrics not available:', data.error || 'Unknown error');
+      // Show section with fallback message
+      showEvaluationFallback();
     }
   } catch (error) {
     console.error('Error fetching model evaluation metrics:', error);
+    // Show section with fallback message
+    showEvaluationFallback();
   }
+}
+
+function showEvaluationFallback() {
+  const section = document.getElementById('sentimentEvaluationSection');
+  if (!section) return;
+  
+  section.style.display = 'block';
+  
+  const elAccuracy = document.getElementById('sentimentAccuracy');
+  if(elAccuracy) elAccuracy.textContent = '-';
+  const elPrecision = document.getElementById('sentimentPrecision');
+  if(elPrecision) elPrecision.textContent = '-';
+  const elRecall = document.getElementById('sentimentRecall');
+  if(elRecall) elRecall.textContent = '-';
+  const elF1 = document.getElementById('sentimentF1');
+  if(elF1) elF1.textContent = '-';
+  
+  const elTotal = document.getElementById('sentimentEvalTotal');
+  if(elTotal) elTotal.textContent = '-';
+  const elCorrect = document.getElementById('sentimentEvalCorrect');
+  if(elCorrect) elCorrect.textContent = '-';
+  const elWrong = document.getElementById('sentimentEvalWrong');
+  if(elWrong) elWrong.textContent = '-';
+  
+  // Hide confusion matrix and classification if no data
+  const confusionSection = document.getElementById('sentimentConfusionSection');
+  if(confusionSection) confusionSection.style.display = 'none';
+  const classificationSection = document.getElementById('sentimentClassificationSection');
+  if(classificationSection) classificationSection.style.display = 'none';
 }
 
 function analyzeSentimentDataset() {
