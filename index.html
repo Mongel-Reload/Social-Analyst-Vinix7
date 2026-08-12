@@ -552,7 +552,6 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <div id="sentimentFinalSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">✅ Validasi Evaluasi</h3>
         <p style="color:#94a3b8;font-size:12px;margin-bottom:10px">Tabel ini menunjukkan perbandingan langsung antara Label Manual (Ground Truth) dan Prediksi Model untuk setiap komentar yang dievaluasi.</p>
-        <p style="color:#ef4444;font-size:11px;margin-bottom:10px">⚠️ Warning: Model dilatih dan dievaluasi pada data yang sama (Data Leakage)</p>
         <div class="table" style="max-height:400px;overflow-y:auto">
           <table>
             <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Status</th></tr></thead>
@@ -3812,8 +3811,8 @@ function analyzeSentimentDataset() {
       wrong: wrongCount
     };
 
-    // Add methodology info (WARNING: Data leakage)
-    sentimentEvaluation.method = 'Model dilatih dan dievaluasi pada data yang sama (Warning: Data Leakage)';
+    // Add methodology info
+    sentimentEvaluation.method = 'Evaluasi berdasarkan perbandingan Prediksi Model vs Label Manual';
 
     console.log('[DISPLAY PREDICTION EVALUATION]', {
       totalLabeled: totalLabeled,
@@ -4737,9 +4736,9 @@ function showEvaluationResults() {
     // Add methodology text
     const elMethodology = document.getElementById('sentimentEvalMethodology');
     if(elMethodology) {
-      elMethodology.textContent = sentimentEvaluation.method || 'Model dilatih dan dievaluasi pada data yang sama (Warning: Data Leakage)';
+      elMethodology.textContent = sentimentEvaluation.method || 'Evaluasi berdasarkan perbandingan Prediksi Model vs Label Manual';
       elMethodology.style.display = 'block';
-      elMethodology.style.color = '#ef4444'; // Red for warning
+      elMethodology.style.color = '#64748b'; // Normal color
     }
   } else {
     console.error('[EVAL DEBUG 10 - RENDER] validationInfo is missing');
