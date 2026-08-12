@@ -487,6 +487,11 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
           <div class="card kpi"><small>Recall</small><strong id="sentimentRecall">-</strong><span>-</span></div>
           <div class="card kpi"><small>F1 Score</small><strong id="sentimentF1">-</strong><span>-</span></div>
         </div>
+        <div style="margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,0.1)">
+          <small style="color:#94a3b8">Data Evaluasi: <strong id="sentimentEvalTotal">-</strong> komentar</small>
+          <small style="color:#94a3b8;margin-left:20px">Prediksi Benar: <strong id="sentimentEvalCorrect">-</strong></small>
+          <small style="color:#94a3b8;margin-left:20px">Prediksi Salah: <strong id="sentimentEvalWrong">-</strong></small>
+        </div>
       </div>
       
       <!-- 6. Confusion Matrix -->
@@ -3475,12 +3480,31 @@ function analyzeSentimentDataset() {
     // Show preprocessing results
     showPreprocessingResults();
     
-    // 2. Train/Test Split (80/20)
-    console.log('Splitting data...');
-    const shuffled = [...sentimentPreprocessed].sort(() => Math.random() - 0.5);
-    const splitIndex = Math.floor(shuffled.length * 0.8);
-    const trainData = shuffled.slice(0, splitIndex);
-    const testData = shuffled.slice(splitIndex);
+    // 2. Train/Test Split (80/20) with stratification
+    console.log('Splitting data with stratification...');
+    
+    // Group by label for stratified split
+    const dataByLabel = {};
+    sentimentPreprocessed.forEach(row => {
+      const label = row.label || 'Netral';
+      if (!dataByLabel[label]) dataByLabel[label] = [];
+      dataByLabel[label].push(row);
+    });
+    
+    // Split each label group
+    const trainData = [];
+    const testData = [];
+    Object.keys(dataByLabel).forEach(label => {
+      const labelData = dataByLabel[label];
+      const shuffled = [...labelData].sort(() => Math.random() - 0.5);
+      const splitIndex = Math.floor(shuffled.length * 0.8);
+      trainData.push(...shuffled.slice(0, splitIndex));
+      testData.push(...shuffled.slice(splitIndex));
+    });
+    
+    // Shuffle train and test separately
+    trainData.sort(() => Math.random() - 0.5);
+    testData.sort(() => Math.random() - 0.5);
     
     console.log('Train data:', trainData.length, 'Test data:', testData.length);
     
@@ -3529,8 +3553,16 @@ function analyzeSentimentDataset() {
     console.log('Classifier classes:', classifier.classes);
     console.log('Classifier priors:', classifier.classPriors);
     
-    // 6. Predict on ALL data (train + test)
-    console.log('Predicting on all data...');
+    // 6. Predict on TEST data only (not all data)
+    console.log('Predicting on test data...');
+    const testPredictions = classifier.predict(testVectors);
+    const testProbabilities = classifier.predict_proba(testVectors);
+    
+    console.log('Test predictions sample:', testPredictions.slice(0, 10));
+    console.log('Unique test predictions:', [...new Set(testPredictions)]);
+    
+    // 7. Predict on ALL data for display purposes (train + test)
+    console.log('Predicting on all data for display...');
     const allTexts = sentimentPreprocessed.map(d => d.preprocessed);
     const allVectors = vectorizer.transform(allTexts);
     const predictions = classifier.predict(allVectors);
@@ -3585,17 +3617,27 @@ function analyzeSentimentDataset() {
     // Show prediction results
     showPredictionResults();
     
-    // 6. Evaluate if labels exist
+    // 6. Evaluate if labels exist (using TEST set only)
     const hasLabels = sentimentDataset.some(row => row.label);
     console.log('Has labels:', hasLabels);
     
     if (hasLabels) {
-      const allLabels = sentimentPreprocessed.map(d => d.label || 'Netral');
-      console.log('All labels sample:', allLabels.slice(0, 10));
+      const testLabels = testData.map(d => d.label || 'Netral');
+      console.log('Test labels sample:', testLabels.slice(0, 10));
+      console.log('Test data count:', testData.length);
       
-      sentimentEvaluation = calculateEvaluationMetrics(allLabels, predictions, ['Positif', 'Netral', 'Negatif']);
+      sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictions, ['Positif', 'Netral', 'Negatif']);
       
       console.log('Evaluation metrics:', sentimentEvaluation);
+      
+      // Calculate validation info
+      const correct = testLabels.filter((label, i) => label === testPredictions[i]).length;
+      const wrong = testLabels.length - correct;
+      sentimentEvaluation.validationInfo = {
+        total: testLabels.length,
+        correct: correct,
+        wrong: wrong
+      };
       
       // Show evaluation results
       showEvaluationResults();
@@ -4429,6 +4471,16 @@ function showEvaluationResults() {
   if(elRecall) elRecall.textContent = (sentimentEvaluation.weightedRecall * 100).toFixed(2) + '%';
   const elF1 = document.getElementById('sentimentF1');
   if(elF1) elF1.textContent = (sentimentEvaluation.weightedF1 * 100).toFixed(2) + '%';
+  
+  // Show validation info
+  if (sentimentEvaluation.validationInfo) {
+    const elTotal = document.getElementById('sentimentEvalTotal');
+    if(elTotal) elTotal.textContent = sentimentEvaluation.validationInfo.total;
+    const elCorrect = document.getElementById('sentimentEvalCorrect');
+    if(elCorrect) elCorrect.textContent = sentimentEvaluation.validationInfo.correct;
+    const elWrong = document.getElementById('sentimentEvalWrong');
+    if(elWrong) elWrong.textContent = sentimentEvaluation.validationInfo.wrong;
+  }
 }
 
 function showConfusionMatrix() {
