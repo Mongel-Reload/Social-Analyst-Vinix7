@@ -3509,13 +3509,16 @@ function extractLinguisticFeatures(text) {
 }
 
 // Seeded random number generator for reproducibility
-function seededRandom(seed) {
-  let x = Math.sin(seed++) * 10000;
+let seedCounter = 42;
+function seededRandom() {
+  const x = Math.sin(seedCounter++) * 10000;
   return x - Math.floor(x);
 }
 
-// Fixed seed for reproducible train/test split
-const RANDOM_SEED = 42;
+// Reset seed counter before each analysis
+function resetSeedCounter() {
+  seedCounter = 42;
+}
 
 // Fetch model evaluation metrics from backend
 // DISABLED: This function depends on localhost:5000 which is not available in Netlify deployment
@@ -3571,6 +3574,10 @@ function analyzeSentimentDataset() {
 
   console.log('[UI FLOW] Starting sentiment analysis');
 
+  // Reset seed counter for reproducibility
+  resetSeedCounter();
+  console.log('[REPRODUCIBILITY] Seed counter reset to:', seedCounter);
+
   try {
     // 1. Preprocessing
     console.log('Starting preprocessing...');
@@ -3604,21 +3611,20 @@ function analyzeSentimentDataset() {
     // Split each label group
     const trainData = [];
     const testData = [];
-    let currentSeed = RANDOM_SEED;
 
     Object.keys(dataByLabel).forEach(label => {
       const labelData = dataByLabel[label];
-      const shuffled = [...labelData].sort(() => seededRandom(currentSeed++) - 0.5);
+      const shuffled = [...labelData].sort(() => seededRandom() - 0.5);
       const splitIndex = Math.floor(shuffled.length * 0.8);
       trainData.push(...shuffled.slice(0, splitIndex));
       testData.push(...shuffled.slice(splitIndex));
     });
 
     // Shuffle train and test separately with seeded random
-    trainData.sort(() => seededRandom(currentSeed++) - 0.5);
-    testData.sort(() => seededRandom(currentSeed++) - 0.5);
+    trainData.sort(() => seededRandom() - 0.5);
+    testData.sort(() => seededRandom() - 0.5);
 
-    console.log('[REPRODUCIBILITY] Using fixed seed:', RANDOM_SEED);
+    console.log('[REPRODUCIBILITY] Using seeded random with seed:', seedCounter);
 
     console.log('[EVAL DEBUG 5 - TRAIN]', trainData.length);
     console.log('[EVAL DEBUG 6 - TEST]', testData.length);
@@ -3788,7 +3794,7 @@ function analyzeSentimentDataset() {
           testPredictionsLength: testPredictionsEval.length,
           labelsSample: testLabels.slice(0, 5),
           predictionsSample: testPredictionsEval.slice(0, 5),
-          randomSeed: RANDOM_SEED
+          randomSeed: seedCounter
         });
 
         sentimentEvaluation = calculateEvaluationMetrics(testLabels, testPredictionsEval, ['Positif', 'Netral', 'Negatif']);
@@ -3796,7 +3802,7 @@ function analyzeSentimentDataset() {
         console.log('[EVAL DEBUG 9 - METRICS]', sentimentEvaluation);
         console.log('[SIDANG METRICS]', {
           ...sentimentEvaluation,
-          randomSeed: RANDOM_SEED
+          randomSeed: seedCounter
         });
 
         // Calculate validation info
