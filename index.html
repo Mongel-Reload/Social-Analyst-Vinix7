@@ -3840,7 +3840,7 @@ function analyzeSentimentDataset() {
       f1: sentimentEvaluation.weightedF1
     });
 
-    // 12. Train on ALL labeled data for display predictions
+    // 12. Train on ALL labeled data for display predictions (for the main prediction table)
     console.log('Training final model on all labeled data for display...');
     const finalVectorizer = new TFIDFVectorizer();
     const allTexts = labeledData.map(d => d.preprocessed);
@@ -3860,7 +3860,7 @@ function analyzeSentimentDataset() {
     if (uniquePredictions.length === 1) {
       console.warn('All predictions are the same:', uniquePredictions[0]);
       console.warn('Using fallback keyword-based classification');
-      
+
       sentimentPredictions = sentimentPreprocessed.map(row => {
         const storedPrediction = getStoredPrediction(row.komentar);
         const sentiment = storedPrediction || classifyByKeyword(row.komentar);
@@ -3884,6 +3884,9 @@ function analyzeSentimentDataset() {
         };
       });
     }
+
+    console.log('[VALIDATION TABLE] Using K-Fold OOF predictions for validation table');
+    console.log('[VALIDATION TABLE] K-Fold prediction details count:', kFoldPredictionDetails.length);
     
     // Log prediction distribution
     const predCounts = {};
