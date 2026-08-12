@@ -552,6 +552,7 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
       <div id="sentimentFinalSection" class="card" style="margin-bottom:15px;display:none">
         <h3 style="margin-bottom:15px">✅ Validasi Evaluasi</h3>
         <p style="color:#94a3b8;font-size:12px;margin-bottom:10px">Tabel ini menunjukkan perbandingan langsung antara Label Manual (Ground Truth) dan Prediksi Model untuk setiap komentar yang dievaluasi.</p>
+        <p style="color:#ef4444;font-size:11px;margin-bottom:10px">⚠️ Warning: Model dilatih dan dievaluasi pada data yang sama (Data Leakage)</p>
         <div class="table" style="max-height:400px;overflow-y:auto">
           <table>
             <thead><tr><th>Komentar</th><th>Label Manual</th><th>Prediksi Model</th><th>Status</th></tr></thead>
@@ -3697,7 +3698,7 @@ function analyzeSentimentDataset() {
     // Show summary cards
     showSentimentSummaryCards();
 
-    // 3. Filter labeled data for K-Fold evaluation
+    // 3. Filter labeled data for evaluation
     const labeledData = sentimentPreprocessed.filter(row => {
       const normalizedLabel = normalizeLabel(row.label);
       return normalizedLabel !== null;
@@ -3705,167 +3706,31 @@ function analyzeSentimentDataset() {
 
     const unlabeledCount = sentimentPreprocessed.length - labeledData.length;
 
-    console.log('[K-FOLD CONFIG]', {
+    console.log('[EVALUATION CONFIG]', {
       totalDataset: sentimentPreprocessed.length,
       labeledRows: labeledData.length,
-      unlabeledRows: unlabeledCount,
-      folds: 5,
-      seed: 42
+      unlabeledRows: unlabeledCount
     });
 
-    // 4. Stratified K-Fold Cross-Validation
-    const K_FOLDS = 5;
-    const RANDOM_SEED = 42;
-    const folds = stratifiedKFoldSplit(labeledData, K_FOLDS, RANDOM_SEED);
+    // 4. Train on ALL labeled data
+    console.log('Training model on all labeled data...');
+    const vectorizer = new TFIDFVectorizer();
+    const trainTexts = labeledData.map(d => d.preprocessed);
+    const trainVectors = vectorizer.fitTransform(trainTexts);
 
-    // Initialize out-of-fold predictions array
-    const outOfFoldPredictions = new Array(labeledData.length);
-    const outOfFoldProbabilities = new Array(labeledData.length);
-    const predictionDetails = new Array(labeledData.length);
+    const classifier = new MultinomialNaiveBayes();
+    const trainLabels = labeledData.map(d => d.label || 'Netral');
+    classifier.fit(trainVectors, trainLabels);
 
-    // 5. K-Fold Loop
-    for (let fold = 0; fold < K_FOLDS; fold++) {
-      console.log(`[FOLD ${fold + 1}/${K_FOLDS}] Starting...`);
+    console.log('Classifier classes:', classifier.classes);
+    console.log('Classifier priors:', classifier.classPriors);
 
-      // Separate train and test for this fold
-      const trainData = [];
-      const testIndices = [];
-      const testData = [];
-
-      folds.forEach((foldData, foldIndex) => {
-        if (foldIndex === fold) {
-          // Test fold
-          foldData.forEach(item => {
-            testIndices.push(item.originalIndex);
-            testData.push(item.row);
-          });
-        } else {
-          // Train fold
-          trainData.push(...foldData.map(item => item.row));
-        }
-      });
-
-      console.log(`[FOLD ${fold + 1}]`, {
-        trainSize: trainData.length,
-        testSize: testData.length
-      });
-
-      // 6. TF-IDF: fit ONLY on train fold
-      const vectorizer = new TFIDFVectorizer();
-      const trainTexts = trainData.map(d => d.preprocessed);
-      const trainVectors = vectorizer.fitTransform(trainTexts);
-
-      // 7. Train Naive Bayes: fit ONLY on train fold
-      const classifier = new MultinomialNaiveBayes();
-      const trainLabels = trainData.map(d => d.label || 'Netral');
-      classifier.fit(trainVectors, trainLabels);
-
-      // 8. Predict on test fold: transform (NO fitting on test)
-      const testTexts = testData.map(d => d.preprocessed);
-      const testVectors = vectorizer.transform(testTexts);
-      const testPredictions = classifier.predict(testVectors);
-      const testProbabilities = classifier.predict_proba(testVectors);
-
-      // 9. Store predictions by original index
-      folds[fold].forEach((item, i) => {
-        const originalIndex = item.originalIndex;
-        outOfFoldPredictions[originalIndex] = testPredictions[i];
-        outOfFoldProbabilities[originalIndex] = testProbabilities[i];
-        predictionDetails[originalIndex] = {
-          originalIndex: originalIndex,
-          comment: item.row.komentar,
-          actualLabel: item.row.label,
-          predictedLabel: testPredictions[i],
-          fold: fold,
-          isCorrect: item.row.label === testPredictions[i]
-        };
-      });
-
-      console.log(`[FOLD ${fold + 1}] Completed`, {
-        predictionsStored: testPredictions.length
-      });
-    }
-
-    // 10. Validation Assertions
-    const totalLabeled = labeledData.length;
-    const predictionsComplete = outOfFoldPredictions.every(p => p !== undefined);
-    const correctCount = labeledData.filter((row, i) => row.label === outOfFoldPredictions[i]).length;
-    const wrongCount = totalLabeled - correctCount;
-
-    // Store prediction details globally for validation table
-    kFoldPredictionDetails = predictionDetails;
-
-    console.log('[EVALUATION VALIDATION]', {
-      totalLabeled: totalLabeled,
-      correctPlusWrong: correctCount + wrongCount,
-      confusionMatrixTotal: correctCount + wrongCount,
-      predictionsComplete: predictionsComplete,
-      outOfFoldPredictionsLength: outOfFoldPredictions.length
-    });
-
-    if (!predictionsComplete) {
-      console.error('[EVALUATION FAILED] Not all out-of-fold predictions filled');
-      alert('Evaluasi gagal: Tidak semua prediksi out-of-fold terisi. Silakan periksa log console.');
-      return;
-    }
-
-    if (correctCount + wrongCount !== totalLabeled) {
-      console.error('[EVALUATION FAILED] Correct + Wrong != Total Labeled');
-      alert('Evaluasi gagal: Jumlah prediksi benar + salah tidak sama dengan total data berlabel.');
-      return;
-    }
-
-    // 11. Calculate global metrics from ALL out-of-fold predictions
-    const actualLabels = labeledData.map(row => row.label);
-
-    // Debug: Compare actual vs predicted in readable format
-    console.log('[DEBUG LABEL PREDICTION COMPARISON]');
-    console.log('Total rows:', actualLabels.length);
-    console.log('Actual vs Predicted:');
-    actualLabels.forEach((actual, i) => {
-      const predicted = outOfFoldPredictions[i];
-      const match = actual === predicted;
-      const symbol = match ? '✓' : '✗';
-      console.log(`${symbol} Row ${i}: Actual="${actual}" | Predicted="${predicted}" | Match=${match}`);
-    });
-
-    sentimentEvaluation = calculateEvaluationMetrics(actualLabels, outOfFoldPredictions, ['Positif', 'Netral', 'Negatif']);
-
-    // Add validation info
-    sentimentEvaluation.validationInfo = {
-      total: totalLabeled,
-      correct: correctCount,
-      wrong: wrongCount
-    };
-
-    // Add methodology info
-    sentimentEvaluation.method = 'Stratified 5-Fold Cross-Validation';
-
-    console.log('[OOF EVALUATION]', {
-      totalLabeled: totalLabeled,
-      totalPredictions: outOfFoldPredictions.length,
-      correct: correctCount,
-      wrong: wrongCount,
-      accuracy: sentimentEvaluation.accuracy,
-      precision: sentimentEvaluation.weightedPrecision,
-      recall: sentimentEvaluation.weightedRecall,
-      f1: sentimentEvaluation.weightedF1
-    });
-
-    // 12. Train on ALL labeled data for display predictions (for the main prediction table)
-    console.log('Training final model on all labeled data for display...');
-    const finalVectorizer = new TFIDFVectorizer();
-    const allTexts = labeledData.map(d => d.preprocessed);
-    const allVectors = finalVectorizer.fitTransform(allTexts);
-    const allLabels = labeledData.map(d => d.label || 'Netral');
-    const finalClassifier = new MultinomialNaiveBayes();
-    finalClassifier.fit(allVectors, allLabels);
-
-    // Predict on ALL data (including unlabeled) for display
+    // 5. Predict on ALL data (including unlabeled) for display
+    console.log('Predicting on all data...');
     const allDataTexts = sentimentPreprocessed.map(d => d.preprocessed);
-    const allDataVectors = finalVectorizer.transform(allDataTexts);
-    const allPredictions = finalClassifier.predict(allDataVectors);
-    const allProbabilities = finalClassifier.predict_proba(allDataVectors);
+    const allDataVectors = vectorizer.transform(allDataTexts);
+    const allPredictions = classifier.predict(allDataVectors);
+    const allProbabilities = classifier.predict_proba(allDataVectors);
 
     // Check if all predictions are the same
     const uniquePredictions = [...new Set(allPredictions)];
@@ -3897,8 +3762,69 @@ function analyzeSentimentDataset() {
       });
     }
 
-    console.log('[VALIDATION TABLE] Using K-Fold OOF predictions for validation table');
-    console.log('[VALIDATION TABLE] K-Fold prediction details count:', kFoldPredictionDetails.length);
+    console.log('Predictions sample:', sentimentPredictions.slice(0, 10));
+    console.log('Unique predictions:', [...new Set(sentimentPredictions.map(p => p.predicted))]);
+
+    // 6. Validation Assertions - Using display predictions (trained on all data)
+    const labeledDataForEval = sentimentPreprocessed.filter(row => {
+      const normalizedLabel = normalizeLabel(row.label);
+      return normalizedLabel !== null;
+    });
+
+    const totalLabeled = labeledDataForEval.length;
+    const actualLabels = labeledDataForEval.map(row => row.label);
+    const displayPredictions = sentimentPredictions
+      .filter((p, i) => sentimentPreprocessed[i].label)
+      .map(p => p.predicted);
+
+    const correctCount = actualLabels.filter((label, i) => label === displayPredictions[i]).length;
+    const wrongCount = totalLabeled - correctCount;
+
+    console.log('[EVALUATION VALIDATION]', {
+      totalLabeled: totalLabeled,
+      correctPlusWrong: correctCount + wrongCount,
+      displayPredictionsLength: displayPredictions.length
+    });
+
+    if (correctCount + wrongCount !== totalLabeled) {
+      console.error('[EVALUATION FAILED] Correct + Wrong != Total Labeled');
+      alert('Evaluasi gagal: Jumlah prediksi benar + salah tidak sama dengan total data berlabel.');
+      return;
+    }
+
+    // 7. Calculate global metrics from display predictions (trained on all data)
+    console.log('[DEBUG LABEL PREDICTION COMPARISON]');
+    console.log('Total rows:', actualLabels.length);
+    console.log('Actual vs Predicted (Display Predictions):');
+    actualLabels.forEach((actual, i) => {
+      const predicted = displayPredictions[i];
+      const match = actual === predicted;
+      const symbol = match ? '✓' : '✗';
+      console.log(`${symbol} Row ${i}: Actual="${actual}" | Predicted="${predicted}" | Match=${match}`);
+    });
+
+    sentimentEvaluation = calculateEvaluationMetrics(actualLabels, displayPredictions, ['Positif', 'Netral', 'Negatif']);
+
+    // Add validation info
+    sentimentEvaluation.validationInfo = {
+      total: totalLabeled,
+      correct: correctCount,
+      wrong: wrongCount
+    };
+
+    // Add methodology info (WARNING: Data leakage)
+    sentimentEvaluation.method = 'Model dilatih dan dievaluasi pada data yang sama (Warning: Data Leakage)';
+
+    console.log('[DISPLAY PREDICTION EVALUATION]', {
+      totalLabeled: totalLabeled,
+      totalPredictions: displayPredictions.length,
+      correct: correctCount,
+      wrong: wrongCount,
+      accuracy: sentimentEvaluation.accuracy,
+      precision: sentimentEvaluation.weightedPrecision,
+      recall: sentimentEvaluation.weightedRecall,
+      f1: sentimentEvaluation.weightedF1
+    });
     
     // Log prediction distribution
     const predCounts = {};
@@ -4811,8 +4737,9 @@ function showEvaluationResults() {
     // Add methodology text
     const elMethodology = document.getElementById('sentimentEvalMethodology');
     if(elMethodology) {
-      elMethodology.textContent = sentimentEvaluation.method || 'Stratified 5-Fold Cross-Validation. Setiap komentar dievaluasi satu kali sebagai data uji.';
+      elMethodology.textContent = sentimentEvaluation.method || 'Model dilatih dan dievaluasi pada data yang sama (Warning: Data Leakage)';
       elMethodology.style.display = 'block';
+      elMethodology.style.color = '#ef4444'; // Red for warning
     }
   } else {
     console.error('[EVAL DEBUG 10 - RENDER] validationInfo is missing');
@@ -5032,21 +4959,26 @@ function showFinalResults() {
 
   section.style.display = 'block';
 
-  // Use K-Fold prediction details for validation table (actual evaluation predictions)
-  // Fallback to sentimentPredictions if no K-Fold details (unlabeled data)
+  // Use display predictions for validation table (trained on all data)
   const hasLabels = sentimentDataset.some(row => row.label);
-  const displayData = kFoldPredictionDetails || [];
+  const displayData = sentimentPreprocessed.filter(row => row.label).map((row, i) => {
+    const prediction = sentimentPredictions[i];
+    return {
+      comment: row.komentar,
+      actualLabel: row.label,
+      predictedLabel: prediction.predicted,
+      isCorrect: row.label === prediction.predicted
+    };
+  });
 
   console.log('[VALIDATION TABLE DEBUG]', {
     hasLabels,
-    kFoldPredictionDetailsExists: !!kFoldPredictionDetails,
-    kFoldPredictionDetailsLength: kFoldPredictionDetails?.length,
     displayDataLength: displayData.length,
     sentimentPredictionsLength: sentimentPredictions?.length
   });
 
   if (displayData.length === 0 && hasLabels) {
-    console.warn('[VALIDATION TABLE] No K-Fold prediction details available');
+    console.warn('[VALIDATION TABLE] No display predictions available');
     body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8">Data validasi tidak tersedia</td></tr>';
     return;
   }
