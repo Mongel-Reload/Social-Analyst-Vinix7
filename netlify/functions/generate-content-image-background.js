@@ -228,6 +228,15 @@ Design:
 - Avoid excessive decorative elements
 
 Layout:
+- ALL visual elements must fit completely inside the image
+- Nothing may continue beyond the bottom edge
+- Keep 60px minimum safe margin on all sides
+- Reserve the bottom 12% specifically for ONE final CTA
+- Maximum 4 information cards
+- Do not create additional cards/sections below the CTA
+- Before finalizing the composition, ensure headline, person, cards, logo-safe-area and CTA are fully visible
+- Prefer less text and larger spacing rather than adding more vertical sections
+- The bottom CTA must have visible padding below it
 - All content inside safe margins (~5% from edges)
 - Keep headline, cards, people, CTA and important visual elements away from the outer crop area
 - Large readable headline in upper area
