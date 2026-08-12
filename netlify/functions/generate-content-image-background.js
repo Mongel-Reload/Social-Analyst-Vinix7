@@ -226,7 +226,7 @@ Design:
 - Avoid excessive decorative elements
 
 Layout:
-- Compose ALL important content inside a centered 4:5 Instagram-safe area
+- Compose ALL important content inside a centered 4:5 Instagram-safe area with ~5% margin
 - Keep headline, cards, people, CTA and important visual elements away from the outer crop area
 - Large readable headline in upper area
 - Supporting information grouped into maximum 3-4 clean cards

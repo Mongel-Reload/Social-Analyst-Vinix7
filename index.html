@@ -6405,25 +6405,29 @@ async function addLogoToImage(imageData) {
       img.src = imageData;
     });
     
-    // Calculate aspect-ratio-safe fitting (contain instead of crop)
+    // Calculate aspect-ratio-safe fitting (contain mode - preserve all content)
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const targetRatio = targetWidth / targetHeight;
     
     let drawWidth, drawHeight, drawX, drawY;
     
-    if (imgRatio > targetRatio) {
-      // Image is wider than target - scale to fit height
-      drawHeight = targetHeight;
-      drawWidth = drawHeight * imgRatio;
-      drawX = (targetWidth - drawWidth) / 2;
-      drawY = 0;
-    } else {
-      // Image is taller than target - scale to fit width
-      drawWidth = targetWidth;
-      drawHeight = drawWidth / imgRatio;
-      drawX = 0;
-      drawY = (targetHeight - drawHeight) / 2;
-    }
+    // Calculate scale factor to fit entire image within target canvas
+    const scale = Math.min(targetWidth / img.naturalWidth, targetHeight / img.naturalHeight);
+    
+    drawWidth = img.naturalWidth * scale;
+    drawHeight = img.naturalHeight * scale;
+    
+    // Center the image on the canvas
+    drawX = (targetWidth - drawWidth) / 2;
+    drawY = (targetHeight - drawHeight) / 2;
+    
+    console.log('[IMAGE SCALING]', {
+      source: `${img.naturalWidth}x${img.naturalHeight}`,
+      target: `${targetWidth}x${targetHeight}`,
+      scale: scale.toFixed(4),
+      draw: `${Math.round(drawWidth)}x${Math.round(drawHeight)}`,
+      position: `${Math.round(drawX)},${Math.round(drawY)}`
+    });
     
     // Fill background with a neutral color before drawing
     ctx.fillStyle = '#f8fafc';
@@ -6499,15 +6503,8 @@ async function addLogoToImage(imageData) {
           logoY = padding;
       }
       
-      // Add subtle white outline/stroke for contrast if needed
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(logoX - 2, logoY - 2, logoWidth + 4, logoHeight + 4);
-      
-      // Draw logo with slight transparency, preserving original PNG transparency
-      ctx.globalAlpha = 0.9;
+      // Draw logo preserving original PNG transparency (no bounding box/shadow)
       ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
-      ctx.globalAlpha = 1.0;
     } else {
       // Fallback: Draw brand name text if logo fails to load
       ctx.font = 'bold 24px Arial';
@@ -6519,6 +6516,20 @@ async function addLogoToImage(imageData) {
     
     // Convert canvas to data URL
     const finalImageData = canvas.toDataURL('image/png');
+    
+    // Verify final dimensions programmatically
+    console.log('[FINAL IMAGE VERIFICATION]', {
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      expectedWidth: 1080,
+      expectedHeight: 1350,
+      widthMatch: canvas.width === 1080,
+      heightMatch: canvas.height === 1350
+    });
+    
+    if (canvas.width !== 1080 || canvas.height !== 1350) {
+      console.error('[FINAL IMAGE ERROR] Dimensions do not match expected 1080x1350');
+    }
     
     return finalImageData;
   } catch (error) {
