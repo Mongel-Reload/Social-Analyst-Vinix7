@@ -4443,6 +4443,50 @@ function updateStatisticsAfterCorrection() {
   // Update charts
   showSentimentDistribution();
   showSentimentTrendChart();
+
+  // Recalculate evaluation metrics if labels exist
+  const hasLabels = sentimentPredictions.some(p => p.label);
+  if (hasLabels) {
+    recalculateEvaluationMetrics();
+  }
+}
+
+function recalculateEvaluationMetrics() {
+  const labeledData = sentimentPredictions.filter(p => p.label);
+  
+  if (labeledData.length === 0) return;
+
+  const actualLabels = labeledData.map(p => p.label);
+  const displayPredictions = labeledData.map(p => p.predicted);
+
+  const correctCount = actualLabels.filter((label, i) => label === displayPredictions[i]).length;
+  const wrongCount = labeledData.length - correctCount;
+
+  // Recalculate metrics
+  sentimentEvaluation = calculateEvaluationMetrics(actualLabels, displayPredictions, ['Positif', 'Netral', 'Negatif']);
+
+  // Update validation info
+  sentimentEvaluation.validationInfo = {
+    total: labeledData.length,
+    correct: correctCount,
+    wrong: wrongCount
+  };
+
+  console.log('[CORRECTION EVALUATION UPDATE]', {
+    total: labeledData.length,
+    correct: correctCount,
+    wrong: wrongCount,
+    accuracy: sentimentEvaluation.accuracy,
+    precision: sentimentEvaluation.weightedPrecision,
+    recall: sentimentEvaluation.weightedRecall,
+    f1: sentimentEvaluation.weightedF1
+  });
+
+  // Update UI
+  showEvaluationResults();
+  showConfusionMatrix();
+  showClassificationReport();
+  showFinalResults();
 }
 
 function refreshSummaryStats() {
