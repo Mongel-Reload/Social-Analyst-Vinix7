@@ -3508,16 +3508,17 @@ function extractLinguisticFeatures(text) {
   return features;
 }
 
-// Seeded random number generator for reproducibility
+// Seeded random number generator for reproducibility (LCG algorithm)
 let seedCounter = 42;
 function seededRandom() {
-  const x = Math.sin(seedCounter++) * 10000;
-  return x - Math.floor(x);
+  seedCounter = (seedCounter * 9301 + 49297) % 233280;
+  return seedCounter / 233280;
 }
 
 // Reset seed counter before each analysis
 function resetSeedCounter() {
   seedCounter = 42;
+  console.log('[REPRODUCIBILITY] Seed counter fully reset to:', seedCounter);
 }
 
 // Fetch model evaluation metrics from backend
@@ -3577,6 +3578,12 @@ function analyzeSentimentDataset() {
   // Reset seed counter for reproducibility
   resetSeedCounter();
   console.log('[REPRODUCIBILITY] Seed counter reset to:', seedCounter);
+
+  // Clear any cached analysis results
+  sentimentPreprocessed = [];
+  sentimentPredictions = [];
+  sentimentLinguisticFeatures = [];
+  sentimentEvaluation = null;
 
   try {
     // 1. Preprocessing
