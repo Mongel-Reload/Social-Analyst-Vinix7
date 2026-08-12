@@ -657,6 +657,12 @@ canvas{width:100%!important;max-height:300px}.table{overflow:auto;border-radius:
         <!-- Generated Contents Container -->
         <div id="generatedContentsContainer" style="margin-top:20px"></div>
         
+        <!-- Image Preview Modal -->
+        <div id="imagePreviewModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:10000;align-items:center;justify-content:center">
+          <button onclick="closeImagePreview()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,.2);border:none;color:white;font-size:24px;padding:10px 15px;border-radius:8px;cursor:pointer;z-index:10001">✕</button>
+          <img id="previewImage" src="" alt="Preview" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px">
+        </div>
+        
         <!-- Remaining Recommendations -->
         <div id="remainingRecommendations" style="margin-top:30px;display:none">
           <h4 style="margin-bottom:15px;color:#d8b4fe">🔄 Buat Konten dari Rekomendasi Lain</h4>
@@ -6086,11 +6092,11 @@ function renderGeneratedContent(content) {
       
       <!-- Left Column: Image + Download + Edit -->
       <div>
-        <img id="content-image-${content.id}" src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;border-radius:8px;aspect-ratio:4/5;object-fit:cover">
-        <button class="btn secondary" onclick="downloadGeneratedImage('${content.id}')" style="margin-top:10px;padding:8px 16px;font-size:14px;width:100%">
+        <img id="content-image-${content.id}" data-content-id="${content.id}" src="${content.finalImage}" alt="Generated Instagram Content" style="width:100%;border-radius:8px;aspect-ratio:4/5;object-fit:cover;cursor:zoom-in">
+        <button class="btn secondary download-btn" data-content-id="${content.id}" style="margin-top:10px;padding:8px 16px;font-size:14px;width:100%">
           ⬇ Download Gambar
         </button>
-        <button class="btn secondary" onclick="toggleEditImageUI('${content.id}')" style="margin-top:8px;padding:8px 16px;font-size:14px;width:100%">
+        <button class="btn secondary edit-btn" data-content-id="${content.id}" style="margin-top:8px;padding:8px 16px;font-size:14px;width:100%">
           ✏️ Edit Gambar
         </button>
         
@@ -6098,7 +6104,7 @@ function renderGeneratedContent(content) {
         <div id="edit-image-ui-${content.id}" style="display:none;margin-top:12px;padding:12px;background:rgba(255,255,255,.05);border-radius:8px">
           <h5 style="margin:0 0 8px 0;color:#d1d5db;font-size:13px">Edit Gambar dengan Prompt</h5>
           <textarea id="edit-prompt-${content.id}" placeholder="Contoh: ubah background lebih cerah, perbesar judul, buat lebih minimalis..." style="width:100%;min-height:80px;padding:8px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:rgba(0,0,0,.3);color:#d1d5db;font-size:13px;resize:vertical;margin-bottom:8px"></textarea>
-          <button class="btn primary" onclick="editImage('${content.id}')" style="padding:8px 16px;font-size:13px;width:100%">
+          <button class="btn primary apply-edit-btn" data-content-id="${content.id}" style="padding:8px 16px;font-size:13px;width:100%">
             ✨ Terapkan Edit
           </button>
         </div>
@@ -6110,7 +6116,7 @@ function renderGeneratedContent(content) {
         <div style="margin-bottom:15px">
           <h5 style="margin:0 0 8px 0;color:#d1d5db">Caption Instagram</h5>
           <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.caption)}</p>
-          <button class="btn secondary" onclick="copyCaption('${content.id}')" style="padding:6px 12px;font-size:13px">
+          <button class="btn secondary copy-caption-btn" data-content-id="${content.id}" style="padding:6px 12px;font-size:13px">
             📋 Salin Caption
           </button>
         </div>
@@ -6119,13 +6125,13 @@ function renderGeneratedContent(content) {
         <div style="margin-bottom:15px">
           <h5 style="margin:0 0 8px 0;color:#d1d5db">Hashtag</h5>
           <p style="margin:0 0 10px 0;color:#d1d5db;line-height:1.6;font-size:14px">${sanitizeText(content.hashtags)}</p>
-          <button class="btn secondary" onclick="copyHashtags('${content.id}')" style="padding:6px 12px;font-size:13px">
+          <button class="btn secondary copy-hashtag-btn" data-content-id="${content.id}" style="padding:6px 12px;font-size:13px">
             📋 Salin Hashtag
           </button>
         </div>
         
         <!-- Regenerate Button -->
-        <button class="btn secondary" onclick="regenerateContent(${content.recommendationId}, ${content.id})" style="padding:8px 16px;font-size:14px">
+        <button class="btn secondary regenerate-btn" data-content-id="${content.id}" data-recommendation-id="${content.recommendationId}" style="padding:8px 16px;font-size:14px">
           🔄 Generate Ulang Konten Ini
         </button>
       </div>
@@ -6142,7 +6148,90 @@ function renderGeneratedContent(content) {
   `;
   
   container.appendChild(card);
+  
+  // Add event listeners after card is rendered
+  attachContentEventListeners(content);
 }
+
+function attachContentEventListeners(content) {
+  const card = document.getElementById(`content-${content.id}`);
+  if (!card) return;
+  
+  // Image click for preview
+  const img = card.querySelector(`#content-image-${content.id}`);
+  if (img) {
+    img.addEventListener('click', () => openImagePreview(content.finalImage));
+  }
+  
+  // Download button
+  const downloadBtn = card.querySelector('.download-btn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => downloadGeneratedImage(content.id));
+  }
+  
+  // Edit button
+  const editBtn = card.querySelector('.edit-btn');
+  if (editBtn) {
+    editBtn.addEventListener('click', () => toggleEditImageUI(content.id));
+  }
+  
+  // Apply edit button
+  const applyEditBtn = card.querySelector('.apply-edit-btn');
+  if (applyEditBtn) {
+    applyEditBtn.addEventListener('click', () => editImage(content.id));
+  }
+  
+  // Copy caption button
+  const copyCaptionBtn = card.querySelector('.copy-caption-btn');
+  if (copyCaptionBtn) {
+    copyCaptionBtn.addEventListener('click', () => copyCaption(content.id));
+  }
+  
+  // Copy hashtag button
+  const copyHashtagBtn = card.querySelector('.copy-hashtag-btn');
+  if (copyHashtagBtn) {
+    copyHashtagBtn.addEventListener('click', () => copyHashtags(content.id));
+  }
+  
+  // Regenerate button
+  const regenerateBtn = card.querySelector('.regenerate-btn');
+  if (regenerateBtn) {
+    regenerateBtn.addEventListener('click', () => regenerateContent(content.recommendationId, content.id));
+  }
+}
+
+function openImagePreview(imageSrc) {
+  const modal = document.getElementById('imagePreviewModal');
+  const previewImage = document.getElementById('previewImage');
+  
+  if (modal && previewImage) {
+    previewImage.src = imageSrc;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+  }
+}
+
+function closeImagePreview() {
+  const modal = document.getElementById('imagePreviewModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = ''; // Restore scrolling
+  }
+}
+
+// Close modal on ESC key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeImagePreview();
+  }
+});
+
+// Close modal on click outside image
+document.getElementById('imagePreviewModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'imagePreviewModal') {
+    closeImagePreview();
+  }
+});
 
 async function generateImage(recommendation) {
   // Helper: Read function response with diagnostics
@@ -6463,15 +6552,44 @@ function downloadGeneratedImage(contentId) {
   
   console.log('[DOWNLOAD IMAGE] Using source:', imageSource.substring(0, 100) + '...');
   
-  // Use anchor element for download
-  const a = document.createElement('a');
-  a.href = imageSource;
-  a.download = `kokorolens-content-${Date.now()}.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  // Handle data URL
+  if (imageSource.startsWith('data:')) {
+    const a = document.createElement('a');
+    a.href = imageSource;
+    a.download = `kokorolens-content-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    showToast('Gambar berhasil diunduh', 'success');
+    return;
+  }
   
-  showToast('Gambar berhasil diunduh', 'success');
+  // Handle regular URL - fetch and convert to blob
+  fetch(imageSource)
+    .then(res => res.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kokorolens-content-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Gambar berhasil diunduh', 'success');
+    })
+    .catch(err => {
+      console.error('Failed to download image:', err);
+      // Fallback: try direct link
+      const a = document.createElement('a');
+      a.href = imageSource;
+      a.download = `kokorolens-content-${Date.now()}.png`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast('Gambar dibuka di tab baru', 'success');
+    });
 }
 
 // Toast notification helper
