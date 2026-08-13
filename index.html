@@ -6975,11 +6975,14 @@ async function addLogoToImage(imageData) {
       // Smart logo placement: prefer top corners (as reserved in prompt)
       const cornerDensity = analyzeCornerDensity(ctx, targetWidth, targetHeight);
       
-      // Sort corners by score (highest = least busy), but prioritize top corners
+      // Sort corners by score (highest = least busy), but prioritize top-right corner
       const sortedCorners = Object.entries(cornerDensity)
         .map(([corner, score]) => ({ corner, score }))
         .sort((a, b) => {
-          // Prioritize top corners
+          // Prioritize top-right corner specifically
+          if (a.corner === 'top-right') return -1;
+          if (b.corner === 'top-right') return 1;
+          // Then prioritize top corners
           const aIsTop = a.corner.startsWith('top');
           const bIsTop = b.corner.startsWith('top');
           if (aIsTop && !bIsTop) return -1;

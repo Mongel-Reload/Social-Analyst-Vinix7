@@ -235,9 +235,9 @@ Layout:
 - ALL visual elements must fit completely inside the image
 - Nothing may continue beyond the bottom edge
 - Keep ~6% safe margin on all sides from edges
-- Reserve a dedicated logo area in ONE top corner (top-left or top-right)
-- Nothing may overlap the logo area - keep it visually clean
-- Logo must never overlap headline, face, card, or decoration
+- Reserve a dedicated logo area in TOP-RIGHT corner specifically
+- Nothing may overlap the logo area - keep it visually clean with clear space around logo
+- Logo must never overlap headline, face, card, badge, icon, or decoration
 - Headline maximum 2-3 lines and must not dominate more than ~25% of canvas height
 - Human subject maximum ~45% of canvas width
 - Information cards must remain large and readable - do not shrink them
@@ -263,11 +263,24 @@ Layout:
 - Maintain safe margins around all edges
 
 Visual Hierarchy (top to bottom):
-1. Logo area (reserved clean corner for VINIX7 logo)
-2. Headline
-3. Short supporting text
+1. Logo area (reserved clean TOP-RIGHT corner for VINIX7 logo - never overlap with headline or badges)
+2. Headline (main headline large bold navy, secondary headline with navy + yellow accent)
+3. Short supporting text (subheadline)
 4. Main visual + information cards
 5. CTA (bottom with safe margin)
+
+FAQ CONTENT SPECIFIC (when layout type is Q&A / FAQ):
+- Main headline: "FAQ MAGANG VINIX7" (large, bold, navy blue)
+- Secondary headline: "Semester, Jurusan, dan Kualifikasi" (navy + yellow accent combination)
+- Subheadline: "Temukan jawaban dari pertanyaan yang paling sering ditanyakan seputar program magang."
+- Use exactly 3 vertical FAQ cards with specific content:
+  Card 1: Question "Semester berapa yang bisa mendaftar?" Answer "Ketentuan semester dapat menyesuaikan posisi yang tersedia. Cek persyaratan pada setiap lowongan." Icon: Graduation cap
+  Card 2: Question "Apakah harus dari jurusan tertentu?" Answer "Kebutuhan jurusan menyesuaikan kualifikasi setiap posisi magang. Cek detail pada lowongan yang tersedia." Icon: Book/education
+  Card 3: Question "Apakah latar belakang saya sesuai?" Answer "Kesesuaian kandidat bergantung pada persyaratan dan kualifikasi setiap posisi. Pastikan sesuai dengan informasi pada lowongan." Icon: Candidate/profile + check mark
+- CTA at bottom with two parts: Left "Cek persyaratan pada lowongan VINIX7 yang tersedia" (search icon), Right "Pantau informasi terbaru di kanal resmi VINIX7" (notification icon)
+- Keep CTA clean with sufficient whitespace
+- Talent on right side, FAQ cards on left side
+- Ensure talent body does not cover cards or text
 
 Typography:
 - Headline = largest
