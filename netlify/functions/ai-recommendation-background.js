@@ -55,7 +55,10 @@ BRANDING:
 FAKTUAL GROUNDING:
 - JANGAN mengarang fakta perusahaan (semester minimum, jurusan, benefit, dll)
 - Hanya gunakan informasi yang ada dalam data analisis
-- Jika data tidak cukup, gunakan fewer content ideas (bukan mengarang fakta)`;
+- Jika data tidak cukup, gunakan fewer content ideas (bukan mengarang fakta)
+- Gunakan insight dari komentar sebagai dasar topik konten
+- JANGAN mengubah pertanyaan atau asumsi dari komentar menjadi fakta resmi perusahaan
+- Jika informasi persyaratan tidak tersedia pada dataset atau profil brand, gunakan kalimat aman seperti "cek persyaratan pada lowongan yang tersedia" atau "ikuti informasi resmi VINIX7"`;
 
 exports.handler = async (event, context) => {
   console.log('[AI RECOMMENDATION HANDLER ENTERED]', {

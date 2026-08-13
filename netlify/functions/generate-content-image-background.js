@@ -321,7 +321,10 @@ CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
 - Only use factual claims that exist in the actual analysis data, recommendation data, or Brand Profile
 - If factual information is unavailable, use safe/general wording instead
 - Creative headlines and CTA are allowed, but invented company facts are NOT allowed
-- NEVER use "belum tersedia" or similar placeholder text in the final image`;
+- NEVER use "belum tersedia" or similar placeholder text in the final image
+- Use insight from comments as basis for content topics
+- Do NOT convert questions or assumptions from comments into official company facts
+- If requirement information is not available in dataset or brand profile, use safe wording like "cek persyaratan pada lowongan yang tersedia" or "ikuti informasi resmi VINIX7"`;
 }
 
 // Helper: Determine layout type based on recommendation content
