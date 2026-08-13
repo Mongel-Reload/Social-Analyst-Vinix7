@@ -6833,8 +6833,8 @@ async function addLogoToImage(imageData) {
     const ctx = canvas.getContext('2d');
     
     // Set canvas size to Instagram portrait (4:5 ratio)
-    const targetWidth = 1080;
-    const targetHeight = 1350;
+    const targetWidth = 1024;
+    const targetHeight = 1280;
     canvas.width = targetWidth;
     canvas.height = targetHeight;
     
@@ -6972,14 +6972,14 @@ async function addLogoToImage(imageData) {
     console.log('[FINAL IMAGE VERIFICATION]', {
       canvasWidth: canvas.width,
       canvasHeight: canvas.height,
-      expectedWidth: 1080,
-      expectedHeight: 1350,
-      widthMatch: canvas.width === 1080,
-      heightMatch: canvas.height === 1350
+      expectedWidth: 1024,
+      expectedHeight: 1280,
+      widthMatch: canvas.width === 1024,
+      heightMatch: canvas.height === 1280
     });
     
-    if (canvas.width !== 1080 || canvas.height !== 1350) {
-      console.error('[FINAL IMAGE ERROR] Dimensions do not match expected 1080x1350');
+    if (canvas.width !== 1024 || canvas.height !== 1280) {
+      console.error('[FINAL IMAGE ERROR] Dimensions do not match expected 1024x1280');
     }
     
     return finalImageData;

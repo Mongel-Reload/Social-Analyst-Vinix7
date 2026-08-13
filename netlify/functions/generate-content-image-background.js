@@ -66,14 +66,14 @@ exports.handler = async (event, context) => {
       finalUrl,
       model,
       promptLength: prompt.length,
-      size: '1080x1350'
+      size: '1024x1280'
     });
     
     // Make request to KoboiLLM
     const payload = {
       model: model,
       prompt: prompt,
-      size: '1080x1350',
+      size: '1024x1280',
       n: 1
     };
     
@@ -220,7 +220,7 @@ ${layoutType}
 DESIGN SYSTEM:
 
 Design:
-- Instagram feed portrait 4:5 composition (1080x1350px)
+- Instagram feed portrait 4:5 composition (1024x1280px)
 - Generate natively for 4:5 ratio - do not use letterboxing or padding
 - Fill entire canvas edge-to-edge with content
 - Clean modern professional social-media layout
@@ -231,7 +231,7 @@ Design:
 - Avoid excessive decorative elements
 
 Layout:
-- Native Instagram portrait 4:5 composition (1080x1350px)
+- Native Instagram portrait 4:5 composition (1024x1280px)
 - ALL visual elements must fit completely inside the image
 - Nothing may continue beyond the bottom edge
 - Keep ~6% safe margin on all sides from edges
