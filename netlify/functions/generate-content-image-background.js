@@ -66,14 +66,14 @@ exports.handler = async (event, context) => {
       finalUrl,
       model,
       promptLength: prompt.length,
-      size: '1024x1536'
+      size: '1080x1350'
     });
     
     // Make request to KoboiLLM
     const payload = {
       model: model,
       prompt: prompt,
-      size: '1024x1536',
+      size: '1080x1350',
       n: 1
     };
     
@@ -182,11 +182,14 @@ function buildPrompt(recommendation, sentimentContext, brandProfile = null) {
   // Determine layout type based on recommendation content
   const layoutType = determineLayoutType(concept, title);
   
+  // Use VINIX7 as brand name for content generation
+  const brandName = brandProfile?.name || 'VINIX7';
+  
   let brandInfo = '';
   if (brandProfile) {
     brandInfo = `
 Brand Information:
-- Brand Name: ${brandProfile.name || 'Not specified'}
+- Brand Name: ${brandName} (VINIX7)
 - Industry: ${brandProfile.industry || 'Not specified'}
 - Target Audience: ${brandProfile.audience || 'Indonesian social media audience'}
 - Brand Colors: Primary ${brandProfile.primaryColor || '#22d3ee'}, Secondary ${brandProfile.secondaryColor || '#3b82f6'}, Accent ${brandProfile.accentColor || '#8b5cf6'}
@@ -194,7 +197,7 @@ Brand Information:
 `;
   }
   
-  return `Create a polished professional Instagram feed marketing visual based on the following recommendation derived from social media sentiment analysis.
+  return `Create a polished professional Instagram feed marketing visual for VINIX7 based on the following recommendation derived from social media sentiment analysis.
 
 ${brandInfo}Recommendation:
 ${title}
@@ -217,7 +220,7 @@ ${layoutType}
 DESIGN SYSTEM:
 
 Design:
-- Instagram feed portrait 4:5 composition (edge-to-edge design)
+- Instagram feed portrait 4:5 composition (1080x1350px)
 - Generate natively for 4:5 ratio - do not use letterboxing or padding
 - Fill entire canvas edge-to-edge with content
 - Clean modern professional social-media layout
@@ -228,7 +231,7 @@ Design:
 - Avoid excessive decorative elements
 
 Layout:
-- Native Instagram portrait 4:5 composition
+- Native Instagram portrait 4:5 composition (1080x1350px)
 - ALL visual elements must fit completely inside the image
 - Nothing may continue beyond the bottom edge
 - Keep ~6% safe margin on all sides from edges
@@ -260,7 +263,7 @@ Layout:
 - Maintain safe margins around all edges
 
 Visual Hierarchy (top to bottom):
-1. Logo area (reserved clean corner)
+1. Logo area (reserved clean corner for VINIX7 logo)
 2. Headline
 3. Short supporting text
 4. Main visual + information cards
@@ -273,21 +276,31 @@ Typography:
 - Maximum 2 font styles
 - Avoid tiny text
 - Avoid long paragraphs inside the image
+- Maximum 1-3 lines per card body text
 
 Branding:
 - Use Brand Profile colors consistently: primary → dominant, secondary → supporting, accent → CTA/highlights, neutral/white → readability
 - Do NOT randomly introduce unrelated dominant colors
+- Brand name in content should be VINIX7
 
 Logo:
 - Do NOT generate/recreate the company logo
 - Reserve a visually clean logo-safe area in one corner (top-left, top-right, bottom-left, or bottom-right)
-- The real uploaded logo will be overlaid afterward
+- The real uploaded VINIX7 logo will be overlaid afterward
 - Do NOT render a visible logo placeholder, box, border, safe-zone, or fake logo
+- Do NOT use "KokoroLens" as the brand name in the poster content
 
-Content:
-- Maximum: 1 headline, optional short subheadline, 3-4 information points, 1 CTA
-- If available grounded information is insufficient, use fewer cards
+Content Structure:
+- Maximum: 1 headline, optional short subheadline, maximum 4 information cards, 1 CTA
+- If available grounded information is insufficient, use fewer cards (not more)
 - NEVER fill empty space by inventing facts
+- NEVER use placeholder text like "belum tersedia" (not available)
+- If specific factual information is missing, use safe/general guidance instead
+
+SAFE WORDING EXAMPLES (use when specific data unavailable):
+- Instead of "Minimal semester belum tersedia" → "Ketentuan semester dapat menyesuaikan posisi yang tersedia. Cek persyaratan pada lowongan."
+- Instead of "Jurusan belum tersedia" → "Kebutuhan jurusan menyesuaikan kualifikasi setiap posisi magang."
+- Instead of "Cara daftar belum tersedia" → "Pantau informasi lowongan dan ikuti petunjuk pendaftaran pada kanal resmi VINIX7."
 
 IMPORTANT:
 - This is a DESIGN SYSTEM, not one fixed template
@@ -307,7 +320,8 @@ CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
 - Do NOT invent any factual company information not provided in this brief
 - Only use factual claims that exist in the actual analysis data, recommendation data, or Brand Profile
 - If factual information is unavailable, use safe/general wording instead
-- Creative headlines and CTA are allowed, but invented company facts are NOT allowed`;
+- Creative headlines and CTA are allowed, but invented company facts are NOT allowed
+- NEVER use "belum tersedia" or similar placeholder text in the final image`;
 }
 
 // Helper: Determine layout type based on recommendation content
