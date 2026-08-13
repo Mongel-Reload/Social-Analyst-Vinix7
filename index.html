@@ -3693,9 +3693,6 @@ function analyzeSentimentDataset() {
     
     // Show linguistic features
     showLinguisticFeatures();
-    
-    // Show summary cards
-    showSentimentSummaryCards();
 
     // 3. Filter labeled data for evaluation
     const labeledData = sentimentPreprocessed.filter(row => {
@@ -3763,6 +3760,9 @@ function analyzeSentimentDataset() {
 
     console.log('Predictions sample:', sentimentPredictions.slice(0, 10));
     console.log('Unique predictions:', [...new Set(sentimentPredictions.map(p => p.predicted))]);
+
+    // Update sentiment summary cards with final predictions
+    updateStatisticsAfterCorrection();
 
     // 6. Validation Assertions - Using display predictions (trained on all data)
     const labeledDataForEval = sentimentPreprocessed.filter(row => {
@@ -3964,7 +3964,15 @@ function showSentimentSummaryCards() {
   const neutral = sentimentPredictions.filter(p => p.predicted === 'Netral').length;
   const negative = sentimentPredictions.filter(p => p.predicted === 'Negatif').length;
   
-  const avgConfidence = (sentimentPredictions.reduce((sum, p) => sum + parseFloat(p.confidencePercent), 0) / total).toFixed(1);
+  // Safe percentage calculation to prevent NaN
+  const safePercentage = (count, total) => {
+    if (!total || total <= 0) return 0;
+    return ((count / total) * 100).toFixed(1);
+  };
+  
+  const avgConfidence = total > 0 
+    ? (sentimentPredictions.reduce((sum, p) => sum + parseFloat(p.confidencePercent || 0), 0) / total).toFixed(1)
+    : 0;
   
   const elSummaryTotal = document.getElementById('summaryTotal');
   if(elSummaryTotal) elSummaryTotal.textContent = total;
@@ -3975,11 +3983,11 @@ function showSentimentSummaryCards() {
   const elSummaryNegative = document.getElementById('summaryNegative');
   if(elSummaryNegative) elSummaryNegative.textContent = negative;
   const elSummaryPositivePct = document.getElementById('summaryPositivePct');
-  if(elSummaryPositivePct) elSummaryPositivePct.textContent = ((positive / total) * 100).toFixed(1) + '%';
+  if(elSummaryPositivePct) elSummaryPositivePct.textContent = safePercentage(positive, total) + '%';
   const elSummaryNeutralPct = document.getElementById('summaryNeutralPct');
-  if(elSummaryNeutralPct) elSummaryNeutralPct.textContent = ((neutral / total) * 100).toFixed(1) + '%';
+  if(elSummaryNeutralPct) elSummaryNeutralPct.textContent = safePercentage(neutral, total) + '%';
   const elSummaryNegativePct = document.getElementById('summaryNegativePct');
-  if(elSummaryNegativePct) elSummaryNegativePct.textContent = ((negative / total) * 100).toFixed(1) + '%';
+  if(elSummaryNegativePct) elSummaryNegativePct.textContent = safePercentage(negative, total) + '%';
   const elSummaryAvgConfidence = document.getElementById('summaryAvgConfidence');
   if(elSummaryAvgConfidence) elSummaryAvgConfidence.textContent = avgConfidence + '%';
 }
@@ -3995,30 +4003,37 @@ function showMLInsights() {
   const positive = sentimentPredictions.filter(p => p.predicted === 'Positif').length;
   const neutral = sentimentPredictions.filter(p => p.predicted === 'Netral').length;
   const negative = sentimentPredictions.filter(p => p.predicted === 'Negatif').length;
-  const positivePct = ((positive / total) * 100).toFixed(1);
-  const neutralPct = ((neutral / total) * 100).toFixed(1);
-  const negativePct = ((negative / total) * 100).toFixed(1);
+  
+  // Safe percentage calculation to prevent NaN
+  const safePercentage = (count, total) => {
+    if (!total || total <= 0) return 0;
+    return ((count / total) * 100).toFixed(1);
+  };
+  
+  const positivePct = safePercentage(positive, total);
+  const neutralPct = safePercentage(neutral, total);
+  const negativePct = safePercentage(negative, total);
   
   const insights = [];
   
   // Insight 1: Majority sentiment
-  if (neutralPct > 50) {
+  if (parseFloat(neutralPct) > 50) {
     insights.push(`Mayoritas komentar (${neutralPct}%) bersifat netral.`);
-  } else if (positivePct > 50) {
+  } else if (parseFloat(positivePct) > 50) {
     insights.push(`Mayoritas komentar (${positivePct}%) bersifat positif.`);
-  } else if (negativePct > 50) {
+  } else if (parseFloat(negativePct) > 50) {
     insights.push(`Mayoritas komentar (${negativePct}%) bersifat negatif.`);
   } else {
     insights.push(`Distribusi sentimen seimbar: Positif ${positivePct}%, Netral ${neutralPct}%, Negatif ${negativePct}%.`);
   }
   
   // Insight 2: Negative comments analysis
-  if (negativePct > 20) {
+  if (parseFloat(negativePct) > 20) {
     insights.push(`Komentar negatif (${negativePct}%) didominasi pertanyaan mengenai biaya atau keluhan.`);
   }
   
   // Insight 3: Positive comments analysis
-  if (positivePct > 30) {
+  if (parseFloat(positivePct) > 30) {
     insights.push(`Komentar positif (${positivePct}%) didominasi apresiasi pelayanan.`);
   }
   
@@ -4027,7 +4042,7 @@ function showMLInsights() {
     const totals = window.linguisticTotals;
     
     if (totals.negation_count > 0) {
-      const negationPct = ((totals.negation_count / total) * 100).toFixed(1);
+      const negationPct = safePercentage(totals.negation_count, total);
       insights.push(`Komentar negatif paling sering mengandung kata negasi "tidak" (${totals.negation_count} kemunculan, ${negationPct}%).`);
     }
     
@@ -4036,7 +4051,7 @@ function showMLInsights() {
     }
     
     if (totals.uppercase_word_count > 0) {
-      const uppercasePct = ((totals.uppercase_word_count / total) * 100).toFixed(1);
+      const uppercasePct = safePercentage(totals.uppercase_word_count, total);
       insights.push(`${totals.uppercase_word_count} komentar menggunakan huruf kapital (${uppercasePct}%).`);
     }
     
@@ -4045,18 +4060,20 @@ function showMLInsights() {
     }
     
     if (totals.exclamation_count > 0) {
-      const avgExclamation = (totals.exclamation_count / total).toFixed(2);
+      const avgExclamation = total > 0 ? (totals.exclamation_count / total).toFixed(2) : 0;
       insights.push(`Rata-rata ${avgExclamation} tanda seru per komentar, menunjukkan emosi yang lebih kuat.`);
     }
     
     if (totals.question_count > 0) {
-      const questionPct = ((totals.question_count / total) * 100).toFixed(1);
+      const questionPct = safePercentage(totals.question_count, total);
       insights.push(`Pertanyaan mendominasi komentar netral (${totals.question_count} tanda tanya, ${questionPct}%).`);
     }
   }
   
   // Insight 5: Confidence analysis
-  const avgConfidence = sentimentPredictions.reduce((sum, p) => sum + parseFloat(p.confidencePercent), 0) / total;
+  const avgConfidence = total > 0 
+    ? (sentimentPredictions.reduce((sum, p) => sum + parseFloat(p.confidencePercent || 0), 0) / total)
+    : 0;
   insights.push(`Rata-rata confidence model: ${avgConfidence.toFixed(1)}%.`);
   
   // Ensure minimum 5 insights
@@ -4413,6 +4430,10 @@ function getStoredPrediction(comment) {
 }
 
 function updateStatisticsAfterCorrection() {
+  // Show the summary section if it was hidden
+  const summarySection = document.getElementById('sentimentSummaryCardsSection');
+  if(summarySection) summarySection.style.display = 'block';
+  
   // Recalculate prediction distribution
   const predCounts = {};
   sentimentPredictions.forEach(p => {
@@ -4425,6 +4446,12 @@ function updateStatisticsAfterCorrection() {
   const neutral = predCounts['Netral'] || 0;
   const negative = predCounts['Negatif'] || 0;
   
+  // Safe percentage calculation to prevent NaN
+  const safePercentage = (count, total) => {
+    if (!total || total <= 0) return 0;
+    return ((count / total) * 100).toFixed(1);
+  };
+  
   const elSummaryTotal = document.getElementById('summaryTotal');
   if(elSummaryTotal) elSummaryTotal.textContent = total;
   const elSummaryPositive = document.getElementById('summaryPositive');
@@ -4434,11 +4461,20 @@ function updateStatisticsAfterCorrection() {
   const elSummaryNegative = document.getElementById('summaryNegative');
   if(elSummaryNegative) elSummaryNegative.textContent = negative;
   const elSummaryPositivePct = document.getElementById('summaryPositivePct');
-  if(elSummaryPositivePct) elSummaryPositivePct.textContent = ((positive / total) * 100).toFixed(1) + '%';
+  if(elSummaryPositivePct) elSummaryPositivePct.textContent = safePercentage(positive, total) + '%';
   const elSummaryNeutralPct = document.getElementById('summaryNeutralPct');
-  if(elSummaryNeutralPct) elSummaryNeutralPct.textContent = ((neutral / total) * 100).toFixed(1) + '%';
+  if(elSummaryNeutralPct) elSummaryNeutralPct.textContent = safePercentage(neutral, total) + '%';
   const elSummaryNegativePct = document.getElementById('summaryNegativePct');
-  if(elSummaryNegativePct) elSummaryNegativePct.textContent = ((negative / total) * 100).toFixed(1) + '%';
+  if(elSummaryNegativePct) elSummaryNegativePct.textContent = safePercentage(negative, total) + '%';
+  
+  // Recalculate average confidence with safe calculation
+  const elSummaryAvgConfidence = document.getElementById('summaryAvgConfidence');
+  if(elSummaryAvgConfidence) {
+    const avgConfidence = total > 0 
+      ? (sentimentPredictions.reduce((sum, p) => sum + parseFloat(p.confidencePercent || 0), 0) / total).toFixed(1)
+      : 0;
+    elSummaryAvgConfidence.textContent = avgConfidence + '%';
+  }
   
   // Update charts
   showSentimentDistribution();
@@ -4495,21 +4531,8 @@ function refreshSummaryStats() {
     return;
   }
   
-  // Recalculate and update all statistics
+  // Recalculate and update all statistics (includes confidence calculation)
   updateStatisticsAfterCorrection();
-  
-  // Recalculate average confidence
-  const avgConfidence = sentimentPredictions.reduce((sum, p) => {
-    const maxConf = Math.max(...Object.values(p.confidence || {}));
-    return sum + maxConf;
-  }, 0) / sentimentPredictions.length;
-  
-  const elSummaryAvgConfidence = document.getElementById('summaryAvgConfidence');
-  if(elSummaryAvgConfidence) elSummaryAvgConfidence.textContent = (avgConfidence * 100).toFixed(1) + '%';
-  
-  // Update charts
-  showSentimentDistribution();
-  showSentimentTrendChart();
   
   alert('Statistik dan chart berhasil di-refresh!');
 }
