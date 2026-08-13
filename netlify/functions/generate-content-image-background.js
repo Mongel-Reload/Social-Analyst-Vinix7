@@ -282,6 +282,22 @@ FAQ CONTENT SPECIFIC (when layout type is Q&A / FAQ):
 - Talent on right side, FAQ cards on left side
 - Ensure talent body does not cover cards or text
 
+INTERVIEW PREPARATION CONTENT SPECIFIC (when concept/title relates to interview preparation):
+- Main headline: "PERSIAPAN INTERVIEW MAGANG VINIX7" (large, bold, navy blue, 2-3 lines max)
+- Alternative headline: "SIAP INTERVIEW MAGANG VINIX7?" (large, bold, navy blue)
+- Subheadline: "Persiapkan dirimu sebelum mengikuti proses seleksi dan selalu perhatikan informasi pada lowongan yang tersedia."
+- Use exactly 3 vertical information cards with specific content:
+  Card 1: Title "Kenali Posisi yang Dilamar" Content "Pahami posisi, tanggung jawab, dan kualifikasi yang tercantum pada informasi lowongan." Icon: Briefcase/search/job position
+  Card 2: Title "Persiapkan Diri" Content "Siapkan pengalaman, kemampuan, dan informasi relevan yang dapat membantu saat proses interview." Icon: Checklist
+  Card 3: Title "Baca Informasi dengan Saksama" Content "Ikuti petunjuk dan persyaratan resmi yang tercantum pada lowongan. Hindari asumsi di luar informasi yang tersedia." Icon: Document + magnifying glass
+- Speech bubble (optional, simplified): "Persiapan matang, interview lebih tenang!" - keep it minimal, not dominant
+- CTA at bottom with two parts: Left "Cek persyaratan pada lowongan VINIX7 yang tersedia" (search icon), Right "Pantau informasi terbaru di kanal resmi VINIX7" (notification icon)
+- Bottom micro CTA: "Simpan panduan ini untuk persiapanmu!"
+- Keep CTA clean with sufficient whitespace
+- Talent on right side, information cards on left side
+- Ensure talent body does not cover cards or text
+- CRITICAL: Do NOT invent interview process stages, number of rounds, duration, specific questions, or any factual company information not provided in data
+
 Typography:
 - Headline = largest
 - Card title = medium/bold
@@ -298,7 +314,10 @@ Branding:
 
 Logo:
 - Do NOT generate/recreate the company logo
-- Reserve a visually clean logo-safe area in one corner (top-left, top-right, bottom-left, or bottom-right)
+- Use ONLY ONE logo placement - in TOP-RIGHT corner specifically
+- NEVER place logo in multiple locations or duplicate branding
+- Logo must have clear space and never overlap headline, badge, icon, or decoration
+- Do NOT use logo as decorative element near headline
 - The real uploaded VINIX7 logo will be overlaid afterward
 - Do NOT render a visible logo placeholder, box, border, safe-zone, or fake logo
 - Do NOT use "KokoroLens" as the brand name in the poster content
@@ -328,6 +347,7 @@ CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
 - Do NOT invent dates or deadlines
 - Do NOT invent benefits or perks
 - Do NOT invent recruitment stages
+- Do NOT invent interview process stages, number of rounds, duration, or specific questions
 - Do NOT invent company policies
 - Do NOT invent statistics or numbers
 - Do NOT invent any factual company information not provided in this brief
@@ -337,7 +357,8 @@ CRITICAL CONSTRAINTS - DO NOT INVENT FACTS:
 - NEVER use "belum tersedia" or similar placeholder text in the final image
 - Use insight from comments as basis for content topics
 - Do NOT convert questions or assumptions from comments into official company facts
-- If requirement information is not available in dataset or brand profile, use safe wording like "cek persyaratan pada lowongan yang tersedia" or "ikuti informasi resmi VINIX7"`;
+- If requirement information is not available in dataset or brand profile, use safe wording like "cek persyaratan pada lowongan yang tersedia" or "ikuti informasi resmi VINIX7"
+- For interview-related content: focus on preparation tips, not specific company interview processes`;
 }
 
 // Helper: Determine layout type based on recommendation content
@@ -346,6 +367,9 @@ function determineLayoutType(concept, title) {
   
   if (text.includes('faq') || text.includes('question') || text.includes('pertanyaan')) {
     return 'Q&A / FAQ layout';
+  }
+  if (text.includes('interview') || text.includes('persiapan') || text.includes('siap') || text.includes('preparation')) {
+    return 'Interview preparation layout';
   }
   if (text.includes('education') || text.includes('learn') || text.includes('belajar') || text.includes('tutorial')) {
     return 'Simple infographic';
